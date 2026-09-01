@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Issuer {
+  id                   Int     @id @default(autoincrement())
+  ruc                  String  @unique
+  nombres              String
+  apellidos            String
+  nombreEmpresa        String
+  razonSocial          String
+  direccion            String
+  email                String
+  celular              String
+  establecimiento      String  @default("001")
+  puntoEmision         String  @default("001")
+  obligadoContabilidad Boolean @default(false)
+  regimen              String  @default("REGIMEN GENERAL")
+  ambiente             Int     @default(1) // 1 = Pruebas, 2 = Producción
+  firmaElectronica     String? // Ruta al archivo .p12 o el archivo codificado en Base64
+  codigoSri            String? // Contraseña de la firma .p12
+  startSecuencial      String  @default("000000001")
+
+  // Nuevos campos comerciales SaaS
+  password         String   @default("123456")
+  status           String   @default("ACTIVE") // ACTIVE, SUSPENDED
+  planType         String   @default("MONTHLY") // MONTHLY, PAY_PER_INVOICE
+  monthlyFee       Float    @default(15.0)
+  balance          Float    @default(5.0)
+  subscriptionEnds DateTime @default(now())
+  logo             String? // Logo de la empresa en Base64
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  invoices        Invoice[]
+  paymentRequests PaymentRequest[]
+}
+
+model SystemConfig {
+  id             Int    @id @default(1)
+  adminPassword  String @default("admin1234")
+  adminWhatsapp  String @default("593999999999")
+  bankAccounts   String @default("Banco Pichincha - Ahorros: 2200123456 (Beneficiario: SRI SaaS)\nBanco Guayaquil - Corriente: 10293847 (Beneficiario: SRI SaaS)")
+  defaultBalance Float  @default(5.0)
+
+  // Nuevos campos personalizables para el Admin
+  systemName    String  @default("FácilSRI")
+  systemLogo    String? // Logo en formato Base64
+  loginTitle    String  @default("FácilSRI")
+  loginSubtitle String  @default("Sistema de Facturación Electrónica Ecuatoriana. Emite facturas, retenciones y guías autorizadas por el SRI al instante.")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Client {
+  id                 Int       @id @default(autoincrement())
+  nombres            String
+  tipoIdentificacion String // "04" (RUC), "05" (Cédula), "06" (Pasaporte), "07" (Consumidor Final)
+  identificacion     String    @unique
+  direccion          String
+  mail               String
+  celular            String
+  telefono           String? // Teléfono convencional adicional
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  invoices           Invoice[]
+}
+
+model Product {
+  id              Int           @id @default(autoincrement())
+  nombre          String
+  codigoPrincipal String        @unique
+  descripcion     String?
+  precio          Float
+  iva             Float         @default(12.0) // Porcentaje de IVA, ej: 12.0, 0.0, 15.0
+  imagen          String? // Imagen opcional del producto (Base64)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  invoiceItems    InvoiceItem[]
+}
+
+model Invoice {
+  id            Int      @id @default(autoincrement())
+  secuencial    String // Ej: "000000001" (9 dígitos)
+  claveAcceso   String?  @unique // 49 dígitos
+  xmlNoFirmado  String?
+  xmlAutorizado String?
+  pdfRIDE       String?
+  estado        String   @default("CREADA") // CREADA, FIRMADA, RECIBIDA, AUTORIZADA, DEVUELTA, RECHAZADA
+  fechaEmision  DateTime
+  tipoAmbiente  Int      @default(1) // 1 = Pruebas, 2 = Producción
+  subtotal0     Float    @default(0.0)
+  subtotalIva   Float    @default(0.0)
+  valorIva      Float    @default(0.0)
+  total         Float
+  formaPago     String   @default("01") // "01" (Sin utilización del sistema financiero), "20" (Otros con utilización del sistema financiero)
+  observaciones String? // Notas u observaciones adicionales del comprobante
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  clientId Int
+  client   Client        @relation(fields: [clientId], references: [id])
+  issuerId Int
+  issuer   Issuer        @relation(fields: [issuerId], references: [id])
+  items    InvoiceItem[]
+}
+
+model InvoiceItem {
+  id             Int      @id @default(autoincrement())
+  cantidad       Float
+  precioUnitario Float
+  descuento      Float    @default(0.0)
+  total          Float
+  notaExtra1     String? // Notas extra del ítem (ej. Color)
+  notaExtra2     String? // Notas extra del ítem (ej. Empaque)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  invoiceId Int
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model PaymentRequest {
+  id             Int       @id @default(autoincrement())
+  ruc            String // RUC del emisor que solicita
+  razonSocial    String // Razón social del emisor
+  monto          Float // Monto del pago
+  tipo           String // "TOPUP" (Recarga de Billetera) o "MEMBERSHIP" (Renovación de Membresía)
+  referencia     String // Referencia de la transferencia o depósito
+  bancoDestino   String // Banco al que transfirió
+  estado         String    @default("PENDIENTE") // PENDIENTE, APROBADO, RECHAZADO
+  fechaSolicitud DateTime  @default(now())
+  fechaProcesado DateTime?
+
+  issuerId Int
+  issuer   Issuer @relation(fields: [issuerId], references: [id], onDelete: Cascade)
+}
