@@ -16,36 +16,76 @@ const sriClient = new SriClient();
 export async function GET(request: Request) {
   try {
     const issuerIdHeader = request.headers.get("x-issuer-id");
-    let invoices;
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search") || "";
+    const startDate = searchParams.get("startDate") || "";
+    const endDate = searchParams.get("endDate") || "";
+    const status = searchParams.get("status") || "";
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.max(1, parseInt(searchParams.get("limit") || "30", 10));
+    const isAll = searchParams.get("all") === "true";
+
+    const where: any = {};
 
     if (issuerIdHeader && issuerIdHeader !== "default" && issuerIdHeader !== "null" && issuerIdHeader !== "undefined") {
-      invoices = await db.invoice.findMany({
-        where: { issuerId: parseInt(issuerIdHeader, 10) },
-        include: {
-          client: true,
-          items: {
-            include: {
-              product: true,
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      });
-    } else {
-      invoices = await db.invoice.findMany({
-        include: {
-          client: true,
-          items: {
-            include: {
-              product: true,
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      });
+      where.issuerId = parseInt(issuerIdHeader, 10);
     }
 
-    return NextResponse.json(invoices);
+    if (status && status !== "ALL") {
+      where.estado = status;
+    }
+
+    if (startDate || endDate) {
+      where.fechaEmision = {};
+      if (startDate) {
+        where.fechaEmision.gte = new Date(`${startDate}T00:00:00.000Z`);
+      }
+      if (endDate) {
+        where.fechaEmision.lte = new Date(`${endDate}T23:59:59.999Z`);
+      }
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      where.OR = [
+        { secuencial: { contains: q } },
+        { claveAcceso: { contains: q } },
+        { client: { identificacion: { contains: q } } },
+        { client: { nombres: { contains: q } } },
+        { client: { mail: { contains: q } } },
+      ];
+    }
+
+    const total = await db.invoice.count({ where });
+
+    const take = isAll ? undefined : limit;
+    const skip = isAll ? undefined : (page - 1) * limit;
+
+    const invoices = await db.invoice.findMany({
+      where,
+      include: {
+        client: true,
+        issuer: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take,
+      skip,
+    });
+
+    const totalPages = isAll ? 1 : Math.ceil(total / limit) || 1;
+
+    return NextResponse.json({
+      invoices,
+      total,
+      page,
+      limit,
+      totalPages,
+    });
   } catch (error: any) {
     console.error("GET /api/invoices error:", error);
     return NextResponse.json({ error: "Fallo al obtener el listado de facturas." }, { status: 500 });

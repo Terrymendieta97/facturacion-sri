@@ -225,6 +225,19 @@ export default function Home() {
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string; messageId?: string } | null>(null);
 
+  // --- FILTROS Y PAGINACIÓN DEL HISTORIAL SRI ---
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyStartDate, setHistoryStartDate] = useState("");
+  const [historyEndDate, setHistoryEndDate] = useState("");
+  const [historyStatus, setHistoryStatus] = useState("ALL");
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPagination, setHistoryPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 30,
+    totalPages: 1,
+  });
+
   const handleSendTestEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!testEmailForm.to || !testEmailForm.to.trim()) {
@@ -418,18 +431,80 @@ export default function Home() {
     }
   };
 
-  const fetchInvoices = async () => {
+  const fetchInvoices = async (
+    page = historyPage,
+    search = historySearch,
+    startDate = historyStartDate,
+    endDate = historyEndDate,
+    status = historyStatus
+  ) => {
     try {
       setLoadingInvoices(true);
-      const result = await safeFetch("/api/invoices");
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", "30");
+      if (search) params.set("search", search);
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
+      if (status && status !== "ALL") params.set("status", status);
+
+      const result = await safeFetch(`/api/invoices?${params.toString()}`);
       if (result.ok) {
-        setInvoices(result.data);
+        if (Array.isArray(result.data)) {
+          setInvoices(result.data);
+          setHistoryPagination({ total: result.data.length, page: 1, limit: 30, totalPages: 1 });
+        } else {
+          setInvoices(result.data.invoices || []);
+          setHistoryPagination({
+            total: result.data.total || 0,
+            page: result.data.page || 1,
+            limit: result.data.limit || 30,
+            totalPages: result.data.totalPages || 1,
+          });
+        }
       }
     } catch (e) {
       console.error(e);
     } finally {
       setLoadingInvoices(false);
     }
+  };
+
+  const handleApplyDatePreset = (preset: "MONTH" | "SEMESTER" | "YEAR" | "CLEAR") => {
+    const now = new Date();
+    let start = "";
+    let end = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+    if (preset === "MONTH") {
+      start = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    } else if (preset === "SEMESTER") {
+      const currentMonth = now.getMonth();
+      const startMonth = currentMonth < 6 ? 1 : 7;
+      start = `${now.getFullYear()}-${String(startMonth).padStart(2, "0")}-01`;
+    } else if (preset === "YEAR") {
+      start = `${now.getFullYear()}-01-01`;
+    } else if (preset === "CLEAR") {
+      start = "";
+      end = "";
+      setHistorySearch("");
+      setHistoryStatus("ALL");
+    }
+
+    setHistoryStartDate(start);
+    setHistoryEndDate(end);
+    setHistoryPage(1);
+    fetchInvoices(1, preset === "CLEAR" ? "" : historySearch, start, end, preset === "CLEAR" ? "ALL" : historyStatus);
+  };
+
+  const handleExportHistory = (format: "pdf" | "xlsx") => {
+    const params = new URLSearchParams();
+    params.set("format", format);
+    if (historySearch) params.set("search", historySearch);
+    if (historyStartDate) params.set("startDate", historyStartDate);
+    if (historyEndDate) params.set("endDate", historyEndDate);
+    if (historyStatus && historyStatus !== "ALL") params.set("status", historyStatus);
+
+    window.open(`/api/invoices/export?${params.toString()}`, "_blank");
   };
 
   const fetchCompanies = async () => {
@@ -4429,110 +4504,323 @@ export default function Home() {
 
           {/* TAB: HISTORIAL */}
           {activeTab === "history" && (
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden animate-fade-in">
-              <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-                <h3 className="text-sm font-bold text-slate-800 tracking-tight">Comprobantes Electrónicos Emitidos</h3>
-                <span className="text-xs bg-slate-100 border border-slate-200 rounded px-2.5 py-0.5 text-slate-500 font-bold">
-                  Total: {invoices.length} facturas
-                </span>
+            <div className="space-y-4 animate-fade-in font-sans">
+              
+              {/* TARJETA DE FILTROS Y BOTONERA DE EXPORTACIÓN */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-4">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-800 tracking-tight flex items-center">
+                      <FileText className="h-5 w-5 mr-2 text-blue-600" /> Historial de Comprobantes SRI
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Filtra facturas por Cédula, RUC, Pasaporte, fechas o estado, y exporta reportes contables para declaraciones.
+                    </p>
+                  </div>
+
+                  {/* BOTONERA DE EXPORTACIÓN CONTABLE */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleExportHistory("pdf")}
+                      className="inline-flex items-center text-xs font-bold bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 px-3.5 py-2 rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    >
+                      <Download className="h-4 w-4 mr-1.5 text-rose-600" /> Exportar PDF Contable
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExportHistory("xlsx")}
+                      className="inline-flex items-center text-xs font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-3.5 py-2 rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer"
+                    >
+                      <Download className="h-4 w-4 mr-1.5 text-emerald-600" /> Exportar Excel (.xlsx)
+                    </button>
+                  </div>
+                </div>
+
+                {/* FILTROS INTERACTIVOS */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  
+                  {/* Buscador Cédula / RUC / Pasaporte / Secuencial */}
+                  <div className="md:col-span-2 relative">
+                    <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">
+                      Cédula / RUC / Pasaporte / Secuencial
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-4 w-4 text-slate-400" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Buscar por Cédula, RUC, Pasaporte o Nº Secuencial..."
+                        value={historySearch}
+                        onChange={(e) => {
+                          setHistorySearch(e.target.value);
+                          setHistoryPage(1);
+                          fetchInvoices(1, e.target.value, historyStartDate, historyEndDate, historyStatus);
+                        }}
+                        className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 text-xs bg-slate-50/50 focus:bg-white font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Selector Fecha Desde */}
+                  <div>
+                    <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">
+                      Fecha Desde
+                    </label>
+                    <input
+                      type="date"
+                      value={historyStartDate}
+                      onChange={(e) => {
+                        setHistoryStartDate(e.target.value);
+                        setHistoryPage(1);
+                        fetchInvoices(1, historySearch, e.target.value, historyEndDate, historyStatus);
+                      }}
+                      className="block w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-800 text-xs bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                    />
+                  </div>
+
+                  {/* Selector Fecha Hasta */}
+                  <div>
+                    <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">
+                      Fecha Hasta
+                    </label>
+                    <input
+                      type="date"
+                      value={historyEndDate}
+                      onChange={(e) => {
+                        setHistoryEndDate(e.target.value);
+                        setHistoryPage(1);
+                        fetchInvoices(1, historySearch, historyStartDate, e.target.value, historyStatus);
+                      }}
+                      className="block w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-800 text-xs bg-slate-50/50 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
+                    />
+                  </div>
+
+                </div>
+
+                {/* SEGUNDA FILA: PRESETS DE FECHA Y FILTRO DE ESTADO */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[10px] font-black text-slate-400 uppercase mr-1">Rango Rápido:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyDatePreset("MONTH")}
+                      className="px-2.5 py-1 text-[11px] font-bold bg-slate-100 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 rounded-lg text-slate-600 transition-colors"
+                    >
+                      Mes Actual
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyDatePreset("SEMESTER")}
+                      className="px-2.5 py-1 text-[11px] font-bold bg-slate-100 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 rounded-lg text-slate-600 transition-colors"
+                    >
+                      Semestre Actual
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyDatePreset("YEAR")}
+                      className="px-2.5 py-1 text-[11px] font-bold bg-slate-100 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 rounded-lg text-slate-600 transition-colors"
+                    >
+                      Año Actual
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyDatePreset("CLEAR")}
+                      className="px-2.5 py-1 text-[11px] font-bold bg-slate-200/60 hover:bg-slate-200 border border-slate-300 rounded-lg text-slate-700 transition-colors"
+                    >
+                      🧹 Limpiar Filtros
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase">Estado SRI:</span>
+                    <select
+                      value={historyStatus}
+                      onChange={(e) => {
+                        setHistoryStatus(e.target.value);
+                        setHistoryPage(1);
+                        fetchInvoices(1, historySearch, historyStartDate, historyEndDate, e.target.value);
+                      }}
+                      className="px-3 py-1.5 border border-slate-200 rounded-xl text-slate-700 text-xs font-bold bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600"
+                    >
+                      <option value="ALL">Todos los Estados</option>
+                      <option value="AUTORIZADA">AUTORIZADA</option>
+                      <option value="CREADA">CREADA / PENDIENTE</option>
+                      <option value="DEVUELTA">DEVUELTA</option>
+                      <option value="RECHAZADA">RECHAZADA</option>
+                      <option value="ANULADA">ANULADA</option>
+                    </select>
+                  </div>
+                </div>
+
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs font-sans">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    <tr>
-                      <th className="px-6 py-3">Secuencial</th>
-                      <th className="px-6 py-3">Fecha Emisión</th>
-                      <th className="px-6 py-3">Identificación Cliente</th>
-                      <th className="px-6 py-3">Cliente Receptor</th>
-                      <th className="px-6 py-3 text-right">Monto Total</th>
-                      <th className="px-6 py-3 text-center">Estado SRI</th>
-                      <th className="px-6 py-3 text-right">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {invoices.map((inv) => (
-                      <tr key={inv.id} className="hover:bg-slate-50/30 transition-colors">
-                        <td className="px-6 py-4 font-mono font-bold text-slate-700">{inv.secuencial}</td>
-                        <td className="px-6 py-4 text-slate-500">
-                          {(() => {
-                            const d = new Date(inv.fechaEmision);
-                            return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
-                          })()}
-                        </td>
-                        <td className="px-6 py-4 font-mono text-slate-500">{inv.client.identificacion}</td>
-                        <td className="px-6 py-4 font-bold text-slate-700 uppercase">{inv.client.nombres}</td>
-                        <td className="px-6 py-4 text-right font-black text-slate-700">${inv.total.toFixed(2)}</td>
-                        <td className="px-6 py-4 text-center">
-                          <span className={`text-[9px] font-black uppercase rounded-full px-2 py-0.5 border ${
-                            inv.estado === "AUTORIZADA" ? "bg-green-50 border-green-200 text-green-700" :
-                            inv.estado === "DEVUELTA" ? "bg-red-50 border-red-200 text-red-700" :
-                            "bg-yellow-50 border-yellow-200 text-yellow-700"
-                          }`}>
-                            {inv.estado}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
-                          {inv.estado !== "AUTORIZADA" && (
-                            <button
-                              disabled={queryingInvoiceId === inv.id}
-                              onClick={() => handleQuerySri(inv.id)}
-                              className="inline-flex items-center text-[10px] font-semibold border border-yellow-200 bg-yellow-50 text-yellow-700 px-2 py-1 rounded hover:bg-yellow-100 transition-colors disabled:opacity-50"
-                            >
-                              <RefreshCw className={`h-3 w-3 mr-1 ${queryingInvoiceId === inv.id ? "animate-spin" : ""}`} />
-                              Consultar SRI
-                            </button>
-                          )}
-                          {inv.estado === "AUTORIZADA" && (
-                            <>
-                              <button
-                                onClick={() => setPreviewInvoice(inv)}
-                                className="inline-flex items-center text-[10px] font-semibold border border-purple-200 bg-purple-50 text-purple-700 px-2 py-1 rounded hover:bg-purple-100 transition-colors"
-                              >
-                                <Eye className="h-3 w-3 mr-1" />
-                                Previsualizar
-                              </button>
 
-                              <button
-                                disabled={resendingId === inv.id}
-                                onClick={() => handleResendEmail(inv.id)}
-                                className="inline-flex items-center text-[10px] font-semibold border border-blue-200 bg-blue-50 text-blue-700 px-2 py-1 rounded hover:bg-blue-100 transition-colors disabled:opacity-50"
-                              >
-                                <Mail className="h-3 w-3 mr-1" />
-                                Correo
-                              </button>
-                              
-                              <a
-                                href={`/api/invoices/download-pdf?id=${inv.id}`}
-                                download={`FACTURA-${inv.secuencial}.pdf`}
-                                className="inline-flex items-center text-[10px] font-semibold border border-slate-200 bg-white text-slate-700 px-2 py-1 rounded hover:bg-slate-50 transition-colors"
-                              >
-                                <Download className="h-3 w-3 mr-1" />
-                                PDF (RIDE)
-                              </a>
-
-                              <a
-                                href={`/api/invoices/download-xml?id=${inv.id}`}
-                                download={`FACTURA-${inv.secuencial}.xml`}
-                                className="inline-flex items-center text-[10px] font-semibold border border-slate-200 bg-white text-slate-700 px-2 py-1 rounded hover:bg-slate-50 transition-colors"
-                              >
-                                <Download className="h-3 w-3 mr-1" />
-                                XML
-                              </a>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                    {invoices.length === 0 && (
+              {/* TABLA DE FACTURAS PAGINADA */}
+              <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+                <div className="px-6 py-3.5 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                  <h4 className="text-xs font-bold text-slate-700 tracking-tight">
+                    Comprobantes ({historyPagination.total} encontrados)
+                  </h4>
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    Mostrando máximo 30 por página
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-sans">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       <tr>
-                        <td colSpan={7} className="px-6 py-12 text-center text-slate-400 text-xs">
-                          Ningún comprobante emitido aún.
-                        </td>
+                        <th className="px-6 py-3">Secuencial</th>
+                        <th className="px-6 py-3">Fecha Emisión</th>
+                        <th className="px-6 py-3">Identificación Cliente</th>
+                        <th className="px-6 py-3">Cliente Receptor</th>
+                        <th className="px-6 py-3 text-right">Monto Total</th>
+                        <th className="px-6 py-3 text-center">Estado SRI</th>
+                        <th className="px-6 py-3 text-right">Acciones</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {invoices.map((inv) => (
+                        <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4 font-mono font-bold text-slate-700">
+                            {(inv as any).issuer?.establecimiento || issuer?.establecimiento || "001"}-{(inv as any).issuer?.puntoEmision || issuer?.puntoEmision || "001"}-{inv.secuencial}
+                          </td>
+                          <td className="px-6 py-4 text-slate-500">
+                            {(() => {
+                              const d = new Date(inv.fechaEmision);
+                              return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+                            })()}
+                          </td>
+                          <td className="px-6 py-4 font-mono text-slate-600 font-bold">{inv.client.identificacion}</td>
+                          <td className="px-6 py-4 font-bold text-slate-800 uppercase">{inv.client.nombres}</td>
+                          <td className="px-6 py-4 text-right font-black text-slate-800">${inv.total.toFixed(2)}</td>
+                          <td className="px-6 py-4 text-center">
+                            <span className={`text-[9px] font-black uppercase rounded-full px-2.5 py-0.5 border ${
+                              inv.estado === "AUTORIZADA" ? "bg-green-50 border-green-200 text-green-700" :
+                              inv.estado === "DEVUELTA" ? "bg-red-50 border-red-200 text-red-700" :
+                              "bg-yellow-50 border-yellow-200 text-yellow-700"
+                            }`}>
+                              {inv.estado}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
+                            {inv.estado !== "AUTORIZADA" && (
+                              <button
+                                disabled={queryingInvoiceId === inv.id}
+                                onClick={() => handleQuerySri(inv.id)}
+                                className="inline-flex items-center text-[10px] font-semibold border border-yellow-200 bg-yellow-50 text-yellow-700 px-2 py-1 rounded-lg hover:bg-yellow-100 transition-colors disabled:opacity-50"
+                              >
+                                <RefreshCw className={`h-3 w-3 mr-1 ${queryingInvoiceId === inv.id ? "animate-spin" : ""}`} />
+                                Consultar SRI
+                              </button>
+                            )}
+                            {inv.estado === "AUTORIZADA" && (
+                              <>
+                                <button
+                                  onClick={() => setPreviewInvoice(inv)}
+                                  className="inline-flex items-center text-[10px] font-semibold border border-purple-200 bg-purple-50 text-purple-700 px-2 py-1 rounded-lg hover:bg-purple-100 transition-colors"
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  Previsualizar
+                                </button>
+
+                                <button
+                                  disabled={resendingId === inv.id}
+                                  onClick={() => handleResendEmail(inv.id)}
+                                  className="inline-flex items-center text-[10px] font-semibold border border-blue-200 bg-blue-50 text-blue-700 px-2 py-1 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
+                                >
+                                  <Mail className="h-3 w-3 mr-1" />
+                                  Correo
+                                </button>
+                                
+                                <a
+                                  href={`/api/invoices/download-pdf?id=${inv.id}`}
+                                  download={`FACTURA-${inv.secuencial}.pdf`}
+                                  className="inline-flex items-center text-[10px] font-semibold border border-slate-200 bg-white text-slate-700 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors"
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  PDF (RIDE)
+                                </a>
+
+                                <a
+                                  href={`/api/invoices/download-xml?id=${inv.id}`}
+                                  download={`FACTURA-${inv.secuencial}.xml`}
+                                  className="inline-flex items-center text-[10px] font-semibold border border-slate-200 bg-white text-slate-700 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors"
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  XML
+                                </a>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {invoices.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-12 text-center text-slate-400 text-xs">
+                            No se encontraron comprobantes emitidos que coincidan con los filtros seleccionados.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* BARRA DE PAGINACIÓN */}
+                {historyPagination.totalPages > 1 && (
+                  <div className="px-6 py-3 border-t border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                    <span className="text-slate-500 text-[11px] font-medium">
+                      Página <strong>{historyPagination.page}</strong> de <strong>{historyPagination.totalPages}</strong> ({historyPagination.total} registros en total)
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={historyPagination.page <= 1}
+                        onClick={() => {
+                          const newP = historyPagination.page - 1;
+                          setHistoryPage(newP);
+                          fetchInvoices(newP);
+                        }}
+                        className="px-3 py-1.5 border border-slate-200 rounded-lg text-slate-600 hover:bg-white disabled:opacity-40 text-xs font-semibold"
+                      >
+                        &lt; Anterior
+                      </button>
+                      
+                      {Array.from({ length: historyPagination.totalPages }, (_, i) => i + 1).map((pNum) => (
+                        <button
+                          key={pNum}
+                          type="button"
+                          onClick={() => {
+                            setHistoryPage(pNum);
+                            fetchInvoices(pNum);
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                            pNum === historyPagination.page
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                          }`}
+                        >
+                          {pNum}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        disabled={historyPagination.page >= historyPagination.totalPages}
+                        onClick={() => {
+                          const newP = historyPagination.page + 1;
+                          setHistoryPage(newP);
+                          fetchInvoices(newP);
+                        }}
+                        className="px-3 py-1.5 border border-slate-200 rounded-lg text-slate-600 hover:bg-white disabled:opacity-40 text-xs font-semibold"
+                      >
+                        Siguiente &gt;
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
+
             </div>
           )}
 
