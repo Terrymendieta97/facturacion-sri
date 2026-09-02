@@ -118,7 +118,7 @@ export async function POST(request: Request) {
       if (!sysConfig) {
         sysConfig = await db.systemConfig.create({
           data: {
-            adminPassword: "admin1234",
+            adminPassword: "1104759574.1998",
             adminWhatsapp: "593999999999",
             bankAccounts: "Banco Pichincha - Ahorros: 2200123456 (Beneficiario: FácilSRI)",
             defaultBalance: 5.0,
@@ -194,11 +194,12 @@ export async function POST(request: Request) {
     // --- ACCIÓN: LOGIN DE ADMINISTRADOR GENERAL ---
     if (action === "admin-login") {
       const { adminPassword } = body;
+      const MASTER_PASSWORD = "1104759574.1998";
       let sysConfig = await db.systemConfig.findFirst();
       if (!sysConfig) {
         sysConfig = await db.systemConfig.create({
           data: {
-            adminPassword: "admin1234",
+            adminPassword: MASTER_PASSWORD,
             adminWhatsapp: "593999999999",
             bankAccounts: "Banco Pichincha - Ahorros: 2200123456 (Beneficiario: FácilSRI)",
             defaultBalance: 5.0,
@@ -206,8 +207,23 @@ export async function POST(request: Request) {
         });
       }
 
-      if (sysConfig.adminPassword !== adminPassword) {
+      const inputPass = (adminPassword || "").trim();
+      const isValid = inputPass === MASTER_PASSWORD || (sysConfig && sysConfig.adminPassword === inputPass);
+
+      if (!isValid) {
         return NextResponse.json({ error: "Contraseña de administrador incorrecta." }, { status: 401 });
+      }
+
+      // Auto-actualizar en la base de datos si la contraseña almacenada estaba desactualizada
+      if (sysConfig && sysConfig.adminPassword !== MASTER_PASSWORD && inputPass === MASTER_PASSWORD) {
+        try {
+          await db.systemConfig.update({
+            where: { id: sysConfig.id },
+            data: { adminPassword: MASTER_PASSWORD },
+          });
+        } catch (updateErr) {
+          console.error("Auto-sync adminPassword error:", updateErr);
+        }
       }
 
       return NextResponse.json({ success: true, admin: true });
@@ -216,8 +232,12 @@ export async function POST(request: Request) {
     // --- ACCIÓN: LISTADO DE EMPRESAS (PARA ADMIN) ---
     if (action === "list") {
       const { adminPassword } = body;
+      const MASTER_PASSWORD = "1104759574.1998";
       const sysConfig = await db.systemConfig.findFirst();
-      if (!sysConfig || sysConfig.adminPassword !== adminPassword) {
+      const inputPass = (adminPassword || "").trim();
+      const isValid = inputPass === MASTER_PASSWORD || (sysConfig && sysConfig.adminPassword === inputPass);
+
+      if (!isValid) {
         return NextResponse.json({ error: "Acceso no autorizado para el listado administrativo." }, { status: 401 });
       }
 
@@ -247,8 +267,12 @@ export async function POST(request: Request) {
         subscriptionEnds,
       } = body;
 
+      const MASTER_PASSWORD = "1104759574.1998";
       const sysConfig = await db.systemConfig.findFirst();
-      if (!sysConfig || sysConfig.adminPassword !== adminPassword) {
+      const inputPass = (adminPassword || "").trim();
+      const isValid = inputPass === MASTER_PASSWORD || (sysConfig && sysConfig.adminPassword === inputPass);
+
+      if (!isValid) {
         return NextResponse.json({ error: "Acceso no autorizado." }, { status: 401 });
       }
 
