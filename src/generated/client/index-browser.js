@@ -155,8 +155,26 @@ exports.Prisma.SystemConfigScalarFieldEnum = {
   defaultBalance: 'defaultBalance',
   systemName: 'systemName',
   systemLogo: 'systemLogo',
+  systemFavicon: 'systemFavicon',
   loginTitle: 'loginTitle',
   loginSubtitle: 'loginSubtitle',
+  metaDescription: 'metaDescription',
+  metaKeywords: 'metaKeywords',
+  pricePerInvoice: 'pricePerInvoice',
+  monthlyPlanFee: 'monthlyPlanFee',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.BankAccountScalarFieldEnum = {
+  id: 'id',
+  banco: 'banco',
+  tipoCuenta: 'tipoCuenta',
+  numeroCuenta: 'numeroCuenta',
+  titular: 'titular',
+  identificacionTitular: 'identificacionTitular',
+  qrCode: 'qrCode',
+  activo: 'activo',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -250,6 +268,7 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   Issuer: 'Issuer',
   SystemConfig: 'SystemConfig',
+  BankAccount: 'BankAccount',
   Client: 'Client',
   Product: 'Product',
   Invoice: 'Invoice',

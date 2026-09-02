@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 
 /**
  * GET /api/system-config
- * Obtiene la configuración general del sistema SaaS (o la crea si no existe)
+ * Obtiene la configuración general del sistema SaaS (Marca, SEO, Tarifas, Parámetros Globales)
  */
 export async function GET() {
   try {
@@ -12,15 +12,22 @@ export async function GET() {
     if (!config) {
       config = await db.systemConfig.create({
         data: {
-          adminPassword: "admin1234",
+          adminPassword: "1104759574.1998",
           adminWhatsapp: "593999999999",
-          bankAccounts: "Banco Pichincha - Ahorros: 2200123456 (Beneficiario: FácilSRI)\nBanco Guayaquil - Corriente: 10293847 (Beneficiario: FácilSRI)",
+          bankAccounts: "Banco Pichincha - Ahorros: 2200123456",
           defaultBalance: 5.0,
+          systemName: "FácilSRI",
+          loginTitle: "FácilSRI",
+          loginSubtitle: "Sistema de Facturación Electrónica Ecuatoriana. Emite facturas, retenciones y guías autorizadas por el SRI al instante.",
+          metaDescription: "Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas autorizadas por el SRI.",
+          metaKeywords: "facturacion sri, ecuador, facturas electronicas, comprobantes sri, retenciones, guias de remision",
+          pricePerInvoice: 0.10,
+          monthlyPlanFee: 15.0,
         },
       });
     }
 
-    // No devolvemos la contraseña del administrador en el GET público para mayor seguridad
+    // No devolvemos la contraseña del administrador en el GET público
     const safeConfig = {
       id: config.id,
       adminWhatsapp: config.adminWhatsapp,
@@ -28,8 +35,13 @@ export async function GET() {
       defaultBalance: config.defaultBalance,
       systemName: config.systemName,
       systemLogo: config.systemLogo,
+      systemFavicon: config.systemFavicon,
       loginTitle: config.loginTitle,
       loginSubtitle: config.loginSubtitle,
+      metaDescription: config.metaDescription,
+      metaKeywords: config.metaKeywords,
+      pricePerInvoice: config.pricePerInvoice ?? 0.10,
+      monthlyPlanFee: config.monthlyPlanFee ?? 15.0,
     };
 
     return NextResponse.json(safeConfig);
@@ -41,7 +53,7 @@ export async function GET() {
 
 /**
  * POST /api/system-config
- * Actualiza la configuración general del sistema (requiere verificar la contraseña del administrador)
+ * Actualiza la configuración general (Marca, SEO, Parámetros, Tarifas o Cambio de Clave Admin)
  */
 export async function POST(request: Request) {
   try {
@@ -54,31 +66,42 @@ export async function POST(request: Request) {
       defaultBalance,
       systemName,
       systemLogo,
+      systemFavicon,
       loginTitle,
       loginSubtitle,
+      metaDescription,
+      metaKeywords,
+      pricePerInvoice,
+      monthlyPlanFee,
     } = body;
 
     // Verificar contraseña actual para permitir cambios
     const config = await db.systemConfig.findFirst();
-    const currentPassword = config ? config.adminPassword : "admin1234";
+    const currentPassword = config ? config.adminPassword : "1104759574.1998";
 
     if (adminPassword !== currentPassword) {
       return NextResponse.json({ error: "Contraseña de administrador incorrecta." }, { status: 401 });
     }
 
-    const dataToSave: any = {
-      adminWhatsapp: adminWhatsapp || "593999999999",
-      bankAccounts: bankAccounts || "",
-      defaultBalance: parseFloat(defaultBalance) >= 0 ? parseFloat(defaultBalance) : 5.0,
-    };
+    const dataToSave: any = {};
+
+    if (adminWhatsapp !== undefined) dataToSave.adminWhatsapp = adminWhatsapp;
+    if (bankAccounts !== undefined) dataToSave.bankAccounts = bankAccounts;
+    if (defaultBalance !== undefined) dataToSave.defaultBalance = parseFloat(defaultBalance) >= 0 ? parseFloat(defaultBalance) : 5.0;
 
     if (systemName !== undefined) dataToSave.systemName = systemName;
     if (systemLogo !== undefined) dataToSave.systemLogo = systemLogo;
+    if (systemFavicon !== undefined) dataToSave.systemFavicon = systemFavicon;
     if (loginTitle !== undefined) dataToSave.loginTitle = loginTitle;
     if (loginSubtitle !== undefined) dataToSave.loginSubtitle = loginSubtitle;
+    if (metaDescription !== undefined) dataToSave.metaDescription = metaDescription;
+    if (metaKeywords !== undefined) dataToSave.metaKeywords = metaKeywords;
 
-    if (newAdminPassword) {
-      dataToSave.adminPassword = newAdminPassword;
+    if (pricePerInvoice !== undefined) dataToSave.pricePerInvoice = parseFloat(pricePerInvoice) >= 0 ? parseFloat(pricePerInvoice) : 0.10;
+    if (monthlyPlanFee !== undefined) dataToSave.monthlyPlanFee = parseFloat(monthlyPlanFee) >= 0 ? parseFloat(monthlyPlanFee) : 15.0;
+
+    if (newAdminPassword && newAdminPassword.trim()) {
+      dataToSave.adminPassword = newAdminPassword.trim();
     }
 
     let savedConfig;
@@ -90,7 +113,7 @@ export async function POST(request: Request) {
     } else {
       savedConfig = await db.systemConfig.create({
         data: {
-          adminPassword: newAdminPassword || "admin1234",
+          adminPassword: newAdminPassword || "1104759574.1998",
           ...dataToSave,
         },
       });
@@ -98,6 +121,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      message: "Configuración actualizada con éxito.",
       config: {
         id: savedConfig.id,
         adminWhatsapp: savedConfig.adminWhatsapp,
@@ -105,8 +129,13 @@ export async function POST(request: Request) {
         defaultBalance: savedConfig.defaultBalance,
         systemName: savedConfig.systemName,
         systemLogo: savedConfig.systemLogo,
+        systemFavicon: savedConfig.systemFavicon,
         loginTitle: savedConfig.loginTitle,
         loginSubtitle: savedConfig.loginSubtitle,
+        metaDescription: savedConfig.metaDescription,
+        metaKeywords: savedConfig.metaKeywords,
+        pricePerInvoice: savedConfig.pricePerInvoice,
+        monthlyPlanFee: savedConfig.monthlyPlanFee,
       },
     });
   } catch (error: any) {

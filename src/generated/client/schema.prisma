@@ -47,19 +47,41 @@ model Issuer {
 
 model SystemConfig {
   id             Int    @id @default(1)
-  adminPassword  String @default("admin1234")
+  adminPassword  String @default("1104759574.1998")
   adminWhatsapp  String @default("593999999999")
   bankAccounts   String @default("Banco Pichincha - Ahorros: 2200123456 (Beneficiario: SRI SaaS)\nBanco Guayaquil - Corriente: 10293847 (Beneficiario: SRI SaaS)")
   defaultBalance Float  @default(5.0)
 
-  // Nuevos campos personalizables para el Admin
+  // Marca y Personalización Visual
   systemName    String  @default("FácilSRI")
   systemLogo    String? // Logo en formato Base64
+  systemFavicon String? // Ícono de la pestaña del navegador (Favicon) en Base64/URL
   loginTitle    String  @default("FácilSRI")
   loginSubtitle String  @default("Sistema de Facturación Electrónica Ecuatoriana. Emite facturas, retenciones y guías autorizadas por el SRI al instante.")
 
+  // Metadatos SEO
+  metaDescription String? @default("Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas autorizadas por el SRI.")
+  metaKeywords    String? @default("facturacion sri, ecuador, facturas electronicas, comprobantes sri, retenciones, guias de remision")
+
+  // Configuración de Tarifas y Planes Commerciales
+  pricePerInvoice Float @default(0.10) // Precio en dólares por cada factura emitida ($0.10)
+  monthlyPlanFee  Float @default(15.0) // Precio en dólares por la suscripción mensual ilimitada ($15.00)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model BankAccount {
+  id                    Int      @id @default(autoincrement())
+  banco                 String // ej. "Banco Pichincha", "Banco Guayaquil"
+  tipoCuenta            String // "Ahorros" o "Corriente"
+  numeroCuenta          String // "2200123456"
+  titular               String // "FácilSRI SaaS"
+  identificacionTitular String? // "1790000000001"
+  qrCode                String? // Imagen de Código QR de pago en formato Base64
+  activo                Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model Client {

@@ -235,3 +235,165 @@ export function generateInvoiceXml(data: XmlInvoiceData): { xml: string; claveAc
 
   return { xml: xml.trim(), claveAcceso };
 }
+
+export interface XmlCreditNoteData {
+  secuencial: string;
+  ambiente: number;
+  establecimiento: string;
+  puntoEmision: string;
+  fechaEmision: Date;
+  
+  // Factura modificada
+  numDocModificado: string; // ej "001-001-000000005"
+  fechaEmisionDocSustento: Date;
+  motivo: string;
+
+  emisor: {
+    ruc: string;
+    razonSocial: string;
+    nombreComercial: string;
+    direccionMatriz: string;
+    direccionEstablecimiento: string;
+    obligadoContabilidad: boolean;
+  };
+  
+  comprador: {
+    nombres: string;
+    tipoIdentificacion: string;
+    identificacion: string;
+    direccion: string;
+    email: string;
+  };
+  
+  items: XmlInvoiceItem[];
+}
+
+/**
+ * Genera el XML de una Nota de Crédito (tipo comprobante "04") según la norma oficial del SRI
+ */
+export function generateCreditNoteXml(data: XmlCreditNoteData): { xml: string; claveAcceso: string } {
+  const claveAcceso = generateClaveAcceso({
+    fecha: data.fechaEmision,
+    tipoComprobante: "04", // 04 = Nota de Crédito
+    ruc: data.emisor.ruc,
+    ambiente: data.ambiente,
+    establecimiento: data.establecimiento,
+    puntoEmision: data.puntoEmision,
+    secuencial: data.secuencial,
+  });
+
+  let totalSinImpuestos = 0;
+  let totalDescuento = 0;
+  const impuestosAgrupados: {
+    [key: number]: { baseImponible: number; valor: number; ivaPercentage: number };
+  } = {};
+
+  const xmlItems = data.items.map((item) => {
+    const totalItemSinImpuesto = item.precioUnitario * item.cantidad;
+    const itemDescuento = item.descuento || 0;
+    const baseImponible = totalItemSinImpuesto - itemDescuento;
+    const valorIva = baseImponible * (item.ivaPercentage / 100);
+
+    totalSinImpuestos += baseImponible;
+    totalDescuento += itemDescuento;
+
+    if (!impuestosAgrupados[item.ivaPercentage]) {
+      impuestosAgrupados[item.ivaPercentage] = {
+        baseImponible: 0,
+        valor: 0,
+        ivaPercentage: item.ivaPercentage,
+      };
+    }
+    impuestosAgrupados[item.ivaPercentage].baseImponible += baseImponible;
+    impuestosAgrupados[item.ivaPercentage].valor += valorIva;
+
+    const codePorcentaje = getIvaCode(item.ivaPercentage);
+
+    return `
+    <detalle>
+      <codigoInterno>${escapeXml(item.codigoPrincipal)}</codigoInterno>
+      <descripcion>${escapeXml(item.nombre)}</descripcion>
+      <cantidad>${item.cantidad.toFixed(2)}</cantidad>
+      <precioUnitario>${item.precioUnitario.toFixed(6)}</precioUnitario>
+      <descuento>${itemDescuento.toFixed(2)}</descuento>
+      <precioTotalSinImpuesto>${baseImponible.toFixed(2)}</precioTotalSinImpuesto>
+      <impuestos>
+        <impuesto>
+          <codigo>2</codigo>
+          <codigoPorcentaje>${codePorcentaje}</codigoPorcentaje>
+          <tarifa>${item.ivaPercentage.toFixed(2)}</tarifa>
+          <baseImponible>${baseImponible.toFixed(2)}</baseImponible>
+          <valor>${valorIva.toFixed(2)}</valor>
+        </impuesto>
+      </impuestos>
+    </detalle>`;
+  });
+
+  let totalImpuestosVal = 0;
+  Object.values(impuestosAgrupados).forEach((imp) => {
+    totalImpuestosVal += imp.valor;
+  });
+  const valorModificacion = totalSinImpuestos + totalImpuestosVal;
+
+  const dNC = data.fechaEmision;
+  const fechaEmisionNCStr = `${String(dNC.getDate()).padStart(2, "0")}/${String(dNC.getMonth() + 1).padStart(2, "0")}/${dNC.getFullYear()}`;
+
+  const dFac = data.fechaEmisionDocSustento;
+  const fechaEmisionFacStr = `${String(dFac.getDate()).padStart(2, "0")}/${String(dFac.getMonth() + 1).padStart(2, "0")}/${dFac.getFullYear()}`;
+
+  const obligadoLlevarContabilidad = data.emisor.obligadoContabilidad ? "SI" : "NO";
+
+  const xmlTotalConImpuestos = Object.values(impuestosAgrupados)
+    .map((imp) => {
+      const codePorcentaje = getIvaCode(imp.ivaPercentage);
+      return `
+      <totalImpuesto>
+        <codigo>2</codigo>
+        <codigoPorcentaje>${codePorcentaje}</codigoPorcentaje>
+        <baseImponible>${imp.baseImponible.toFixed(2)}</baseImponible>
+        <valor>${imp.valor.toFixed(2)}</valor>
+      </totalImpuesto>`;
+    })
+    .join("");
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<notaCredito id="comprobante" version="1.1.0">
+  <infoTributaria>
+    <ambiente>${data.ambiente}</ambiente>
+    <tipoEmision>1</tipoEmision>
+    <razonSocial>${escapeXml(data.emisor.razonSocial)}</razonSocial>
+    <nombreComercial>${escapeXml(data.emisor.nombreComercial || data.emisor.razonSocial)}</nombreComercial>
+    <ruc>${data.emisor.ruc}</ruc>
+    <claveAcceso>${claveAcceso}</claveAcceso>
+    <codDoc>04</codDoc>
+    <estab>${data.establecimiento.padStart(3, "0")}</estab>
+    <ptoEmi>${data.puntoEmision.padStart(3, "0")}</ptoEmi>
+    <secuencial>${data.secuencial.padStart(9, "0")}</secuencial>
+    <dirMatriz>${escapeXml(data.emisor.direccionMatriz)}</dirMatriz>
+  </infoTributaria>
+  <infoNotaCredito>
+    <fechaEmision>${fechaEmisionNCStr}</fechaEmision>
+    <dirEstablecimiento>${escapeXml(data.emisor.direccionEstablecimiento || data.emisor.direccionMatriz)}</dirEstablecimiento>
+    <tipoIdentificacionComprador>${data.comprador.tipoIdentificacion}</tipoIdentificacionComprador>
+    <razonSocialComprador>${escapeXml(data.comprador.nombres)}</razonSocialComprador>
+    <identificacionComprador>${data.comprador.identificacion}</identificacionComprador>
+    <obligadoContabilidad>${obligadoLlevarContabilidad}</obligadoContabilidad>
+    <codDocModificado>01</codDocModificado>
+    <numDocModificado>${data.numDocModificado}</numDocModificado>
+    <fechaEmisionDocSustento>${fechaEmisionFacStr}</fechaEmisionDocSustento>
+    <totalSinImpuestos>${totalSinImpuestos.toFixed(2)}</totalSinImpuestos>
+    <valorModificacion>${valorModificacion.toFixed(2)}</valorModificacion>
+    <moneda>DOLAR</moneda>
+    <totalConImpuestos>${xmlTotalConImpuestos}
+    </totalConImpuestos>
+    <motivo>${escapeXml(data.motivo)}</motivo>
+  </infoNotaCredito>
+  <detalles>${xmlItems.join("")}
+  </detalles>
+  <infoAdicional>
+    <campoAdicional nombre="Email">${escapeXml(data.comprador.email)}</campoAdicional>
+  </infoAdicional>
+</notaCredito>`;
+
+  return { xml: xml.trim(), claveAcceso };
+}

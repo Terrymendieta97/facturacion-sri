@@ -37,7 +37,10 @@ import {
   Check,
   Eye,
   EyeOff,
-  ShieldCheck
+  ShieldCheck,
+  Tag,
+  Receipt,
+  QrCode
 } from "lucide-react";
 
 // --- INTERFACES ---
@@ -238,6 +241,252 @@ export default function Home() {
     totalPages: 1,
   });
 
+  // --- ESTADOS DEL MODAL DE ANULACIÓN / NOTAS DE CRÉDITO ---
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelModalInvoice, setCancelModalInvoice] = useState<any | null>(null);
+  const [cancelTab, setCancelTab] = useState<"SYSTEM" | "SRI" | "NC">("SRI");
+  const [cancelMotivo, setCancelMotivo] = useState("");
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+
+  const handleCopyText = (text: string, label: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopyFeedback(`¡${label} copiado al portapapeles!`);
+    setTimeout(() => setCopyFeedback(null), 2500);
+  };
+
+  const handleExecuteCancel = async (actionType: "cancel_system" | "cancel_sri" | "issue_credit_note") => {
+    if (!cancelModalInvoice) return;
+    if (actionType !== "cancel_sri" && !cancelMotivo.trim()) {
+      alert("Por favor ingrese el motivo de la anulación o Nota de Crédito.");
+      return;
+    }
+
+    if (actionType === "cancel_system" && !window.confirm("¿Está seguro de anular esta factura ÚNICAMENTE en el sistema local?")) return;
+    if (actionType === "cancel_sri" && !window.confirm("¿Confirma que ya ha registrado la solicitud de anulación en el portal web del SRI?")) return;
+    if (actionType === "issue_credit_note" && !window.confirm("¿Está seguro de emitir la Nota de Crédito Electrónica (Comprobante 04) ante el SRI?")) return;
+
+    try {
+      setCancelLoading(true);
+      const result = await safeFetch("/api/invoices/cancel", {
+        method: "POST",
+        body: JSON.stringify({
+          invoiceId: cancelModalInvoice.id,
+          action: actionType,
+          motivo: cancelMotivo,
+        }),
+      });
+
+      if (result.ok) {
+        alert(result.data.message || "Procesado con éxito.");
+        setShowCancelModal(false);
+        setCancelModalInvoice(null);
+        setCancelMotivo("");
+        fetchInvoices();
+      } else {
+        alert(result.error || "Fallo al procesar la acción.");
+      }
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
+  // --- ESTADOS DEL PANEL ADMIN (MARCA, PARÁMETROS, PLANES Y BANCOS) ---
+  const [adminSubTab, setAdminSubTab] = useState<"BRANDING" | "GLOBAL" | "PLANS">("BRANDING");
+  
+  const [brandForm, setBrandForm] = useState({
+    systemName: "FácilSRI",
+    systemLogo: "",
+    systemFavicon: "",
+    loginTitle: "FácilSRI",
+    loginSubtitle: "Sistema de Facturación Electrónica Ecuatoriana. Emite facturas, retenciones y guías autorizadas por el SRI al instante.",
+    metaDescription: "Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas autorizadas por el SRI.",
+    metaKeywords: "facturacion sri, ecuador, facturas electronicas, comprobantes sri, retenciones, guias de remision",
+  });
+
+  const [globalParamsForm, setGlobalParamsForm] = useState({
+    adminWhatsapp: "593999999999",
+    defaultBalance: "5.00",
+    adminCurrentPassword: "",
+    adminNewPassword: "",
+    adminConfirmNewPassword: "",
+  });
+
+  const [plansTariffForm, setPlansTariffForm] = useState({
+    pricePerInvoice: "0.10",
+    monthlyPlanFee: "15.00",
+  });
+
+  const [bankAccountsList, setBankAccountsList] = useState<any[]>([]);
+  const [loadingBankAccounts, setLoadingBankAccounts] = useState(false);
+  const [showBankModal, setShowBankModal] = useState(false);
+  const [bankForm, setBankForm] = useState({
+    id: "",
+    banco: "",
+    tipoCuenta: "Ahorros",
+    numeroCuenta: "",
+    titular: "",
+    identificacionTitular: "",
+    qrCode: "",
+    activo: true,
+  });
+
+  const fetchBankAccounts = async (all = true) => {
+    try {
+      setLoadingBankAccounts(true);
+      const result = await safeFetch(`/api/bank-accounts?all=${all}`);
+      if (result.ok) {
+        setBankAccountsList(result.data || []);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingBankAccounts(false);
+    }
+  };
+
+  const handleSaveBankForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bankForm.banco || !bankForm.numeroCuenta || !bankForm.titular) {
+      alert("Por favor complete Banco, Número de Cuenta y Titular.");
+      return;
+    }
+    try {
+      const result = await safeFetch("/api/bank-accounts", {
+        method: "POST",
+        body: JSON.stringify(bankForm),
+      });
+      if (result.ok) {
+        alert(result.data.message || "Cuenta bancaria guardada con éxito.");
+        setShowBankModal(false);
+        fetchBankAccounts(true);
+      } else {
+        alert(result.error || "Fallo al guardar la cuenta bancaria.");
+      }
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    }
+  };
+
+  const handleDeleteBankAccount = async (id: number) => {
+    if (!window.confirm("¿Está seguro de eliminar esta cuenta bancaria?")) return;
+    try {
+      const result = await safeFetch(`/api/bank-accounts?id=${id}`, { method: "DELETE" });
+      if (result.ok) {
+        fetchBankAccounts(true);
+      } else {
+        alert(result.error || "Fallo al eliminar.");
+      }
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    }
+  };
+
+  const handleSystemFaviconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("El ícono/favicon debe pesar menos de 2MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBrandForm((prev) => ({ ...prev, systemFavicon: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleBankQrUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("La imagen del código QR debe pesar menos de 5MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBankForm((prev) => ({ ...prev, qrCode: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveBranding = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const result = await safeFetch("/api/system-config", {
+        method: "POST",
+        body: JSON.stringify({
+          adminPassword: adminPasswordInput || "1104759574.1998",
+          ...brandForm,
+        }),
+      });
+      if (result.ok) {
+        alert("¡Configuración de Marca & SEO guardada con éxito!");
+        fetchSystemConfig();
+      } else {
+        alert(result.error || "Fallo al guardar la configuración de marca.");
+      }
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    }
+  };
+
+  const handleSaveGlobalParams = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (globalParamsForm.adminNewPassword && globalParamsForm.adminNewPassword !== globalParamsForm.adminConfirmNewPassword) {
+      alert("La nueva contraseña y su confirmación no coinciden.");
+      return;
+    }
+
+    try {
+      const result = await safeFetch("/api/system-config", {
+        method: "POST",
+        body: JSON.stringify({
+          adminPassword: adminPasswordInput || "1104759574.1998",
+          adminWhatsapp: globalParamsForm.adminWhatsapp,
+          defaultBalance: globalParamsForm.defaultBalance,
+          newAdminPassword: globalParamsForm.adminNewPassword || undefined,
+        }),
+      });
+      if (result.ok) {
+        alert("¡Parámetros globales y contraseña de administración guardados con éxito!");
+        setGlobalParamsForm((prev) => ({ ...prev, adminNewPassword: "", adminConfirmNewPassword: "" }));
+        fetchSystemConfig();
+      } else {
+        alert(result.error || "Fallo al guardar parámetros globales.");
+      }
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    }
+  };
+
+  const handleSavePlansTariff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const result = await safeFetch("/api/system-config", {
+        method: "POST",
+        body: JSON.stringify({
+          adminPassword: adminPasswordInput || "1104759574.1998",
+          pricePerInvoice: plansTariffForm.pricePerInvoice,
+          monthlyPlanFee: plansTariffForm.monthlyPlanFee,
+        }),
+      });
+      if (result.ok) {
+        alert("¡Configuración de Tarifas y Planes SaaS guardada con éxito!");
+        fetchSystemConfig();
+      } else {
+        alert(result.error || "Fallo al guardar la configuración de planes.");
+      }
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    }
+  };
+
   const handleSendTestEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!testEmailForm.to || !testEmailForm.to.trim()) {
@@ -385,7 +634,29 @@ export default function Home() {
     const result = await safeFetch("/api/system-config");
     if (result.ok) {
       setSystemConfig(result.data);
+      if (result.data) {
+        setBrandForm({
+          systemName: result.data.systemName || "FácilSRI",
+          systemLogo: result.data.systemLogo || "",
+          systemFavicon: result.data.systemFavicon || "",
+          loginTitle: result.data.loginTitle || "FácilSRI",
+          loginSubtitle: result.data.loginSubtitle || "Sistema de Facturación Electrónica Ecuatoriana. Emite facturas, retenciones y guías autorizadas por el SRI al instante.",
+          metaDescription: result.data.metaDescription || "Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas autorizadas por el SRI.",
+          metaKeywords: result.data.metaKeywords || "facturacion sri, ecuador, facturas electronicas, comprobantes sri, retenciones, guias de remision",
+        });
+        setGlobalParamsForm((prev) => ({
+          ...prev,
+          adminWhatsapp: result.data.adminWhatsapp || "593999999999",
+          defaultBalance: result.data.defaultBalance ? String(result.data.defaultBalance) : "5.00",
+        }));
+        setPlansTariffForm({
+          pricePerInvoice: result.data.pricePerInvoice ? String(result.data.pricePerInvoice) : "0.10",
+          monthlyPlanFee: result.data.monthlyPlanFee ? String(result.data.monthlyPlanFee) : "15.00",
+        });
+      }
     }
+    // Cargar también las cuentas bancarias activas/globales
+    fetchBankAccounts(true);
   };
 
   // --- FETCH DE DATOS INDIVIDUALES ---
@@ -4725,6 +4996,19 @@ export default function Home() {
                                 </button>
 
                                 <button
+                                  onClick={() => {
+                                    setCancelModalInvoice(inv);
+                                    setCancelTab("SRI");
+                                    setCancelMotivo("");
+                                    setShowCancelModal(true);
+                                  }}
+                                  className="inline-flex items-center text-[10px] font-semibold border border-rose-200 bg-rose-50 text-rose-700 px-2 py-1 rounded-lg hover:bg-rose-100 transition-colors cursor-pointer"
+                                >
+                                  <AlertTriangle className="h-3 w-3 mr-1 text-rose-600" />
+                                  Anular / NC
+                                </button>
+
+                                <button
                                   disabled={resendingId === inv.id}
                                   onClick={() => handleResendEmail(inv.id)}
                                   className="inline-flex items-center text-[10px] font-semibold border border-blue-200 bg-blue-50 text-blue-700 px-2 py-1 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
@@ -5620,76 +5904,167 @@ export default function Home() {
             </div>
           )}
 
-          {/* TAB: SUPER ADMINISTRADOR - CONFIGURACIÓN DE MARCA */}
+          {/* TAB: SUPER ADMINISTRADOR - CONFIGURACIÓN DE MARCA, PARÁMETROS Y PLANES */}
           {activeTab === "admin_branding" && isAdminLoggedIn && (
-            <div className="space-y-8 animate-fade-in">
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-xs p-6 max-w-4xl mx-auto">
-                <h3 className="text-sm font-bold text-slate-800 tracking-tight border-b border-slate-100 pb-4 flex items-center mb-6">
-                  <Settings className="h-4 w-4 mr-2 text-slate-500" /> Configuración de Marca y Parámetros Globales
-                </h3>
+            <div className="space-y-6 animate-fade-in max-w-5xl mx-auto font-sans">
+              
+              {/* Barra de Sub-pestañas */}
+              <div className="flex border border-slate-200 mb-6 bg-slate-50/80 p-1.5 rounded-2xl gap-2 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setAdminSubTab("BRANDING")}
+                  className={`flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center space-x-2 ${
+                    adminSubTab === "BRANDING"
+                      ? "bg-white text-blue-600 shadow-sm border border-slate-200/80"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  <Tag className="h-4 w-4" />
+                  <span>1. Configuración de Marca & SEO</span>
+                </button>
 
-                <form onSubmit={handleSaveAdminConfig} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left Column: Identidad Visual y Textos */}
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                        Nombre del Sistema
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={adminConfigForm.systemName}
-                        onChange={(e) => setAdminConfigForm({ ...adminConfigForm, systemName: e.target.value })}
-                        className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold"
-                      />
-                    </div>
+                <button
+                  type="button"
+                  onClick={() => setAdminSubTab("GLOBAL")}
+                  className={`flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center space-x-2 ${
+                    adminSubTab === "GLOBAL"
+                      ? "bg-white text-blue-600 shadow-sm border border-slate-200/80"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>2. Parámetros Globales & Cuentas (CRUD + QR)</span>
+                </button>
 
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                        Logotipo del Sistema
-                      </label>
-                      <div className="flex items-center space-x-3 mt-1">
-                        {adminConfigForm.systemLogo ? (
-                          <div className="relative h-12 w-12 border border-slate-200 rounded-xl bg-slate-50 flex items-center justify-center p-1 overflow-hidden shrink-0">
-                            <img src={adminConfigForm.systemLogo} alt="Logo" className="h-full w-full object-contain" />
-                            <button
-                              type="button"
-                              onClick={() => setAdminConfigForm({ ...adminConfigForm, systemLogo: "" })}
-                              className="absolute top-0 right-0 h-4 w-4 bg-red-600 text-white rounded-full text-[8px] flex items-center justify-center font-bold hover:bg-red-700 transition-colors"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="h-12 w-12 border border-dashed border-slate-300 rounded-xl flex items-center justify-center text-slate-400 shrink-0">
-                            <ImageIcon className="h-5 w-5" />
-                          </div>
-                        )}
-                        <label className="flex-1 cursor-pointer">
-                          <span className="inline-flex justify-center items-center w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-250 text-slate-700 font-bold text-[10px] uppercase rounded-lg transition-colors">
-                            <Upload className="h-3.5 w-3.5 mr-1" /> Subir Imagen
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleSystemLogoUpload}
-                            className="hidden"
-                          />
+                <button
+                  type="button"
+                  onClick={() => setAdminSubTab("PLANS")}
+                  className={`flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs transition-all flex items-center justify-center space-x-2 ${
+                    adminSubTab === "PLANS"
+                      ? "bg-white text-blue-600 shadow-sm border border-slate-200/80"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  <span>3. Tarifas y Planes Comerciales</span>
+                </button>
+              </div>
+
+              {/* CONTENIDO SUB-PESTAÑA 1: BRANDING & SEO */}
+              {adminSubTab === "BRANDING" && (
+                <div className="bg-white border border-slate-200 rounded-2xl shadow-xs p-6">
+                  <h3 className="text-sm font-bold text-slate-800 tracking-tight border-b border-slate-100 pb-4 flex items-center mb-6">
+                    <Tag className="h-4 w-4 mr-2 text-blue-600" /> Personalización de Marca, Logotipos y Metadatos SEO
+                  </h3>
+
+                  <form onSubmit={handleSaveBranding} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Logo Principal */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                          Logotipo Principal del Sistema
                         </label>
+                        <div className="flex items-center space-x-3 mt-1">
+                          {brandForm.systemLogo ? (
+                            <div className="relative h-14 w-14 border border-slate-200 rounded-xl bg-slate-50 flex items-center justify-center p-1 overflow-hidden shrink-0">
+                              <img src={brandForm.systemLogo} alt="Logo" className="h-full w-full object-contain" />
+                              <button
+                                type="button"
+                                onClick={() => setBrandForm({ ...brandForm, systemLogo: "" })}
+                                className="absolute top-0 right-0 h-4 w-4 bg-red-600 text-white rounded-full text-[8px] flex items-center justify-center font-bold hover:bg-red-700 transition-colors"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="h-14 w-14 border border-dashed border-slate-300 rounded-xl flex items-center justify-center text-slate-400 shrink-0">
+                              <ImageIcon className="h-6 w-6" />
+                            </div>
+                          )}
+                          <label className="flex-1 cursor-pointer">
+                            <span className="inline-flex justify-center items-center w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-250 text-slate-700 font-bold text-[10px] uppercase rounded-lg transition-colors">
+                              <Upload className="h-3.5 w-3.5 mr-1" /> Subir Logotipo
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => setBrandForm((prev) => ({ ...prev, systemLogo: reader.result as string }));
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Favicon / Ícono del Buscador */}
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                          Favicon / Ícono del Buscador (Pestaña Navegador)
+                        </label>
+                        <div className="flex items-center space-x-3 mt-1">
+                          {brandForm.systemFavicon ? (
+                            <div className="relative h-14 w-14 border border-slate-200 rounded-xl bg-slate-50 flex items-center justify-center p-2 overflow-hidden shrink-0">
+                              <img src={brandForm.systemFavicon} alt="Favicon" className="h-full w-full object-contain" />
+                              <button
+                                type="button"
+                                onClick={() => setBrandForm({ ...brandForm, systemFavicon: "" })}
+                                className="absolute top-0 right-0 h-4 w-4 bg-red-600 text-white rounded-full text-[8px] flex items-center justify-center font-bold hover:bg-red-700 transition-colors"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="h-14 w-14 border border-dashed border-slate-300 rounded-xl flex items-center justify-center text-slate-400 shrink-0">
+                              <Sparkles className="h-5 w-5" />
+                            </div>
+                          )}
+                          <label className="flex-1 cursor-pointer">
+                            <span className="inline-flex justify-center items-center w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-250 text-slate-700 font-bold text-[10px] uppercase rounded-lg transition-colors">
+                              <Upload className="h-3.5 w-3.5 mr-1" /> Subir Favicon (PNG/ICO)
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleSystemFaviconUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                        Título de Pantalla de Inicio
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={adminConfigForm.loginTitle}
-                        onChange={(e) => setAdminConfigForm({ ...adminConfigForm, loginTitle: e.target.value })}
-                        className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                          Nombre Comercial del Sistema
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={brandForm.systemName}
+                          onChange={(e) => setBrandForm({ ...brandForm, systemName: e.target.value })}
+                          className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                          Título de Pantalla de Inicio
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={brandForm.loginTitle}
+                          onChange={(e) => setBrandForm({ ...brandForm, loginTitle: e.target.value })}
+                          className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold"
+                        />
+                      </div>
                     </div>
 
                     <div>
@@ -5697,90 +6072,341 @@ export default function Home() {
                         Subtítulo de Pantalla de Inicio
                       </label>
                       <textarea
-                        rows={3}
+                        rows={2}
                         required
-                        value={adminConfigForm.loginSubtitle}
-                        onChange={(e) => setAdminConfigForm({ ...adminConfigForm, loginSubtitle: e.target.value })}
+                        value={brandForm.loginSubtitle}
+                        onChange={(e) => setBrandForm({ ...brandForm, loginSubtitle: e.target.value })}
                         className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700 text-xs focus:outline-none focus:border-blue-600 font-medium leading-relaxed"
                       />
                     </div>
-                  </div>
 
-                  {/* Right Column: Parámetros del Negocio */}
-                  <div className="space-y-4 flex flex-col justify-between">
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                        WhatsApp de Contacto (ej. 593999999999)
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={adminConfigForm.adminWhatsapp}
-                        onChange={(e) => setAdminConfigForm({ ...adminConfigForm, adminWhatsapp: e.target.value })}
-                        className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold"
-                      />
-                    </div>
+                    {/* Metadatos SEO */}
+                    <div className="border-t border-slate-100 pt-4 space-y-4">
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                        🌐 Metadatos SEO para Google y Redes Sociales
+                      </h4>
 
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                        Saldo Inicial de Cortesía (Registros Nuevos)
-                      </label>
-                      <input
-                        type="number"
-                        step="any"
-                        required
-                        value={adminConfigForm.defaultBalance}
-                        onChange={(e) => setAdminConfigForm({ ...adminConfigForm, defaultBalance: e.target.value })}
-                        className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold text-center"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                        Cuentas Bancarias de Recarga (Multilínea)
-                      </label>
-                      <textarea
-                        rows={4}
-                        required
-                        value={adminConfigForm.bankAccounts}
-                        onChange={(e) => setAdminConfigForm({ ...adminConfigForm, bankAccounts: e.target.value })}
-                        className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700 text-xs focus:outline-none focus:border-blue-600 font-mono leading-normal"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                        Cambiar Contraseña de Administración
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showNewAdminPassword ? "text" : "password"}
-                          placeholder="Dejar vacío para no cambiar"
-                          value={adminConfigForm.newAdminPassword}
-                          onChange={(e) => setAdminConfigForm({ ...adminConfigForm, newAdminPassword: e.target.value })}
-                          className="block w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600"
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                          Meta Description (Descripción SEO para buscadores)
+                        </label>
+                        <textarea
+                          rows={2}
+                          placeholder="ej. Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas..."
+                          value={brandForm.metaDescription}
+                          onChange={(e) => setBrandForm({ ...brandForm, metaDescription: e.target.value })}
+                          className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700 text-xs focus:outline-none focus:border-blue-600 font-medium leading-relaxed"
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowNewAdminPassword(!showNewAdminPassword)}
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-650 transition-colors cursor-pointer"
-                        >
-                          {showNewAdminPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                          Meta Keywords (Palabras clave SEO separadas por coma)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="ej. facturacion sri, ecuador, facturas electronicas, comprobantes sri"
+                          value={brandForm.metaKeywords}
+                          onChange={(e) => setBrandForm({ ...brandForm, metaKeywords: e.target.value })}
+                          className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-medium"
+                        />
                       </div>
                     </div>
+
+                    <div className="pt-4 border-t border-slate-100 flex justify-end">
+                      <button
+                        type="submit"
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-sm active:scale-98 cursor-pointer"
+                      >
+                        Guardar Configuración de Marca & SEO
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* CONTENIDO SUB-PESTAÑA 2: PARÁMETROS GLOBALES & CRUD CUENTAS BANCARIAS */}
+              {adminSubTab === "GLOBAL" && (
+                <div className="space-y-6">
+                  {/* Formulario Parámetros Globales & Clave Admin */}
+                  <div className="bg-white border border-slate-200 rounded-2xl shadow-xs p-6">
+                    <h3 className="text-sm font-bold text-slate-800 tracking-tight border-b border-slate-100 pb-4 flex items-center mb-6">
+                      <Settings className="h-4 w-4 mr-2 text-slate-600" /> Parámetros Generales del Sistema
+                    </h3>
+
+                    <form onSubmit={handleSaveGlobalParams} className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            WhatsApp de Contacto / Soporte (ej. 593999999999)
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={globalParamsForm.adminWhatsapp}
+                            onChange={(e) => setGlobalParamsForm({ ...globalParamsForm, adminWhatsapp: e.target.value })}
+                            className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            Saldo Inicial de Cortesía (Registros Nuevos en USD)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            required
+                            value={globalParamsForm.defaultBalance}
+                            onChange={(e) => setGlobalParamsForm({ ...globalParamsForm, defaultBalance: e.target.value })}
+                            className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold text-center"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Cambiar Contraseña Admin */}
+                      <div className="border-t border-slate-100 pt-4 space-y-4">
+                        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                          🔒 Cambiar Contraseña de Administración
+                        </h4>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                              Nueva Contraseña
+                            </label>
+                            <input
+                              type="password"
+                              placeholder="Dejar en blanco para no cambiar"
+                              value={globalParamsForm.adminNewPassword}
+                              onChange={(e) => setGlobalParamsForm({ ...globalParamsForm, adminNewPassword: e.target.value })}
+                              className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-mono"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                              Confirmar Nueva Contraseña
+                            </label>
+                            <input
+                              type="password"
+                              placeholder="Repita la nueva contraseña"
+                              value={globalParamsForm.adminConfirmNewPassword}
+                              onChange={(e) => setGlobalParamsForm({ ...globalParamsForm, adminConfirmNewPassword: e.target.value })}
+                              className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-mono"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-slate-100 flex justify-end">
+                        <button
+                          type="submit"
+                          className="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-sm active:scale-98 cursor-pointer"
+                        >
+                          Guardar Parámetros y Clave
+                        </button>
+                      </div>
+                    </form>
                   </div>
 
-                  <div className="md:col-span-2 pt-4 border-t border-slate-100 flex justify-end">
-                    <button
-                      type="submit"
-                      className="w-full md:w-auto bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-6 rounded-lg text-xs uppercase tracking-wider transition-colors active:scale-98"
-                    >
-                      Guardar Configuración
-                    </button>
+                  {/* CRUD DE CUENTAS BANCARIAS CON CÓDIGO QR */}
+                  <div className="bg-white border border-slate-200 rounded-2xl shadow-xs p-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4 mb-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800 tracking-tight flex items-center">
+                          <Building className="h-4.5 w-4.5 mr-2 text-blue-600" /> Cuentas Bancarias y Códigos QR de Pago
+                        </h3>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          Administra las cuentas bancarias donde tus usuarios realizarán sus transferencias y escaneos de QR.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBankForm({
+                            id: "",
+                            banco: "",
+                            tipoCuenta: "Ahorros",
+                            numeroCuenta: "",
+                            titular: "",
+                            identificacionTitular: "",
+                            qrCode: "",
+                            activo: true,
+                          });
+                          setShowBankModal(true);
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-2 px-4 rounded-xl shadow-sm transition-colors flex items-center justify-center cursor-pointer"
+                      >
+                        <Plus className="h-4 w-4 mr-1.5" /> Agregar Cuenta Bancaria
+                      </button>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs font-sans">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          <tr>
+                            <th className="px-4 py-3">Código QR</th>
+                            <th className="px-4 py-3">Banco / Institución</th>
+                            <th className="px-4 py-3">Tipo Cuenta</th>
+                            <th className="px-4 py-3">Número Cuenta</th>
+                            <th className="px-4 py-3">Titular / Beneficiario</th>
+                            <th className="px-4 py-3">Cédula / RUC</th>
+                            <th className="px-4 py-3 text-center">Estado</th>
+                            <th className="px-4 py-3 text-right">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {bankAccountsList.map((acc) => (
+                            <tr key={acc.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-4 py-3">
+                                {acc.qrCode ? (
+                                  <img src={acc.qrCode} alt="QR" className="h-10 w-10 object-contain rounded-lg border border-slate-200 bg-white p-0.5 cursor-pointer hover:scale-110 transition-transform" />
+                                ) : (
+                                  <span className="text-[10px] text-slate-400 italic">Sin QR</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 font-bold text-slate-800 uppercase">{acc.banco}</td>
+                              <td className="px-4 py-3 text-slate-500 font-bold text-[10px] uppercase">{acc.tipoCuenta}</td>
+                              <td className="px-4 py-3 font-mono font-bold text-slate-800">{acc.numeroCuenta}</td>
+                              <td className="px-4 py-3 text-slate-700 font-medium uppercase">{acc.titular}</td>
+                              <td className="px-4 py-3 text-slate-400 font-mono text-[10px]">{acc.identificacionTitular || "N/A"}</td>
+                              <td className="px-4 py-3 text-center">
+                                <span className={`text-[8px] font-black uppercase rounded-full px-2 py-0.5 border ${
+                                  acc.activo ? "bg-green-50 border-green-200 text-green-700" : "bg-slate-100 border-slate-200 text-slate-500"
+                                }`}>
+                                  {acc.activo ? "Activa" : "Inactiva"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-right space-x-3 whitespace-nowrap">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setBankForm({
+                                      id: String(acc.id),
+                                      banco: acc.banco,
+                                      tipoCuenta: acc.tipoCuenta,
+                                      numeroCuenta: acc.numeroCuenta,
+                                      titular: acc.titular,
+                                      identificacionTitular: acc.identificacionTitular || "",
+                                      qrCode: acc.qrCode || "",
+                                      activo: acc.activo,
+                                    });
+                                    setShowBankModal(true);
+                                  }}
+                                  className="text-blue-600 hover:underline font-semibold cursor-pointer"
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteBankAccount(acc.id)}
+                                  className="text-red-500 hover:underline font-semibold cursor-pointer"
+                                >
+                                  Eliminar
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                          {bankAccountsList.length === 0 && (
+                            <tr>
+                              <td colSpan={8} className="px-4 py-8 text-center text-slate-400 text-xs">
+                                Ninguna cuenta bancaria registrada aún. Haz clic en "Agregar Cuenta Bancaria".
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </form>
-              </div>
+                </div>
+              )}
+
+              {/* CONTENIDO SUB-PESTAÑA 3: PLANES Y TARIFAS SAAS */}
+              {adminSubTab === "PLANS" && (
+                <div className="bg-white border border-slate-200 rounded-2xl shadow-xs p-6">
+                  <h3 className="text-sm font-bold text-slate-800 tracking-tight border-b border-slate-100 pb-4 flex items-center mb-6">
+                    <CreditCard className="h-4 w-4 mr-2 text-violet-600" /> Configuración de Tarifas y Modalidades Comerciales SaaS
+                  </h3>
+
+                  <form onSubmit={handleSavePlansTariff} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      
+                      {/* Modalidad 1: Pago por Factura */}
+                      <div className="border border-emerald-100 bg-emerald-50/40 p-5 rounded-2xl space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-black text-emerald-800 uppercase tracking-wider flex items-center">
+                            <Receipt className="h-4 w-4 mr-1.5 text-emerald-600" /> Modalidad 1: Pago Por Uso (Billetera)
+                          </h4>
+                          <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-2 py-0.5 rounded-full">Recargable</span>
+                        </div>
+                        <p className="text-[10px] text-emerald-700 leading-normal">
+                          Configura la tarifa individual que se descontará de la billetera del cliente por cada factura electrónica autorizada.
+                        </p>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            Precio en USD por Factura Emitida ($)
+                          </label>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs font-bold">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0.01"
+                              required
+                              value={plansTariffForm.pricePerInvoice}
+                              onChange={(e) => setPlansTariffForm({ ...plansTariffForm, pricePerInvoice: e.target.value })}
+                              className="block w-full pl-8 pr-3 py-2 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-emerald-600 font-black text-base"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Modalidad 2: Plan Mensual Ilimitado */}
+                      <div className="border border-violet-100 bg-violet-50/40 p-5 rounded-2xl space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-black text-violet-800 uppercase tracking-wider flex items-center">
+                            <Sparkles className="h-4 w-4 mr-1.5 text-violet-600" /> Modalidad 2: Suscripción Mensual
+                          </h4>
+                          <span className="bg-violet-100 text-violet-800 text-[9px] font-bold px-2 py-0.5 rounded-full">30 Días Ilimitados</span>
+                        </div>
+                        <p className="text-[10px] text-violet-700 leading-normal">
+                          Configura el costo de la tarifa plana mensual por 30 días de emisión ilimitada de facturas.
+                        </p>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                            Costo de Renovación Mensual Fijo ($ USD)
+                          </label>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs font-bold">$</span>
+                            <input
+                              type="number"
+                              step="0.50"
+                              min="1"
+                              required
+                              value={plansTariffForm.monthlyPlanFee}
+                              onChange={(e) => setPlansTariffForm({ ...plansTariffForm, monthlyPlanFee: e.target.value })}
+                              className="block w-full pl-8 pr-3 py-2 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-violet-600 font-black text-base"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-100 flex justify-end">
+                      <button
+                        type="submit"
+                        className="bg-violet-600 hover:bg-violet-700 text-white font-extrabold py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-sm active:scale-98 cursor-pointer"
+                      >
+                        Guardar Configuración de Tarifas y Planes
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
             </div>
           )}
 
@@ -7558,35 +8184,6 @@ export default function Home() {
                       </a>
                     </div>
                   </form>
-
-                  {/* Simulador rápido de pruebas (solo para desarrollo/demos) */}
-                  <div className="border-t border-dashed border-slate-200 pt-4 bg-violet-50/50 border border-violet-100 p-4 rounded-xl space-y-2">
-                    <h5 className="text-[10px] font-black text-violet-700 uppercase tracking-widest flex items-center">
-                      <Sparkles className="h-3.5 w-3.5 mr-1 text-violet-600 animate-pulse" /> Simulador Inmediato (Entorno de Pruebas)
-                    </h5>
-                    <p className="text-[9px] text-violet-500 leading-normal">
-                      Como te encuentras en un entorno de pruebas, puedes simular la aprobación instantánea de saldo o mensualidad con un clic:
-                    </p>
-                    <div className="flex gap-2.5 pt-1">
-                      {selectedRequestType === "TOPUP" ? (
-                        <button
-                          type="button"
-                          onClick={handleSimulateTopup}
-                          className="flex-1 bg-violet-600 hover:bg-violet-750 text-white font-bold py-1.5 px-3 rounded-lg text-[9px] uppercase tracking-wider transition-colors shadow-3xs"
-                        >
-                          Simular Carga de ${parseFloat(topupAmount || "5").toFixed(2)}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={handleSimulateRenew}
-                          className="flex-1 bg-violet-600 hover:bg-violet-750 text-white font-bold py-1.5 px-3 rounded-lg text-[9px] uppercase tracking-wider transition-colors shadow-3xs"
-                        >
-                          Simular Renovación (+30 días)
-                        </button>
-                      )}
-                    </div>
-                  </div>
                 </div>
 
               </div>
@@ -7666,6 +8263,486 @@ export default function Home() {
               </button>
             </div>
             
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ANULACIÓN Y EMISIÓN DE NOTAS DE CRÉDITO */}
+      {showCancelModal && cancelModalInvoice && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in font-sans">
+          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden border border-slate-100">
+            
+            {/* Header del Modal */}
+            <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-extrabold flex items-center tracking-tight">
+                  <AlertTriangle className="h-4 w-4 mr-2 text-rose-400" /> Anulación / Nota de Crédito de Factura
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5 font-mono">
+                  Secuencial: {(cancelModalInvoice as any).issuer?.establecimiento || issuer?.establecimiento || "001"}-{(cancelModalInvoice as any).issuer?.puntoEmision || issuer?.puntoEmision || "001"}-{cancelModalInvoice.secuencial} | Total: ${cancelModalInvoice.total.toFixed(2)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(false)}
+                className="text-slate-400 hover:text-white transition-colors text-lg font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Pestañas de Modalidades */}
+            <div className="flex border-b border-slate-200 bg-slate-50/50 p-1.5 gap-1 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setCancelTab("SRI")}
+                className={`flex-1 py-2 px-3 rounded-xl transition-all ${
+                  cancelTab === "SRI"
+                    ? "bg-white text-blue-700 shadow-2xs border border-slate-200"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                1. Anular en Portal SRI (Copy & Paste)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCancelTab("NC")}
+                className={`flex-1 py-2 px-3 rounded-xl transition-all ${
+                  cancelTab === "NC"
+                    ? "bg-white text-blue-700 shadow-2xs border border-slate-200"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                2. Emitir Nota de Crédito (SRI 04)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCancelTab("SYSTEM")}
+                className={`flex-1 py-2 px-3 rounded-xl transition-all ${
+                  cancelTab === "SYSTEM"
+                    ? "bg-white text-blue-700 shadow-2xs border border-slate-200"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                3. Solo en Sistema (Interno)
+              </button>
+            </div>
+
+            {/* Alerta flotante de feedback al copiar */}
+            {copyFeedback && (
+              <div className="bg-emerald-500 text-white text-xs font-bold px-4 py-2 text-center transition-all animate-fade-in">
+                {copyFeedback}
+              </div>
+            )}
+
+            {/* CUERPO DEL MODAL SEGÚN LA PESTAÑA */}
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              
+              {/* --- PESTAÑA 1: ANULAR EN PORTAL SRI (ASISTENTE COPY & PASTE COMPLETO) --- */}
+              {cancelTab === "SRI" && (
+                <div className="space-y-4">
+                  <div className="p-3.5 bg-blue-50/70 border border-blue-100 rounded-xl text-xs text-blue-900 space-y-1">
+                    <strong className="font-extrabold flex items-center">
+                      <FileText className="h-4 w-4 mr-1 text-blue-600" /> Solicitud de Anulación en el Portal Oficial del SRI:
+                    </strong>
+                    <p className="text-slate-600 text-[11px] leading-relaxed">
+                      Haz clic en los botones <strong>"📋 Copiar"</strong> de cada campo para pegar exactamente la información requerida en la página oficial de anulación del SRI.
+                    </p>
+                  </div>
+
+                  {/* TABLA DE CAMPOS PARA COPIAR Y PEGAR */}
+                  <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 bg-white shadow-2xs text-xs">
+                    
+                    {/* Campo 1: Tipo de Comprobante */}
+                    <div className="p-3 flex items-center justify-between hover:bg-slate-50/50">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">1. Tipo de comprobante</span>
+                        <span className="font-bold text-slate-800">Factura</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyText("Factura", "Tipo de comprobante")}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center cursor-pointer"
+                      >
+                        📋 Copiar
+                      </button>
+                    </div>
+
+                    {/* Campo 2: Fecha Autorización */}
+                    <div className="p-3 flex items-center justify-between hover:bg-slate-50/50">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">2. Fecha autorización</span>
+                        <span className="font-bold text-slate-800 font-mono">
+                          {(() => {
+                            const d = new Date(cancelModalInvoice.fechaEmision);
+                            return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+                          })()}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const d = new Date(cancelModalInvoice.fechaEmision);
+                          const fechaStr = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+                          handleCopyText(fechaStr, "Fecha autorización");
+                        }}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center cursor-pointer"
+                      >
+                        📋 Copiar
+                      </button>
+                    </div>
+
+                    {/* Campo 3: Clave acceso */}
+                    <div className="p-3 flex items-center justify-between hover:bg-slate-50/50">
+                      <div className="pr-4">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">3. Clave acceso (49 dígitos)</span>
+                        <span className="font-bold text-slate-700 font-mono text-[11px] break-all">{cancelModalInvoice.claveAcceso}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyText(cancelModalInvoice.claveAcceso, "Clave de acceso")}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center shrink-0 cursor-pointer"
+                      >
+                        📋 Copiar
+                      </button>
+                    </div>
+
+                    {/* Campo 4: No. Autorización */}
+                    <div className="p-3 flex items-center justify-between hover:bg-slate-50/50">
+                      <div className="pr-4">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">4. No. Autorización</span>
+                        <span className="font-bold text-slate-700 font-mono text-[11px] break-all">{cancelModalInvoice.claveAcceso}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyText(cancelModalInvoice.claveAcceso, "No. Autorización")}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center shrink-0 cursor-pointer"
+                      >
+                        📋 Copiar
+                      </button>
+                    </div>
+
+                    {/* Campo 5: Identificación receptor */}
+                    <div className="p-3 flex items-center justify-between hover:bg-slate-50/50">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">5. Identificación receptor</span>
+                        <span className="font-bold text-slate-800 font-mono">{cancelModalInvoice.client?.identificacion}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyText(cancelModalInvoice.client?.identificacion, "Identificación receptor")}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center cursor-pointer"
+                      >
+                        📋 Copiar
+                      </button>
+                    </div>
+
+                    {/* Campo 6: Correo electrónico receptor */}
+                    <div className="p-3 flex items-center justify-between hover:bg-slate-50/50">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">6. Correo electrónico receptor</span>
+                        <span className="font-bold text-slate-800">{cancelModalInvoice.client?.mail}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyText(cancelModalInvoice.client?.mail, "Correo del receptor")}
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center cursor-pointer"
+                      >
+                        📋 Copiar
+                      </button>
+                    </div>
+
+                  </div>
+
+                  {/* ACCIONES DE PORTAL Y CONFIRMACIÓN */}
+                  <div className="pt-2 space-y-2">
+                    <a
+                      href="https://srienlinea.sri.gob.ec/sri-en-linea/SriComprobantesElectronicosWeb/AnulacionComprobantes/SolicitudAnulacionComprobantes/consultarComprobante.jsf"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-4 rounded-xl text-xs transition-all shadow-md shadow-blue-600/10"
+                    >
+                      🌐 Abrir Portal Oficial de Anulaciones del SRI ➔
+                    </a>
+
+                    <button
+                      type="button"
+                      disabled={cancelLoading}
+                      onClick={() => handleExecuteCancel("cancel_sri")}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl text-xs transition-all shadow-md shadow-emerald-600/10 cursor-pointer disabled:opacity-50"
+                    >
+                      ✓ Confirmar Anulación Registrada en el SRI
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* --- PESTAÑA 2: EMITIR NOTA DE CRÉDITO ELECTRÓNICA (SRI 04) --- */}
+              {cancelTab === "NC" && (
+                <div className="space-y-4">
+                  <div className="p-3.5 bg-purple-50 border border-purple-100 rounded-xl text-xs text-purple-900 space-y-1">
+                    <strong className="font-extrabold flex items-center">
+                      <FileText className="h-4 w-4 mr-1 text-purple-600" /> Emisión Oficial de Nota de Crédito (Tipo 04):
+                    </strong>
+                    <p className="text-slate-600 text-[11px] leading-relaxed">
+                      Se generará y firmará digitalmente el comprobante de Nota de Crédito modificatorio ante los Web Services SOAP del SRI para anular o ajustar esta factura.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">
+                        Factura de Origen a Modificar
+                      </label>
+                      <input
+                        type="text"
+                        disabled
+                        value={`Factura Nº ${(cancelModalInvoice as any).issuer?.establecimiento || issuer?.establecimiento || "001"}-${(cancelModalInvoice as any).issuer?.puntoEmision || issuer?.puntoEmision || "001"}-${cancelModalInvoice.secuencial}`}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-100 font-bold text-slate-700"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">
+                        Cliente / Razón Social
+                      </label>
+                      <input
+                        type="text"
+                        disabled
+                        value={`${cancelModalInvoice.client?.nombres} (${cancelModalInvoice.client?.identificacion})`}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-100 font-bold text-slate-700 uppercase"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">
+                        Motivo de la Nota de Crédito *
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder="Ejemplo: Devolución total de mercadería / Descuento concedido / Error en factura..."
+                        value={cancelMotivo}
+                        onChange={(e) => setCancelMotivo(e.target.value)}
+                        className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:border-purple-600 text-xs text-slate-800"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={cancelLoading}
+                      onClick={() => handleExecuteCancel("issue_credit_note")}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-xs transition-all shadow-md shadow-purple-600/10 cursor-pointer disabled:opacity-50"
+                    >
+                      {cancelLoading ? "Emitiendo Nota de Crédito en el SRI..." : "⚡ Firmar y Transmitir Nota de Crédito al SRI"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* --- PESTAÑA 3: ANULAR SOLO EN EL SISTEMA (LOCAL) --- */}
+              {cancelTab === "SYSTEM" && (
+                <div className="space-y-4">
+                  <div className="p-3.5 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-900 space-y-1">
+                    <strong className="font-extrabold flex items-center">
+                      ⚠️ Anulación Interna Únicamente:
+                    </strong>
+                    <p className="text-slate-600 text-[11px] leading-relaxed">
+                      Esta opción cambiará el estado de la factura a <strong>ANULADA_SISTEMA</strong> en la base de datos local de la aplicación sin transmitir ninguna solicitud al SRI.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">
+                        Motivo de Anulación Interna *
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder="Ingrese el motivo por el cual invalida este registro en el sistema..."
+                        value={cancelMotivo}
+                        onChange={(e) => setCancelMotivo(e.target.value)}
+                        className="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:border-amber-600 text-xs text-slate-800"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={cancelLoading}
+                      onClick={() => handleExecuteCancel("cancel_system")}
+                      className="w-full bg-rose-600 hover:bg-rose-700 text-white font-extrabold py-3 px-4 rounded-xl text-xs transition-all shadow-md shadow-rose-600/10 cursor-pointer disabled:opacity-50"
+                    >
+                      🚫 Confirmar Anulación Solo en Sistema
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PARA AGREGAR / EDITAR CUENTA BANCARIA CON QR */}
+      {showBankModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in font-sans">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100">
+            
+            <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+              <h3 className="text-sm font-extrabold flex items-center tracking-tight">
+                <Building className="h-4 w-4 mr-2 text-emerald-400" />
+                {bankForm.id ? "Editar Cuenta Bancaria" : "Agregar Nueva Cuenta Bancaria"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowBankModal(false)}
+                className="text-slate-400 hover:text-white transition-colors text-lg font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBankForm} className="p-6 space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Banco / Institución *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ej. Banco Pichincha"
+                    value={bankForm.banco}
+                    onChange={(e) => setBankForm({ ...bankForm, banco: e.target.value })}
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-600 font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Tipo de Cuenta *
+                  </label>
+                  <select
+                    value={bankForm.tipoCuenta}
+                    onChange={(e) => setBankForm({ ...bankForm, tipoCuenta: e.target.value })}
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-600 font-bold"
+                  >
+                    <option value="Ahorros">Cuenta de Ahorros</option>
+                    <option value="Corriente">Cuenta Corriente</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Número de Cuenta *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ej. 2200123456"
+                    value={bankForm.numeroCuenta}
+                    onChange={(e) => setBankForm({ ...bankForm, numeroCuenta: e.target.value })}
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-600 font-mono font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Cédula / RUC del Titular
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="ej. 1790000000001"
+                    value={bankForm.identificacionTitular}
+                    onChange={(e) => setBankForm({ ...bankForm, identificacionTitular: e.target.value })}
+                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-600 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Nombre del Titular / Beneficiario *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="ej. FácilSRI SaaS Cía. Ltda."
+                  value={bankForm.titular}
+                  onChange={(e) => setBankForm({ ...bankForm, titular: e.target.value })}
+                  className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-600 font-bold uppercase"
+                />
+              </div>
+
+              {/* Imagen del Código QR de Pago */}
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Código QR de Pago (Deuna, Pichincha QR, etc.)
+                </label>
+                <div className="flex items-center space-x-3 mt-1">
+                  {bankForm.qrCode ? (
+                    <div className="relative h-16 w-16 border border-slate-200 rounded-xl bg-slate-50 flex items-center justify-center p-1 overflow-hidden shrink-0">
+                      <img src={bankForm.qrCode} alt="QR" className="h-full w-full object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => setBankForm({ ...bankForm, qrCode: "" })}
+                        className="absolute top-0 right-0 h-4 w-4 bg-red-600 text-white rounded-full text-[8px] flex items-center justify-center font-bold hover:bg-red-700 transition-colors"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="h-16 w-16 border border-dashed border-slate-300 rounded-xl flex items-center justify-center text-slate-400 shrink-0">
+                      <Sparkles className="h-6 w-6" />
+                    </div>
+                  )}
+                  <label className="flex-1 cursor-pointer">
+                    <span className="inline-flex justify-center items-center w-full px-3 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-250 text-slate-700 font-bold text-[10px] uppercase rounded-xl transition-colors">
+                      <Upload className="h-4 w-4 mr-1.5" /> Subir Imagen QR de Pago
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBankQrUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="bankActivo"
+                  checked={bankForm.activo}
+                  onChange={(e) => setBankForm({ ...bankForm, activo: e.target.checked })}
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                />
+                <label htmlFor="bankActivo" className="text-xs font-bold text-slate-700 cursor-pointer">
+                  Cuenta activa (visible para transferencias de clientes)
+                </label>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowBankModal(false)}
+                  className="px-4 py-2 border border-slate-250 bg-white hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider transition-colors shadow-sm"
+                >
+                  Guardar Cuenta Bancaria
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
