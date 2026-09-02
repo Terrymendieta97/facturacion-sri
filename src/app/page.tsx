@@ -130,8 +130,13 @@ export default function Home() {
     defaultBalance: number;
     systemName?: string;
     systemLogo?: string | null;
+    systemFavicon?: string | null;
     loginTitle?: string;
     loginSubtitle?: string;
+    metaDescription?: string | null;
+    metaKeywords?: string | null;
+    pricePerInvoice?: number;
+    monthlyPlanFee?: number;
   } | null>(null);
 
   // --- ESTADOS DE CARGA Y DATOS ---
@@ -333,6 +338,7 @@ export default function Home() {
     qrCode: "",
     activo: true,
   });
+  const [previewQrModal, setPreviewQrModal] = useState<{ isOpen: boolean; banco: string; qrCode: string; titular: string; numeroCuenta: string; tipoCuenta: string } | null>(null);
 
   const fetchBankAccounts = async (all = true) => {
     try {
@@ -839,7 +845,8 @@ export default function Home() {
       return;
     }
 
-    const amountVal = parseFloat(selectedRequestType === "TOPUP" ? topupAmount : "15.00");
+    const fixedMonthlyFee = systemConfig?.monthlyPlanFee ? String(systemConfig.monthlyPlanFee) : "15.00";
+    const amountVal = parseFloat(selectedRequestType === "TOPUP" ? topupAmount : fixedMonthlyFee);
     if (selectedRequestType === "TOPUP" && (isNaN(amountVal) || amountVal < 5.0)) {
       alert("El monto mínimo de recarga es de $5.00.");
       return;
@@ -2935,9 +2942,64 @@ export default function Home() {
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center">
               <CreditCard className="h-4 w-4 mr-1 text-blue-500" /> Cuentas para Transferencia / Depósito Bancario
             </h3>
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 font-mono text-xs text-slate-600 whitespace-pre-wrap leading-normal">
-              {systemConfig?.bankAccounts || "Cargando cuentas..."}
-            </div>
+            {bankAccountsList && bankAccountsList.filter((b) => b.activo !== false).length > 0 ? (
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                {bankAccountsList
+                  .filter((b) => b.activo !== false)
+                  .map((acc) => (
+                    <div
+                      key={acc.id}
+                      className="p-3 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-2xs"
+                    >
+                      <div className="space-y-0.5 text-xs">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-extrabold text-slate-800">{acc.banco}</span>
+                          <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
+                            {acc.tipoCuenta}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2 font-mono text-slate-800">
+                          <span className="font-black text-slate-900">{acc.numeroCuenta}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyText(acc.numeroCuenta, `Número de cuenta ${acc.banco}`)}
+                            className="text-[10px] text-blue-600 hover:text-blue-800 font-sans font-bold hover:underline ml-1 cursor-pointer"
+                          >
+                            📋 Copiar
+                          </button>
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          <span>Titular:</span> {acc.titular} {acc.identificacionTitular && `(${acc.identificacionTitular})`}
+                        </div>
+                      </div>
+
+                      {acc.qrCode && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPreviewQrModal({
+                              isOpen: true,
+                              banco: acc.banco,
+                              qrCode: acc.qrCode,
+                              titular: acc.titular,
+                              numeroCuenta: acc.numeroCuenta,
+                              tipoCuenta: acc.tipoCuenta,
+                            })
+                          }
+                          className="shrink-0 p-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded-xl text-emerald-700 text-[10px] font-bold flex flex-col items-center justify-center transition-colors cursor-pointer"
+                        >
+                          <QrCode className="h-5 w-5 text-emerald-600 mb-0.5" />
+                          <span>Ver QR</span>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 font-mono text-xs text-slate-600 whitespace-pre-wrap leading-normal">
+                {systemConfig?.bankAccounts || "Cargando cuentas..."}
+              </div>
+            )}
           </div>
 
           <div className="mt-8 space-y-3">
@@ -3181,6 +3243,7 @@ export default function Home() {
               onClick={() => {
                 setShowMembershipModal(true);
                 fetchMembershipRequests();
+                fetchBankAccounts(true);
               }}
               className="bg-white border border-[#e8ebf7] hover:border-violet-300 hover:shadow-xs rounded-3xl p-4 mb-3 shadow-2xs relative overflow-hidden cursor-pointer transition-all duration-200 group active:scale-[0.98] select-none"
             >
@@ -8088,18 +8151,87 @@ export default function Home() {
                           : "text-slate-400 hover:text-slate-700"
                       }`}
                     >
-                      Renovar Mensualidad ($15)
+                      Renovar Mensualidad ({systemConfig?.monthlyPlanFee ? `$${systemConfig.monthlyPlanFee.toFixed(2)}` : "$15"})
                     </button>
                   </div>
 
-                  {/* Cuentas Bancarias */}
-                  <div className="space-y-2 bg-slate-50 border border-slate-100 rounded-2xl p-4">
-                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center">
-                      <Building className="h-3.5 w-3.5 mr-1 text-slate-400" /> Cuentas para Transferencia / Depósito
-                    </h4>
-                    <div className="bg-white border border-slate-200/60 rounded-xl p-3 font-mono text-[10px] text-slate-600 whitespace-pre-wrap leading-relaxed shadow-3xs">
-                      {systemConfig?.bankAccounts || "Cargando cuentas..."}
+                  {/* Cuentas Bancarias Dinámicas */}
+                  <div className="space-y-2 bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center">
+                        <Building className="h-3.5 w-3.5 mr-1 text-slate-400" /> Cuentas para Transferencia / Depósito
+                      </h4>
+                      <span className="text-[9px] text-slate-400 font-semibold">Toca una cuenta para seleccionarla</span>
                     </div>
+
+                    {bankAccountsList && bankAccountsList.filter((b) => b.activo !== false).length > 0 ? (
+                      <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        {bankAccountsList
+                          .filter((b) => b.activo !== false)
+                          .map((acc) => (
+                            <div
+                              key={acc.id}
+                              onClick={() => setPaymentBank(`${acc.banco} - ${acc.tipoCuenta}`)}
+                              className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between group ${
+                                paymentBank.includes(acc.banco)
+                                  ? "bg-blue-50/90 border-blue-400 ring-1 ring-blue-300 shadow-xs"
+                                  : "bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-xs"
+                              }`}
+                            >
+                              <div className="space-y-0.5 text-xs">
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-extrabold text-slate-800">{acc.banco}</span>
+                                  <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
+                                    {acc.tipoCuenta}
+                                  </span>
+                                </div>
+                                <div className="flex items-center space-x-2 font-mono text-slate-800">
+                                  <span className="font-black text-slate-900">{acc.numeroCuenta}</span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCopyText(acc.numeroCuenta, `Número de cuenta ${acc.banco}`);
+                                    }}
+                                    className="text-[10px] text-blue-600 hover:text-blue-800 font-sans font-bold hover:underline ml-1 cursor-pointer"
+                                  >
+                                    📋 Copiar
+                                  </button>
+                                </div>
+                                <div className="text-[10px] text-slate-500">
+                                  <span>Titular:</span> {acc.titular} {acc.identificacionTitular && `(${acc.identificacionTitular})`}
+                                </div>
+                              </div>
+
+                              {acc.qrCode && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewQrModal({
+                                      isOpen: true,
+                                      banco: acc.banco,
+                                      qrCode: acc.qrCode,
+                                      titular: acc.titular,
+                                      numeroCuenta: acc.numeroCuenta,
+                                      tipoCuenta: acc.tipoCuenta,
+                                    });
+                                  }}
+                                  className="shrink-0 p-2 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded-xl text-emerald-700 text-[10px] font-bold flex flex-col items-center justify-center transition-colors cursor-pointer"
+                                  title="Ver Código QR para escanear"
+                                >
+                                  <QrCode className="h-5 w-5 text-emerald-600 mb-0.5" />
+                                  <span>Ver QR</span>
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    ) : (
+                      <div className="bg-white border border-slate-200/60 rounded-xl p-3 font-mono text-[10px] text-slate-600 whitespace-pre-wrap leading-relaxed shadow-3xs">
+                        {systemConfig?.bankAccounts || "No hay cuentas bancarias configuradas actualmente."}
+                      </div>
+                    )}
                   </div>
 
                   {/* Formulario de registro de pago */}
@@ -8130,7 +8262,7 @@ export default function Home() {
                           Costo de Renovación Fijo
                         </label>
                         <div className="py-2 px-3 border border-slate-100 rounded-lg bg-slate-50/50 text-slate-700 text-xs font-black">
-                          $15.00 USD (30 días de suscripción ilimitada)
+                          {systemConfig?.monthlyPlanFee ? `$${systemConfig.monthlyPlanFee.toFixed(2)}` : "$15.00"} USD (30 días de suscripción ilimitada)
                         </div>
                       </div>
                     )}
@@ -8175,7 +8307,7 @@ export default function Home() {
 
                       {/* Notificar por WhatsApp */}
                       <a
-                        href={`https://wa.me/${systemConfig?.adminWhatsapp || "593999999999"}?text=Hola%20Administrador,%20he%20registrado%20un%20pago%20en%20FácilSRI%20para%20mi%20RUC%20${issuer.ruc}%20(${issuer.nombreEmpresa})%20por%20un%20monto%20de%20$${selectedRequestType === "TOPUP" ? topupAmount : "15.00"}%20para%20${selectedRequestType === "TOPUP" ? "Recarga de Billetera" : "Renovación de Membresía"}.%20Referencia%20del%20depósito:%20${paymentReference || "N/A"}.%20Quedo%20atento%20a%20la%20aprobación.%20Gracias!`}
+                        href={`https://wa.me/${systemConfig?.adminWhatsapp || "593999999999"}?text=Hola%20Administrador,%20he%20registrado%20un%20pago%20en%20FácilSRI%20para%20mi%20RUC%20${issuer.ruc}%20(${issuer.nombreEmpresa})%20por%20un%20monto%20de%20$${selectedRequestType === "TOPUP" ? topupAmount : (systemConfig?.monthlyPlanFee ? systemConfig.monthlyPlanFee.toFixed(2) : "15.00")}%20para%20${selectedRequestType === "TOPUP" ? "Recarga de Billetera" : "Renovación de Membresía"}.%20Referencia%20del%20depósito:%20${paymentReference || "N/A"}.%20Quedo%20atento%20a%20la%20aprobación.%20Gracias!`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-sm active:scale-[0.98]"
@@ -8743,6 +8875,50 @@ export default function Home() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE VISUALIZACIÓN / ESCANEO DE CÓDIGO QR */}
+      {previewQrModal && previewQrModal.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 z-60 animate-fade-in font-sans">
+          <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden border border-slate-100 text-center p-6 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="text-left">
+                <h3 className="text-sm font-extrabold text-slate-800">{previewQrModal.banco}</h3>
+                <p className="text-[10px] text-slate-500 font-bold uppercase">{previewQrModal.tipoCuenta} - {previewQrModal.numeroCuenta}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewQrModal(null)}
+                className="text-slate-400 hover:text-slate-700 text-lg font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-center shadow-inner">
+              <img
+                src={previewQrModal.qrCode}
+                alt={`QR ${previewQrModal.banco}`}
+                className="max-h-64 w-auto object-contain rounded-xl"
+              />
+            </div>
+
+            <div className="text-xs text-slate-600 space-y-1">
+              <p className="font-extrabold text-slate-800 uppercase tracking-tight">{previewQrModal.titular}</p>
+              <p className="text-[11px] text-slate-500">
+                Abre tu app bancaria (Deuna, Pichincha, Guayaquil, etc.) y escanea el código para transferir directamente.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setPreviewQrModal(null)}
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer"
+            >
+              Cerrar QR
+            </button>
           </div>
         </div>
       )}
