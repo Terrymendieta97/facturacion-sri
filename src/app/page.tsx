@@ -40,7 +40,11 @@ import {
   ShieldCheck,
   Tag,
   Receipt,
-  QrCode
+  QrCode,
+  ShieldAlert,
+  ArrowLeft,
+  LogIn,
+  UserPlus
 } from "lucide-react";
 
 // --- INTERFACES ---
@@ -121,6 +125,7 @@ export default function Home() {
   // --- ESTADOS DE SESIÓN Y SAAS ---
   const [activeIssuerId, setActiveIssuerId] = useState<string | null>(null);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [isImpersonating, setIsImpersonating] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
   
   const [systemConfig, setSystemConfig] = useState<{
@@ -562,13 +567,20 @@ export default function Home() {
   useEffect(() => {
     const cachedId = localStorage.getItem("activeIssuerId");
     const cachedAdmin = localStorage.getItem("isAdminLoggedIn") === "true";
+    const cachedImpersonating = sessionStorage.getItem("admin_impersonating") === "true";
     
-    if (cachedId) {
+    if (cachedImpersonating && cachedId) {
+      setIsImpersonating(true);
       setActiveIssuerId(cachedId);
-    }
-    if (cachedAdmin) {
-      setIsAdminLoggedIn(true);
-      setActiveTab("admin_approvals");
+      setIsAdminLoggedIn(false);
+    } else {
+      if (cachedId) {
+        setActiveIssuerId(cachedId);
+      }
+      if (cachedAdmin) {
+        setIsAdminLoggedIn(true);
+        setActiveTab("admin_approvals");
+      }
     }
     setSessionChecked(true);
     
@@ -1046,7 +1058,7 @@ export default function Home() {
     });
 
     if (result.ok && result.data.success) {
-      alert("Empresa registrada con éxito. ¡Bienvenido!");
+      alert("¡Empresa registrada con éxito! Te hemos acreditado $1.00 USD (10 Facturas Gratis) de cortesía. ¡Bienvenido!");
       const targetId = String(result.data.issuer.id);
       localStorage.setItem("activeIssuerId", targetId);
       setActiveIssuerId(targetId);
@@ -1084,6 +1096,8 @@ export default function Home() {
   };
 
   const handleLogout = () => {
+    sessionStorage.removeItem("admin_impersonating");
+    setIsImpersonating(false);
     localStorage.removeItem("activeIssuerId");
     localStorage.removeItem("isAdminLoggedIn");
     localStorage.removeItem("adminPassword");
@@ -1092,6 +1106,29 @@ export default function Home() {
     setIssuer(null);
     setInvoices([]);
     setActiveTab("dashboard");
+  };
+
+  // --- MODO SOPORTE / IMPERSONACIÓN DE EMPRESA ---
+  const handleImpersonateCompany = (comp: Issuer) => {
+    const targetId = String(comp.id);
+    sessionStorage.setItem("admin_impersonating", "true");
+    localStorage.setItem("activeIssuerId", targetId);
+    setActiveIssuerId(targetId);
+    setIsImpersonating(true);
+    setIsAdminLoggedIn(false);
+    setActiveTab("dashboard");
+  };
+
+  const handleExitImpersonation = () => {
+    sessionStorage.removeItem("admin_impersonating");
+    setIsImpersonating(false);
+    localStorage.removeItem("activeIssuerId");
+    setActiveIssuerId(null);
+    setIssuer(null);
+    setIsAdminLoggedIn(true);
+    localStorage.setItem("isAdminLoggedIn", "true");
+    setActiveTab("admin_companies");
+    fetchCompanies();
   };
 
   // --- OPERACIONES DE ADMIN SUPERVISOR SAAS ---
@@ -1259,10 +1296,11 @@ export default function Home() {
   };
 
   // --- DETERMINAR ESTADO DE SUSPENSIÓN ---
+  const activePricePerInvoice = systemConfig?.pricePerInvoice ?? 0.10;
   const isSuspended = issuer && (
     issuer.status === "SUSPENDED" ||
     (issuer.planType === "MONTHLY" && new Date(issuer.subscriptionEnds) < new Date()) ||
-    (issuer.planType === "PAY_PER_INVOICE" && issuer.balance < 0.20)
+    (issuer.planType === "PAY_PER_INVOICE" && issuer.balance < activePricePerInvoice)
   );
 
   const getSuspensionReason = () => {
@@ -1272,10 +1310,11 @@ export default function Home() {
     }
     if (issuer.planType === "MONTHLY") {
       const d = new Date(issuer.subscriptionEnds);
-      return `Su suscripción mensual de $${issuer.monthlyFee.toFixed(2)} expiró el ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}. Por favor realice el pago para re-activarla.`;
+      const monthlyFee = systemConfig?.monthlyPlanFee ?? issuer.monthlyFee ?? 15.0;
+      return `Su suscripción mensual de $${monthlyFee.toFixed(2)} expiró el ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}. Por favor realice el pago para re-activarla.`;
     }
     if (issuer.planType === "PAY_PER_INVOICE") {
-      return `Su billetera recargable tiene saldo insuficiente ($${issuer.balance.toFixed(2)} de saldo actual, mínimo requerido $0.20 por factura). Cargue saldo para seguir facturando.`;
+      return `Su billetera recargable tiene saldo insuficiente ($${issuer.balance.toFixed(2)} de saldo actual, mínimo requerido $${activePricePerInvoice.toFixed(2)} por factura). Cargue saldo para seguir facturando.`;
     }
     return "";
   };
@@ -1460,15 +1499,39 @@ export default function Home() {
     celular: "",
   });
   const [showClientModal, setShowClientModal] = useState(false);
+  const [isPOSClientCreate, setIsPOSClientCreate] = useState(false);
+  const [clientLookupStatus, setClientLookupStatus] = useState<{
+    type: "success" | "not_found" | "error" | null;
+    message: string;
+  }>({ type: null, message: "" });
+
+  const openPOSNewClientModal = () => {
+    setClientForm({
+      id: "",
+      nombres: "",
+      tipoIdentificacion: "05",
+      identificacion: "",
+      direccion: "",
+      mail: "",
+      celular: "",
+    });
+    setClientLookupStatus({ type: null, message: "" });
+    setIsPOSClientCreate(true);
+    setShowClientModal(true);
+  };
 
   const handleLookupClient = async () => {
     const ident = clientForm.identificacion.trim();
     if (!ident) {
-      alert("Por favor ingrese un número de cédula o RUC para consultar.");
+      setClientLookupStatus({
+        type: "error",
+        message: "Por favor ingrese un número de cédula o RUC para consultar.",
+      });
       return;
     }
 
     setLookingUpClient(true);
+    setClientLookupStatus({ type: null, message: "" });
     const result = await safeFetch(`/api/clients/lookup?identificacion=${ident}`);
     setLookingUpClient(false);
 
@@ -1484,7 +1547,10 @@ export default function Home() {
             mail: data.client.mail || "",
             celular: data.client.celular || "",
           });
-          alert("✓ Cliente registrado encontrado. Datos autocompletados desde la base de datos.");
+          setClientLookupStatus({
+            type: "success",
+            message: "✓ Cliente encontrado en la base de datos. Datos cargados automáticamente.",
+          });
         } else if (data.isNew) {
           setClientForm({
             ...clientForm,
@@ -1494,13 +1560,22 @@ export default function Home() {
             mail: "",
             celular: "",
           });
-          alert("Documento válido en Ecuador. Cliente no registrado previamente, por favor ingrese sus datos.");
+          setClientLookupStatus({
+            type: "not_found",
+            message: "⚠️ No se encuentra registrado. Por favor ingrese sus datos.",
+          });
         }
       } else {
-        alert(data.error || "No se pudieron obtener los datos de la cédula/RUC.");
+        setClientLookupStatus({
+          type: "error",
+          message: data.error || "No se pudieron obtener los datos de la cédula/RUC.",
+        });
       }
     } else {
-      alert(result.error || "Error de red al consultar el documento.");
+      setClientLookupStatus({
+        type: "error",
+        message: result.error || "Error de red al consultar el documento.",
+      });
     }
   };
 
@@ -1518,8 +1593,14 @@ export default function Home() {
     });
 
     if (result.ok) {
-      fetchClients();
+      const savedClient = result.data?.client;
+      await fetchClients();
       setShowClientModal(false);
+      setClientLookupStatus({ type: null, message: "" });
+      if (isPOSClientCreate && savedClient) {
+        setInvoiceForm((prev) => ({ ...prev, clientId: String(savedClient.id) }));
+      }
+      setIsPOSClientCreate(false);
       setClientForm({ id: "", nombres: "", tipoIdentificacion: "05", identificacion: "", direccion: "", mail: "", celular: "" });
     } else {
       alert(result.error || "No se pudo guardar el cliente.");
@@ -1536,39 +1617,91 @@ export default function Home() {
     }
   };
 
-  // --- PRODUCTOS ORIGINALES ---
+  // --- PRODUCTOS ORIGINALES Y CATÁLOGO ---
   const [productForm, setProductForm] = useState({
     id: "",
     nombre: "",
     codigoPrincipal: "",
     descripcion: "",
     precio: "",
-    iva: "12.0",
+    precioConIva: "",
+    iva: "15.0",
+    cantidad: "1",
+    descuento: "0",
+    notaExtra1: "",
+    notaExtra2: "",
     imagen: "",
   });
   const [showProductModal, setShowProductModal] = useState(false);
+
+  const generateNextProductCode = () => {
+    const count = (products && products.length > 0) ? products.length + 1 : 1;
+    return `PROD-${String(count).padStart(3, "0")}`;
+  };
+
+  const openNewProductModal = () => {
+    const nextCode = generateNextProductCode();
+    setProductForm({
+      id: "",
+      nombre: "",
+      codigoPrincipal: nextCode,
+      descripcion: "",
+      precio: "",
+      precioConIva: "",
+      iva: "15.0",
+      cantidad: "1",
+      descuento: "0",
+      notaExtra1: "",
+      notaExtra2: "",
+      imagen: "",
+    });
+    setShowProductModal(true);
+  };
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     const f = productForm;
     if (!f.nombre || !f.codigoPrincipal || !f.precio) {
-      alert("Por favor rellene todos los campos.");
+      alert("Por favor rellene todos los campos obligatorios.");
+      return;
+    }
+
+    const priceVal = parseFloat(f.precio);
+    if (isNaN(priceVal) || priceVal < 0) {
+      alert("Por favor ingrese un precio unitario válido.");
       return;
     }
 
     const result = await safeFetch("/api/products", {
       method: "POST",
       body: JSON.stringify({
-        ...f,
-        precio: parseFloat(f.precio),
-        iva: parseFloat(f.iva),
+        id: f.id || undefined,
+        nombre: f.nombre.toUpperCase(),
+        codigoPrincipal: f.codigoPrincipal.toUpperCase(),
+        descripcion: f.descripcion || "",
+        precio: priceVal,
+        iva: parseFloat(f.iva || "15.0"),
+        imagen: f.imagen || null,
       }),
     });
 
     if (result.ok) {
       fetchProducts();
       setShowProductModal(false);
-      setProductForm({ id: "", nombre: "", codigoPrincipal: "", descripcion: "", precio: "", iva: "12.0", imagen: "" });
+      setProductForm({
+        id: "",
+        nombre: "",
+        codigoPrincipal: "",
+        descripcion: "",
+        precio: "",
+        precioConIva: "",
+        iva: "15.0",
+        cantidad: "1",
+        descuento: "0",
+        notaExtra1: "",
+        notaExtra2: "",
+        imagen: "",
+      });
     } else {
       alert(result.error || "Fallo al guardar el producto.");
     }
@@ -2722,6 +2855,16 @@ export default function Home() {
 
           {activeAuthTab === "register" && (
             <form onSubmit={handleRegister} className="space-y-4 max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 flex items-center space-x-3 text-emerald-900 shadow-3xs">
+                <div className="h-8 w-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div className="text-xs">
+                  <span className="font-extrabold block uppercase tracking-tight text-emerald-950">¡Regalo de Bienvenida!</span>
+                  <span className="text-[11px] text-emerald-700 font-medium">Regístrate gratis y recibe <strong>$1.00 USD (10 Facturas Gratis)</strong> para empezar a emitir al SRI.</span>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-1">
                   Número de RUC (13 dígitos)
@@ -2915,7 +3058,7 @@ export default function Home() {
   }
 
   // --- SI LA CUENTA SE ENCUENTRA SUSPENDIDA ---
-  if (isSuspended && !isAdminLoggedIn) {
+  if (isSuspended && !isAdminLoggedIn && !isImpersonating) {
     const ruc = issuer?.ruc || "";
     const name = issuer?.nombreEmpresa || "";
     const waText = encodeURIComponent(`Hola, acabo de realizar la transferencia de pago. Por favor active mi cuenta de facturación FácilSRI para la empresa ${name} con RUC ${ruc}. Adjunto comprobante.`);
@@ -3026,10 +3169,49 @@ export default function Home() {
 
   // --- APLICACIÓN COMPLETA (EMISOR O SUPERVISOR) ---
   return (
-    <div className="min-h-screen bg-[#f8f9fe] flex font-sans text-slate-800 antialiased">
+    <div className="min-h-screen bg-[#f8f9fe] flex flex-col font-sans text-slate-800 antialiased">
       
-      {/* SIDEBAR SIDE BAR */}
-      <aside className={`w-64 bg-[#f3f4fd]/95 md:bg-[#f3f4fd]/40 border-r border-[#e8ebf7] flex flex-col justify-between shrink-0 fixed md:static inset-y-0 left-0 z-40 transform transition-transform duration-300 ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
+      {/* BANNER FLOTANTE DE MODO SOPORTE TÉCNICO ADMIN */}
+      {isImpersonating && issuer && (
+        <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white px-4 py-2.5 shadow-md flex flex-wrap items-center justify-between gap-3 z-50 animate-fade-in border-b border-amber-500/50 select-none sticky top-0">
+          <div className="flex items-center space-x-2.5">
+            <div className="h-7 w-7 bg-white/20 backdrop-blur-xs rounded-lg flex items-center justify-center text-white shrink-0 shadow-xs animate-pulse">
+              <ShieldAlert className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-md">
+                  MODO SOPORTE ACTIVO
+                </span>
+                <span className="text-xs font-bold truncate">
+                  Navegando como: <strong className="underline decoration-amber-300 font-black">{issuer.nombreEmpresa || issuer.razonSocial}</strong>
+                </span>
+                <span className="text-[10px] font-mono text-amber-100 hidden md:inline">
+                  (RUC: {issuer.ruc})
+                </span>
+              </div>
+              <p className="text-[10px] text-amber-100/90 leading-none mt-0.5 hidden sm:block">
+                Tienes control total para emitir facturas, gestionar clientes, productos y revisar su configuración tributaria.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 shrink-0 ml-auto">
+            <button
+              type="button"
+              onClick={handleExitImpersonation}
+              className="inline-flex items-center space-x-1.5 bg-slate-900 hover:bg-slate-950 text-white font-extrabold px-3.5 py-1.5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-sm hover:scale-105 active:scale-95 cursor-pointer"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Salir y Volver al Panel Admin</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* SIDEBAR SIDE BAR */}
+        <aside className={`w-64 bg-[#f3f4fd]/95 md:bg-[#f3f4fd]/40 border-r border-[#e8ebf7] flex flex-col justify-between shrink-0 fixed md:static inset-y-0 left-0 z-40 transform transition-transform duration-300 ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
         <div>
           {/* Logo Header */}
           <div className="h-20 px-6 border-b border-[#e8ebf7]/60 flex items-center justify-between">
@@ -3352,23 +3534,124 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="flex items-center space-x-4 relative">
+        <div className="flex items-center space-x-3 md:space-x-4 relative">
             {!isAdminLoggedIn && issuer && (
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5 bg-white border border-[#e8ebf7] rounded-2xl py-1.5 px-3 shadow-2xs select-none">
-                <div className="flex items-center space-x-1 shrink-0">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Est.:</span>
-                  <span className="text-xs font-black text-slate-800">
-                    {issuer.establecimiento}-{issuer.puntoEmision}
-                  </span>
+              <>
+                {/* WIDGET / BARRITA DE FACTURAS DISPONIBLES (SOLO PARA PAGO POR FACTURA) */}
+                {issuer.planType === "PAY_PER_INVOICE" && (
+                  (() => {
+                    const pricePerInv = systemConfig?.pricePerInvoice ?? 0.10;
+                    const availableInvoices = Math.max(0, Math.floor((issuer.balance || 0) / pricePerInv));
+                    const isLow = availableInvoices <= 2;
+                    const isZero = availableInvoices === 0;
+
+                    return (
+                      <div 
+                        onClick={() => {
+                          setShowMembershipModal(true);
+                          fetchMembershipRequests();
+                          fetchBankAccounts(true);
+                        }}
+                        className={`flex items-center space-x-2.5 sm:space-x-3 px-3 py-1.5 rounded-2xl border transition-all cursor-pointer shadow-2xs group hover:scale-[1.02] select-none ${
+                          isZero
+                            ? "bg-rose-50 border-rose-200 hover:border-rose-300"
+                            : isLow
+                            ? "bg-amber-50 border-amber-200 hover:border-amber-300"
+                            : "bg-emerald-50/90 border-emerald-200 hover:border-emerald-300"
+                        }`}
+                        title="Haz clic para recargar saldo"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <div className={`h-7 w-7 rounded-xl flex items-center justify-center shrink-0 shadow-3xs ${
+                            isZero
+                              ? "bg-rose-500 text-white"
+                              : isLow
+                              ? "bg-amber-500 text-white"
+                              : "bg-emerald-600 text-white"
+                          }`}>
+                            <Sparkles className="h-3.5 w-3.5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center space-x-1.5 leading-none">
+                              <span className={`text-xs font-black tracking-tight ${
+                                isZero ? "text-rose-900" : isLow ? "text-amber-900" : "text-emerald-950"
+                              }`}>
+                                {availableInvoices} {availableInvoices === 1 ? "Factura Disponible" : "Facturas Disponibles"}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-bold hidden sm:inline">
+                                (${(issuer.balance || 0).toFixed(2)})
+                              </span>
+                            </div>
+                            {/* Mini barrita de progreso visual */}
+                            <div className="w-full bg-slate-200/80 h-1.5 rounded-full overflow-hidden mt-1">
+                              <div
+                                className={`h-full transition-all duration-500 rounded-full ${
+                                  isZero
+                                    ? "w-0 bg-rose-500"
+                                    : isLow
+                                    ? "w-1/4 bg-amber-500"
+                                    : availableInvoices < 10
+                                    ? "w-2/3 bg-emerald-500"
+                                    : "w-full bg-emerald-600"
+                                }`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <span className={`hidden lg:inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider ${
+                          isZero
+                            ? "bg-rose-600 text-white"
+                            : "bg-white text-emerald-800 border border-emerald-200 shadow-3xs group-hover:bg-emerald-600 group-hover:text-white"
+                        } transition-colors`}>
+                          + Recargar
+                        </span>
+                      </div>
+                    );
+                  })()
+                )}
+
+                {/* BADGE DEL PLAN MENSUAL SI ESTÁ EN MONTHLY */}
+                {issuer.planType === "MONTHLY" && (
+                  <div 
+                    onClick={() => {
+                      setShowMembershipModal(true);
+                      fetchMembershipRequests();
+                      fetchBankAccounts(true);
+                    }}
+                    className="hidden sm:flex items-center space-x-2 bg-violet-50 border border-violet-200/80 rounded-2xl py-1.5 px-3 shadow-2xs cursor-pointer hover:border-violet-300 transition-colors select-none"
+                    title="Plan Mensual Ilimitado Activo"
+                  >
+                    <CreditCard className="h-4 w-4 text-violet-600" />
+                    <div className="text-[10px] font-bold text-violet-950">
+                      <span className="font-extrabold uppercase tracking-tight">Plan Mensual Ilimitado</span>
+                      <span className="text-violet-500 ml-1.5">
+                        (Vence: {(() => {
+                          const d = new Date(issuer.subscriptionEnds);
+                          return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+                        })()})
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Badge de Establecimiento y Secuencial */}
+                <div className="hidden md:flex items-center gap-1.5 bg-white border border-[#e8ebf7] rounded-2xl py-1.5 px-3 shadow-2xs select-none">
+                  <div className="flex items-center space-x-1 shrink-0">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Est.:</span>
+                    <span className="text-xs font-black text-slate-800">
+                      {issuer.establecimiento}-{issuer.puntoEmision}
+                    </span>
+                  </div>
+                  <span className="text-slate-300 text-[10px]">|</span>
+                  <div className="flex items-center space-x-1 shrink-0">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sec.:</span>
+                    <span className="text-xs font-mono font-black text-violet-750">
+                      {issuer.startSecuencial}
+                    </span>
+                  </div>
                 </div>
-                <span className="hidden sm:inline text-slate-300 text-[10px]">|</span>
-                <div className="flex items-center space-x-1 shrink-0">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Secuencial:</span>
-                  <span className="text-xs font-mono font-black text-violet-750">
-                    {issuer.startSecuencial}
-                  </span>
-                </div>
-              </div>
+              </>
             )}
             
             {/* Header Widgets Mock */}
@@ -3978,13 +4261,24 @@ export default function Home() {
 
                   {/* Client selector (optional for POS) */}
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                      Cliente Asignado
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                        Cliente Asignado
+                      </label>
+                      <button
+                        type="button"
+                        onClick={openPOSNewClientModal}
+                        className="text-[10px] text-blue-600 hover:text-blue-800 font-extrabold flex items-center space-x-1 cursor-pointer transition-colors"
+                        title="Crear y asignar un nuevo cliente"
+                      >
+                        <UserPlus className="h-3 w-3 mr-0.5" />
+                        <span>+ Nuevo Cliente</span>
+                      </button>
+                    </div>
                     <select
                       value={invoiceForm.clientId}
                       onChange={(e) => setInvoiceForm({ ...invoiceForm, clientId: e.target.value })}
-                      className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700 text-xs focus:outline-none focus:border-blue-600"
+                      className="block w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-800 text-xs font-semibold focus:outline-none focus:border-blue-600 bg-white shadow-2xs cursor-pointer"
                     >
                       <option value="">-- Consumidor Final Express --</option>
                       {clients.map((c) => (
@@ -5190,9 +5484,11 @@ export default function Home() {
                 <button
                   onClick={() => {
                     setClientForm({ id: "", nombres: "", tipoIdentificacion: "05", identificacion: "", direccion: "", mail: "", celular: "" });
+                    setClientLookupStatus({ type: null, message: "" });
+                    setIsPOSClientCreate(false);
                     setShowClientModal(true);
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center w-full sm:w-auto justify-center"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs transition-colors flex items-center w-full sm:w-auto justify-center cursor-pointer"
                 >
                   <Plus className="h-4 w-4 mr-1" /> Agregar Cliente
                 </button>
@@ -5289,11 +5585,8 @@ export default function Home() {
                   />
                 </div>
                 <button
-                  onClick={() => {
-                    setProductForm({ id: "", nombre: "", codigoPrincipal: "", descripcion: "", precio: "", iva: "12.0", imagen: "" });
-                    setShowProductModal(true);
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center w-full sm:w-auto justify-center"
+                  onClick={openNewProductModal}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs transition-colors flex items-center w-full sm:w-auto justify-center cursor-pointer"
                 >
                   <Plus className="h-4 w-4 mr-1" /> Agregar Producto
                 </button>
@@ -5339,13 +5632,20 @@ export default function Home() {
                             <td className="px-6 py-4 text-right space-x-3 whitespace-nowrap">
                               <button
                                 onClick={() => {
+                                  const ivaRate = p.iva !== undefined ? p.iva : 15.0;
+                                  const calculatedWithIva = (p.precio * (1 + ivaRate / 100)).toFixed(2);
                                   setProductForm({
                                     id: String(p.id),
                                     nombre: p.nombre,
                                     codigoPrincipal: p.codigoPrincipal,
                                     descripcion: p.descripcion || "",
                                     precio: String(p.precio),
-                                    iva: String(p.iva),
+                                    precioConIva: calculatedWithIva,
+                                    iva: String(ivaRate),
+                                    cantidad: "1",
+                                    descuento: "0",
+                                    notaExtra1: "",
+                                    notaExtra2: "",
                                     imagen: p.imagen || "",
                                   });
                                   setShowProductModal(true);
@@ -5897,7 +6197,7 @@ export default function Home() {
                           <th className="px-4 py-2">Plan</th>
                           <th className="px-4 py-2">Saldo / Vence</th>
                           <th className="px-4 py-2 text-center">Estado</th>
-                          <th className="px-4 py-2 text-right">Membresía</th>
+                          <th className="px-4 py-2 text-right">Acciones</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -5927,7 +6227,7 @@ export default function Home() {
                                     })()}
                                   </span>
                                 ) : (
-                                  <span className={`font-black ${c.balance < 0.20 ? "text-red-500" : "text-slate-800"}`}>
+                                  <span className={`font-black ${c.balance < (systemConfig?.pricePerInvoice ?? 0.10) ? "text-red-500" : "text-slate-800"}`}>
                                     ${c.balance.toFixed(2)}
                                   </span>
                                 )}
@@ -5940,15 +6240,28 @@ export default function Home() {
                                 </span>
                               </td>
                               <td className="px-4 py-3 text-right">
-                                <button
-                                  onClick={() => {
-                                    setEditingCompany(c);
-                                    setBalanceChangeVal("0");
-                                  }}
-                                  className="text-xs text-blue-600 hover:underline font-semibold"
-                                >
-                                  Gestionar
-                                </button>
+                                <div className="flex items-center justify-end space-x-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleImpersonateCompany(c)}
+                                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-2xs hover:scale-105 active:scale-95 cursor-pointer"
+                                    title={`Navegar y operar como ${c.nombreEmpresa}`}
+                                  >
+                                    <LogIn className="h-3.5 w-3.5" />
+                                    <span>Navegar como Empresa</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingCompany(c);
+                                      setBalanceChangeVal("0");
+                                    }}
+                                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-extrabold transition-colors cursor-pointer"
+                                    title="Ajustar saldo o membresía"
+                                  >
+                                    Gestionar
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -6625,6 +6938,7 @@ export default function Home() {
 
         </div>
       </main>
+      </div>
 
       {/* MODAL: PREVISUALIZACIÓN DE FACTURA RIDE (PDF) */}
       {previewInvoice && (
@@ -6847,10 +7161,17 @@ export default function Home() {
 
       {/* MODAL: REGISTRAR CLIENTE */}
       {showClientModal && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4 backdrop-blur-xs font-sans">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-100 animate-scale-up">
-            <h3 className="text-sm font-bold text-slate-800 tracking-tight border-b border-slate-100 pb-3 uppercase">
-              {clientForm.id ? "Editar Cliente" : "Registrar Cliente en Ecuador"}
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs font-sans animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-100 animate-scale-up">
+            <h3 className="text-sm font-bold text-slate-800 tracking-tight border-b border-slate-100 pb-3 uppercase flex items-center justify-between">
+              <span>{isPOSClientCreate ? "Registrar y Asignar Cliente (POS)" : (clientForm.id ? "Editar Cliente" : "Registrar Cliente en Ecuador")}</span>
+              <button
+                type="button"
+                onClick={() => { setShowClientModal(false); setIsPOSClientCreate(false); }}
+                className="text-slate-400 hover:text-slate-600 text-sm font-bold cursor-pointer"
+              >
+                ✕
+              </button>
             </h3>
             
             <form onSubmit={handleCreateClient} className="space-y-4 mt-4">
@@ -6888,7 +7209,7 @@ export default function Home() {
                         type="button"
                         onClick={handleLookupClient}
                         disabled={lookingUpClient}
-                        className="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-bold px-2 rounded-lg text-[10px] flex items-center justify-center shrink-0 disabled:opacity-50"
+                        className="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-bold px-2 rounded-lg text-[10px] flex items-center justify-center shrink-0 disabled:opacity-50 cursor-pointer"
                       >
                         {lookingUpClient ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : "Consultar"}
                       </button>
@@ -6896,6 +7217,24 @@ export default function Home() {
                   </div>
                 </div>
               </div>
+
+              {/* MENSAJE DE ESTADO DE CONSULTA INLINE */}
+              {clientLookupStatus.type && (
+                <div
+                  className={`p-2.5 rounded-xl text-xs font-bold flex items-center gap-2 animate-fade-in ${
+                    clientLookupStatus.type === "success"
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : clientLookupStatus.type === "not_found"
+                      ? "bg-amber-50 text-amber-700 border border-amber-200"
+                      : "bg-red-50 text-red-700 border border-red-200"
+                  }`}
+                >
+                  {clientLookupStatus.type === "success" && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
+                  {clientLookupStatus.type === "not_found" && <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />}
+                  {clientLookupStatus.type === "error" && <X className="h-4 w-4 shrink-0 text-red-600" />}
+                  <span>{clientLookupStatus.message}</span>
+                </div>
+              )}
 
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
@@ -6956,7 +7295,7 @@ export default function Home() {
               <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setShowClientModal(false)}
+                  onClick={() => { setShowClientModal(false); setIsPOSClientCreate(false); }}
                   className="px-4 py-2 border border-slate-200 rounded-lg text-slate-500 text-xs hover:bg-slate-50 transition-colors"
                 >
                   Cancelar
@@ -6974,105 +7313,251 @@ export default function Home() {
       )}
 
       {/* MODAL: REGISTRAR PRODUCTO */}
+      {/* MODAL: REGISTRAR / EDITAR PRODUCTO EN CATÁLOGO */}
       {showProductModal && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4 backdrop-blur-xs font-sans">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-100 animate-scale-up">
-            <h3 className="text-sm font-bold text-slate-800 tracking-tight border-b border-slate-100 pb-3 uppercase">
-              {productForm.id ? "Editar Producto" : "Registrar Producto en Catálogo"}
-            </h3>
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 font-sans animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-7 border border-slate-100 animate-scale-up max-h-[92vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+              <h3 className="text-sm font-black text-slate-800 tracking-tight uppercase flex items-center">
+                <Plus className="h-4 w-4 mr-1.5 text-blue-600" />
+                {productForm.id ? "Editar Producto en Catálogo" : "Registrar Producto en Catálogo"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowProductModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1 cursor-pointer transition-colors"
+              >
+                ✕
+              </button>
+            </div>
 
-            <form onSubmit={handleCreateProduct} className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+            <form onSubmit={handleCreateProduct} className="space-y-4">
+              {/* CÓDIGO PRINCIPAL CON BOTÓN REGENERAR */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">
                     Código Principal *
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newCode = generateNextProductCode();
+                      setProductForm((prev) => ({ ...prev, codigoPrincipal: newCode }));
+                    }}
+                    className="text-[10px] text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1 cursor-pointer"
+                    title="Autogenerar código"
+                  >
+                    <RefreshCw className="h-2.5 w-2.5 mr-0.5" />
+                    <span>Autogenerar</span>
+                  </button>
+                </div>
+                <div className="relative">
                   <input
                     type="text"
                     required
                     placeholder="ej. PROD-001"
                     value={productForm.codigoPrincipal}
                     onChange={(e) => setProductForm({ ...productForm, codigoPrincipal: e.target.value.toUpperCase() })}
-                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-mono font-bold"
+                    className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-mono font-black uppercase shadow-2xs"
                   />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    IVA Aplicado *
-                  </label>
-                  <select
-                    value={productForm.iva}
-                    onChange={(e) => setProductForm({ ...productForm, iva: e.target.value })}
-                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700 text-xs focus:outline-none focus:border-blue-600"
-                  >
-                    <option value="12.0">12% IVA</option>
-                    <option value="15.0">15% IVA</option>
-                    <option value="8.0">8% IVA</option>
-                    <option value="0.0">0% IVA</option>
-                  </select>
                 </div>
               </div>
 
+              {/* NOMBRE DEL PRODUCTO */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                  Nombre Comercial / Producto *
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                  Nombre del Producto *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="ej. YOGURT DE FRESA 1 LITRO"
+                  placeholder="EJ: SERVICIO DE CONSULTORÍA"
                   value={productForm.nombre}
                   onChange={(e) => setProductForm({ ...productForm, nombre: e.target.value.toUpperCase() })}
-                  className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold uppercase"
+                  className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold uppercase shadow-2xs"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* DETALLE / DESCRIPCIÓN */}
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                  Detalle / Descripción
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Descripción adicional si es necesario..."
+                  value={productForm.descripcion || ""}
+                  onChange={(e) => setProductForm({ ...productForm, descripcion: e.target.value })}
+                  className="block w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-700 text-xs focus:outline-none focus:border-blue-600 shadow-2xs resize-none"
+                />
+              </div>
+
+              {/* GRID: CANTIDAD E IMPUESTO IVA */}
+              <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Precio Unitario *
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                    Cantidad
                   </label>
                   <input
-                    type="text"
-                    required
-                    placeholder="$0.00"
-                    value={productForm.precio}
-                    onChange={(e) => setProductForm({ ...productForm, precio: e.target.value })}
-                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold text-center"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={productForm.cantidad || "1"}
+                    onChange={(e) => setProductForm({ ...productForm, cantidad: e.target.value })}
+                    className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold text-center shadow-2xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Categoría / Grupo
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                    Impuesto IVA
                   </label>
+                  <select
+                    value={productForm.iva}
+                    onChange={(e) => {
+                      const newIva = e.target.value;
+                      const pSin = parseFloat(productForm.precio);
+                      let newPCon = productForm.precioConIva;
+                      if (!isNaN(pSin) && pSin > 0) {
+                        newPCon = (pSin * (1 + parseFloat(newIva) / 100)).toFixed(2);
+                      }
+                      setProductForm({ ...productForm, iva: newIva, precioConIva: newPCon });
+                    }}
+                    className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-slate-700 text-xs font-bold focus:outline-none focus:border-blue-600 shadow-2xs bg-white cursor-pointer"
+                  >
+                    <option value="15.0">IVA 15%</option>
+                    <option value="12.0">IVA 12%</option>
+                    <option value="8.0">IVA 8%</option>
+                    <option value="0.0">IVA 0%</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* TARJETAS DE CÁLCULO: P. UNITARIO (SIN IVA) Y PRECIO FINAL (CON IVA) */}
+              <div className="grid grid-cols-2 gap-3.5">
+                {/* TARJETA AZUL: P. UNITARIO (SIN IVA) */}
+                <div className="bg-blue-50/70 border border-blue-200/80 rounded-2xl p-3.5 shadow-2xs">
+                  <label className="block text-[9px] font-black text-blue-600 uppercase tracking-wider mb-1">
+                    P. Unitario (Sin IVA)
+                  </label>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-blue-600 font-extrabold text-sm">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      placeholder="0"
+                      value={productForm.precio}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const num = parseFloat(val);
+                        const ivaRate = parseFloat(productForm.iva || "15.0");
+                        const calculatedWithIva = !isNaN(num) && num >= 0 ? (num * (1 + ivaRate / 100)).toFixed(2) : "";
+                        setProductForm({
+                          ...productForm,
+                          precio: val,
+                          precioConIva: calculatedWithIva,
+                        });
+                      }}
+                      className="w-full bg-transparent text-slate-900 font-black text-sm focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* TARJETA VERDE: PRECIO FINAL (CON IVA) */}
+                <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-3.5 shadow-2xs">
+                  <label className="block text-[9px] font-black text-emerald-600 uppercase tracking-wider mb-1">
+                    Precio Final (Con IVA)
+                  </label>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-emerald-600 font-extrabold text-sm">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      value={productForm.precioConIva}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const num = parseFloat(val);
+                        const ivaRate = parseFloat(productForm.iva || "15.0");
+                        const calculatedWithoutIva = !isNaN(num) && num >= 0 ? (num / (1 + ivaRate / 100)).toFixed(2) : "";
+                        setProductForm({
+                          ...productForm,
+                          precioConIva: val,
+                          precio: calculatedWithoutIva,
+                        });
+                      }}
+                      className="w-full bg-transparent text-slate-900 font-black text-sm focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* TARJETA AMARILLA: APLICAR DESCUENTO ($) */}
+              <div className="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-3.5 shadow-2xs">
+                <label className="block text-[9px] font-black text-amber-600 uppercase tracking-wider mb-1">
+                  Aplicar Descuento ($)
+                </label>
+                <div className="flex items-center space-x-1">
+                  <span className="text-amber-600 font-extrabold text-sm">$</span>
                   <input
-                    type="text"
-                    placeholder="ej. CAT: Lacteos"
-                    value={productForm.descripcion || ""}
-                    onChange={(e) => setProductForm({ ...productForm, descripcion: e.target.value })}
-                    className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0"
+                    value={productForm.descuento || ""}
+                    onChange={(e) => setProductForm({ ...productForm, descuento: e.target.value })}
+                    className="w-full bg-transparent text-slate-900 font-black text-sm focus:outline-none"
                   />
                 </div>
               </div>
 
+              {/* GRID: NOTA EXTRA 1 Y NOTA EXTRA 2 */}
+              <div className="grid grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                    Nota Extra 1
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Color Rojo"
+                    value={productForm.notaExtra1 || ""}
+                    onChange={(e) => setProductForm({ ...productForm, notaExtra1: e.target.value })}
+                    className="block w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-blue-600 shadow-2xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                    Nota Extra 2
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Con empaque"
+                    value={productForm.notaExtra2 || ""}
+                    onChange={(e) => setProductForm({ ...productForm, notaExtra2: e.target.value })}
+                    className="block w-full px-3.5 py-2 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-blue-600 shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              {/* IMAGEN DEL PRODUCTO (OPCIONAL) */}
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">
                   Imagen del Producto (Opcional)
                 </label>
-                <div className="flex items-center gap-3 mt-1.5">
+                <div className="flex items-center gap-3 mt-1">
                   {productForm.imagen ? (
-                    <div className="relative h-12 w-12 rounded-xl border border-slate-100 overflow-hidden bg-slate-50 flex items-center justify-center">
+                    <div className="relative h-12 w-12 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex items-center justify-center shrink-0 shadow-2xs">
                       <img src={productForm.imagen} alt="Producto" className="h-full w-full object-cover" />
                       <button
                         type="button"
                         onClick={() => setProductForm({ ...productForm, imagen: "" })}
-                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 text-[8px] hover:bg-red-600 transition-colors shadow-xs"
+                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 text-[8px] hover:bg-red-600 transition-colors shadow-xs cursor-pointer"
                       >
                         ✕
                       </button>
                     </div>
                   ) : (
-                    <div className="h-12 w-12 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 flex items-center justify-center text-slate-400">
+                    <div className="h-12 w-12 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 flex items-center justify-center text-slate-400 shrink-0">
                       <ImageIcon className="h-4 w-4" />
                     </div>
                   )}
@@ -7097,24 +7582,25 @@ export default function Home() {
                   />
                   <label
                     htmlFor="product-catalog-image"
-                    className="px-3 py-2 border border-slate-200 hover:border-blue-600 hover:text-blue-600 rounded-xl text-xs font-semibold text-slate-500 bg-white cursor-pointer transition-all duration-200 flex items-center gap-1 active:scale-95 select-none"
+                    className="px-3.5 py-2 border border-slate-200 hover:border-blue-600 hover:text-blue-600 rounded-xl text-xs font-bold text-slate-600 bg-white cursor-pointer transition-all flex items-center gap-1.5 shadow-2xs active:scale-95 select-none"
                   >
-                    <Upload className="h-3 w-3" /> Seleccionar Imagen
+                    <Upload className="h-3.5 w-3.5" /> Seleccionar Imagen
                   </label>
                 </div>
               </div>
 
+              {/* BOTONES */}
               <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowProductModal(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-lg text-slate-500 text-xs hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2.5 border border-slate-200 rounded-xl text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs transition-colors"
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider transition-colors shadow-sm cursor-pointer"
                 >
                   Guardar Producto
                 </button>
@@ -8058,7 +8544,9 @@ export default function Home() {
                         </div>
                         <div>
                           <span className="text-xs font-extrabold text-violet-900 uppercase tracking-wider block">PLAN MENSUAL ILIMITADO</span>
-                          <span className="text-[10px] text-violet-500 font-bold block mt-0.5">$15.00 / mes • Emisiones ilimitadas</span>
+                          <span className="text-[10px] text-violet-500 font-bold block mt-0.5">
+                            {systemConfig?.monthlyPlanFee ? `$${systemConfig.monthlyPlanFee.toFixed(2)}` : "$15.00"} / mes • Emisiones ilimitadas
+                          </span>
                         </div>
                       </div>
                     ) : (
@@ -8068,7 +8556,9 @@ export default function Home() {
                         </div>
                         <div>
                           <span className="text-xs font-extrabold text-emerald-900 uppercase tracking-wider block">BILLETERA (PAGO POR FACTURA)</span>
-                          <span className="text-[10px] text-emerald-500 font-bold block mt-0.5">$0.20 por factura emitida con éxito</span>
+                          <span className="text-[10px] text-emerald-500 font-bold block mt-0.5">
+                            {systemConfig?.pricePerInvoice ? `$${systemConfig.pricePerInvoice.toFixed(2)}` : "$0.10"} por factura emitida con éxito
+                          </span>
                         </div>
                       </div>
                     )}
@@ -8114,8 +8604,8 @@ export default function Home() {
                     </h4>
                     <p className="text-[10px] text-slate-400 leading-normal">
                       {issuer.planType === "MONTHLY" 
-                        ? "Si no deseas pagar $15 mensuales y facturas poco, puedes cambiar a Pago por Factura. Pagarás $0.20 solo por cada factura emitida satisfactoriamente usando tu saldo de billetera."
-                        : "Si facturas frecuentemente, te conviene contratar el Plan Mensual Ilimitado por $15.00 al mes y olvidarte de recargar saldo por cada factura."}
+                        ? `Si no deseas pagar $${systemConfig?.monthlyPlanFee ? systemConfig.monthlyPlanFee.toFixed(2) : "15.00"} mensuales y facturas poco, puedes cambiar a Pago por Factura. Pagarás $${systemConfig?.pricePerInvoice ? systemConfig.pricePerInvoice.toFixed(2) : "0.10"} solo por cada factura emitida satisfactoriamente usando tu saldo de billetera.`
+                        : `Si facturas frecuentemente, te conviene contratar el Plan Mensual Ilimitado por $${systemConfig?.monthlyPlanFee ? systemConfig.monthlyPlanFee.toFixed(2) : "15.00"} al mes y olvidarte de recargar saldo por cada factura.`}
                     </p>
                     <button
                       type="button"

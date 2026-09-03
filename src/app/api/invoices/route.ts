@@ -135,6 +135,10 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
+    // Consultar tarifas globales del sistema
+    const sysConfig = await db.systemConfig.findFirst();
+    const pricePerInvoice = sysConfig?.pricePerInvoice ?? 0.10;
+
     if (issuer.planType === "MONTHLY") {
       if (new Date(issuer.subscriptionEnds) < new Date()) {
         return NextResponse.json({
@@ -142,9 +146,9 @@ export async function POST(request: Request) {
         }, { status: 403 });
       }
     } else if (issuer.planType === "PAY_PER_INVOICE") {
-      if (issuer.balance < 0.20) {
+      if (issuer.balance < pricePerInvoice) {
         return NextResponse.json({
-          error: "Saldo insuficiente en su billetera ($0.20 mínimo requerido por factura). Recargue saldo para seguir facturando.",
+          error: `Saldo insuficiente en su billetera ($${pricePerInvoice.toFixed(2)} mínimo requerido por factura). Recargue saldo para seguir facturando.`,
         }, { status: 403 });
       }
     }
@@ -194,6 +198,23 @@ export async function POST(request: Request) {
 
     if (!clientObj) {
       return NextResponse.json({ error: "El cliente seleccionado o provisto no es válido." }, { status: 400 });
+    }
+
+    // Vincular cliente a la cartera de la empresa emisora para que quede visible en su sección de Clientes
+    if (clientObj && issuer) {
+      await db.issuerClient.upsert({
+        where: {
+          issuerId_clientId: {
+            issuerId: issuer.id,
+            clientId: clientObj.id,
+          },
+        },
+        create: {
+          issuerId: issuer.id,
+          clientId: clientObj.id,
+        },
+        update: {},
+      });
     }
 
     // 3. Registrar productos dinámicos (ítems rápidos sin registrar) en caliente
@@ -563,13 +584,13 @@ export async function POST(request: Request) {
       },
     });
 
-    // --- COBRO SAAS: DEDUCIR $0.20 EN CASO DE PLAN POR FACTURA ---
+    // --- COBRO SAAS: DEDUCIR TARIFA CONFIGURADA EN CASO DE PLAN POR FACTURA ---
     if (issuer.planType === "PAY_PER_INVOICE") {
       await db.issuer.update({
         where: { id: issuer.id },
         data: {
           balance: {
-            decrement: 0.20,
+            decrement: pricePerInvoice,
           },
         },
       });

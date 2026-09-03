@@ -192,6 +192,13 @@ exports.Prisma.ClientScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.IssuerClientScalarFieldEnum = {
+  id: 'id',
+  issuerId: 'issuerId',
+  clientId: 'clientId',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.ProductScalarFieldEnum = {
   id: 'id',
   nombre: 'nombre',
@@ -270,6 +277,7 @@ exports.Prisma.ModelName = {
   SystemConfig: 'SystemConfig',
   BankAccount: 'BankAccount',
   Client: 'Client',
+  IssuerClient: 'IssuerClient',
   Product: 'Product',
   Invoice: 'Invoice',
   InvoiceItem: 'InvoiceItem',

@@ -34,6 +34,11 @@ export type BankAccount = $Result.DefaultSelection<Prisma.$BankAccountPayload>
  */
 export type Client = $Result.DefaultSelection<Prisma.$ClientPayload>
 /**
+ * Model IssuerClient
+ * 
+ */
+export type IssuerClient = $Result.DefaultSelection<Prisma.$IssuerClientPayload>
+/**
  * Model Product
  * 
  */
@@ -211,6 +216,16 @@ export class PrismaClient<
     * ```
     */
   get client(): Prisma.ClientDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.issuerClient`: Exposes CRUD operations for the **IssuerClient** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more IssuerClients
+    * const issuerClients = await prisma.issuerClient.findMany()
+    * ```
+    */
+  get issuerClient(): Prisma.IssuerClientDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.product`: Exposes CRUD operations for the **Product** model.
@@ -696,6 +711,7 @@ export namespace Prisma {
     SystemConfig: 'SystemConfig',
     BankAccount: 'BankAccount',
     Client: 'Client',
+    IssuerClient: 'IssuerClient',
     Product: 'Product',
     Invoice: 'Invoice',
     InvoiceItem: 'InvoiceItem',
@@ -718,7 +734,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "issuer" | "systemConfig" | "bankAccount" | "client" | "product" | "invoice" | "invoiceItem" | "paymentRequest"
+      modelProps: "issuer" | "systemConfig" | "bankAccount" | "client" | "issuerClient" | "product" | "invoice" | "invoiceItem" | "paymentRequest"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1015,6 +1031,80 @@ export namespace Prisma {
           count: {
             args: Prisma.ClientCountArgs<ExtArgs>
             result: $Utils.Optional<ClientCountAggregateOutputType> | number
+          }
+        }
+      }
+      IssuerClient: {
+        payload: Prisma.$IssuerClientPayload<ExtArgs>
+        fields: Prisma.IssuerClientFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.IssuerClientFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IssuerClientPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.IssuerClientFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IssuerClientPayload>
+          }
+          findFirst: {
+            args: Prisma.IssuerClientFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IssuerClientPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.IssuerClientFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IssuerClientPayload>
+          }
+          findMany: {
+            args: Prisma.IssuerClientFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IssuerClientPayload>[]
+          }
+          create: {
+            args: Prisma.IssuerClientCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IssuerClientPayload>
+          }
+          createMany: {
+            args: Prisma.IssuerClientCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.IssuerClientCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IssuerClientPayload>[]
+          }
+          delete: {
+            args: Prisma.IssuerClientDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IssuerClientPayload>
+          }
+          update: {
+            args: Prisma.IssuerClientUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IssuerClientPayload>
+          }
+          deleteMany: {
+            args: Prisma.IssuerClientDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.IssuerClientUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.IssuerClientUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IssuerClientPayload>[]
+          }
+          upsert: {
+            args: Prisma.IssuerClientUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IssuerClientPayload>
+          }
+          aggregate: {
+            args: Prisma.IssuerClientAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateIssuerClient>
+          }
+          groupBy: {
+            args: Prisma.IssuerClientGroupByArgs<ExtArgs>
+            result: $Utils.Optional<IssuerClientGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.IssuerClientCountArgs<ExtArgs>
+            result: $Utils.Optional<IssuerClientCountAggregateOutputType> | number
           }
         }
       }
@@ -1414,6 +1504,7 @@ export namespace Prisma {
     systemConfig?: SystemConfigOmit
     bankAccount?: BankAccountOmit
     client?: ClientOmit
+    issuerClient?: IssuerClientOmit
     product?: ProductOmit
     invoice?: InvoiceOmit
     invoiceItem?: InvoiceItemOmit
@@ -1499,11 +1590,13 @@ export namespace Prisma {
 
   export type IssuerCountOutputType = {
     invoices: number
+    clients: number
     paymentRequests: number
   }
 
   export type IssuerCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     invoices?: boolean | IssuerCountOutputTypeCountInvoicesArgs
+    clients?: boolean | IssuerCountOutputTypeCountClientsArgs
     paymentRequests?: boolean | IssuerCountOutputTypeCountPaymentRequestsArgs
   }
 
@@ -1528,6 +1621,13 @@ export namespace Prisma {
   /**
    * IssuerCountOutputType without action
    */
+  export type IssuerCountOutputTypeCountClientsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: IssuerClientWhereInput
+  }
+
+  /**
+   * IssuerCountOutputType without action
+   */
   export type IssuerCountOutputTypeCountPaymentRequestsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PaymentRequestWhereInput
   }
@@ -1539,10 +1639,12 @@ export namespace Prisma {
 
   export type ClientCountOutputType = {
     invoices: number
+    issuers: number
   }
 
   export type ClientCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     invoices?: boolean | ClientCountOutputTypeCountInvoicesArgs
+    issuers?: boolean | ClientCountOutputTypeCountIssuersArgs
   }
 
   // Custom InputTypes
@@ -1561,6 +1663,13 @@ export namespace Prisma {
    */
   export type ClientCountOutputTypeCountInvoicesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: InvoiceWhereInput
+  }
+
+  /**
+   * ClientCountOutputType without action
+   */
+  export type ClientCountOutputTypeCountIssuersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: IssuerClientWhereInput
   }
 
 
@@ -2009,6 +2118,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     invoices?: boolean | Issuer$invoicesArgs<ExtArgs>
+    clients?: boolean | Issuer$clientsArgs<ExtArgs>
     paymentRequests?: boolean | Issuer$paymentRequestsArgs<ExtArgs>
     _count?: boolean | IssuerCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["issuer"]>
@@ -2103,6 +2213,7 @@ export namespace Prisma {
   export type IssuerOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ruc" | "nombres" | "apellidos" | "nombreEmpresa" | "razonSocial" | "direccion" | "email" | "celular" | "establecimiento" | "puntoEmision" | "obligadoContabilidad" | "regimen" | "ambiente" | "firmaElectronica" | "codigoSri" | "startSecuencial" | "password" | "status" | "planType" | "monthlyFee" | "balance" | "subscriptionEnds" | "logo" | "createdAt" | "updatedAt", ExtArgs["result"]["issuer"]>
   export type IssuerInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     invoices?: boolean | Issuer$invoicesArgs<ExtArgs>
+    clients?: boolean | Issuer$clientsArgs<ExtArgs>
     paymentRequests?: boolean | Issuer$paymentRequestsArgs<ExtArgs>
     _count?: boolean | IssuerCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -2113,6 +2224,7 @@ export namespace Prisma {
     name: "Issuer"
     objects: {
       invoices: Prisma.$InvoicePayload<ExtArgs>[]
+      clients: Prisma.$IssuerClientPayload<ExtArgs>[]
       paymentRequests: Prisma.$PaymentRequestPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -2537,6 +2649,7 @@ export namespace Prisma {
   export interface Prisma__IssuerClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     invoices<T extends Issuer$invoicesArgs<ExtArgs> = {}>(args?: Subset<T, Issuer$invoicesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InvoicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    clients<T extends Issuer$clientsArgs<ExtArgs> = {}>(args?: Subset<T, Issuer$clientsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     paymentRequests<T extends Issuer$paymentRequestsArgs<ExtArgs> = {}>(args?: Subset<T, Issuer$paymentRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PaymentRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -3000,6 +3113,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: InvoiceScalarFieldEnum | InvoiceScalarFieldEnum[]
+  }
+
+  /**
+   * Issuer.clients
+   */
+  export type Issuer$clientsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientInclude<ExtArgs> | null
+    where?: IssuerClientWhereInput
+    orderBy?: IssuerClientOrderByWithRelationInput | IssuerClientOrderByWithRelationInput[]
+    cursor?: IssuerClientWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: IssuerClientScalarFieldEnum | IssuerClientScalarFieldEnum[]
   }
 
   /**
@@ -5558,6 +5695,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     invoices?: boolean | Client$invoicesArgs<ExtArgs>
+    issuers?: boolean | Client$issuersArgs<ExtArgs>
     _count?: boolean | ClientCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["client"]>
 
@@ -5603,6 +5741,7 @@ export namespace Prisma {
   export type ClientOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nombres" | "tipoIdentificacion" | "identificacion" | "direccion" | "mail" | "celular" | "telefono" | "createdAt" | "updatedAt", ExtArgs["result"]["client"]>
   export type ClientInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     invoices?: boolean | Client$invoicesArgs<ExtArgs>
+    issuers?: boolean | Client$issuersArgs<ExtArgs>
     _count?: boolean | ClientCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ClientIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -5612,6 +5751,7 @@ export namespace Prisma {
     name: "Client"
     objects: {
       invoices: Prisma.$InvoicePayload<ExtArgs>[]
+      issuers: Prisma.$IssuerClientPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -6019,6 +6159,7 @@ export namespace Prisma {
   export interface Prisma__ClientClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     invoices<T extends Client$invoicesArgs<ExtArgs> = {}>(args?: Subset<T, Client$invoicesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InvoicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    issuers<T extends Client$issuersArgs<ExtArgs> = {}>(args?: Subset<T, Client$issuersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6468,6 +6609,30 @@ export namespace Prisma {
   }
 
   /**
+   * Client.issuers
+   */
+  export type Client$issuersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientInclude<ExtArgs> | null
+    where?: IssuerClientWhereInput
+    orderBy?: IssuerClientOrderByWithRelationInput | IssuerClientOrderByWithRelationInput[]
+    cursor?: IssuerClientWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: IssuerClientScalarFieldEnum | IssuerClientScalarFieldEnum[]
+  }
+
+  /**
    * Client without action
    */
   export type ClientDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6483,6 +6648,1099 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ClientInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model IssuerClient
+   */
+
+  export type AggregateIssuerClient = {
+    _count: IssuerClientCountAggregateOutputType | null
+    _avg: IssuerClientAvgAggregateOutputType | null
+    _sum: IssuerClientSumAggregateOutputType | null
+    _min: IssuerClientMinAggregateOutputType | null
+    _max: IssuerClientMaxAggregateOutputType | null
+  }
+
+  export type IssuerClientAvgAggregateOutputType = {
+    id: number | null
+    issuerId: number | null
+    clientId: number | null
+  }
+
+  export type IssuerClientSumAggregateOutputType = {
+    id: number | null
+    issuerId: number | null
+    clientId: number | null
+  }
+
+  export type IssuerClientMinAggregateOutputType = {
+    id: number | null
+    issuerId: number | null
+    clientId: number | null
+    createdAt: Date | null
+  }
+
+  export type IssuerClientMaxAggregateOutputType = {
+    id: number | null
+    issuerId: number | null
+    clientId: number | null
+    createdAt: Date | null
+  }
+
+  export type IssuerClientCountAggregateOutputType = {
+    id: number
+    issuerId: number
+    clientId: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type IssuerClientAvgAggregateInputType = {
+    id?: true
+    issuerId?: true
+    clientId?: true
+  }
+
+  export type IssuerClientSumAggregateInputType = {
+    id?: true
+    issuerId?: true
+    clientId?: true
+  }
+
+  export type IssuerClientMinAggregateInputType = {
+    id?: true
+    issuerId?: true
+    clientId?: true
+    createdAt?: true
+  }
+
+  export type IssuerClientMaxAggregateInputType = {
+    id?: true
+    issuerId?: true
+    clientId?: true
+    createdAt?: true
+  }
+
+  export type IssuerClientCountAggregateInputType = {
+    id?: true
+    issuerId?: true
+    clientId?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type IssuerClientAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which IssuerClient to aggregate.
+     */
+    where?: IssuerClientWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IssuerClients to fetch.
+     */
+    orderBy?: IssuerClientOrderByWithRelationInput | IssuerClientOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: IssuerClientWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IssuerClients from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IssuerClients.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned IssuerClients
+    **/
+    _count?: true | IssuerClientCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: IssuerClientAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: IssuerClientSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: IssuerClientMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: IssuerClientMaxAggregateInputType
+  }
+
+  export type GetIssuerClientAggregateType<T extends IssuerClientAggregateArgs> = {
+        [P in keyof T & keyof AggregateIssuerClient]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateIssuerClient[P]>
+      : GetScalarType<T[P], AggregateIssuerClient[P]>
+  }
+
+
+
+
+  export type IssuerClientGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: IssuerClientWhereInput
+    orderBy?: IssuerClientOrderByWithAggregationInput | IssuerClientOrderByWithAggregationInput[]
+    by: IssuerClientScalarFieldEnum[] | IssuerClientScalarFieldEnum
+    having?: IssuerClientScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: IssuerClientCountAggregateInputType | true
+    _avg?: IssuerClientAvgAggregateInputType
+    _sum?: IssuerClientSumAggregateInputType
+    _min?: IssuerClientMinAggregateInputType
+    _max?: IssuerClientMaxAggregateInputType
+  }
+
+  export type IssuerClientGroupByOutputType = {
+    id: number
+    issuerId: number
+    clientId: number
+    createdAt: Date
+    _count: IssuerClientCountAggregateOutputType | null
+    _avg: IssuerClientAvgAggregateOutputType | null
+    _sum: IssuerClientSumAggregateOutputType | null
+    _min: IssuerClientMinAggregateOutputType | null
+    _max: IssuerClientMaxAggregateOutputType | null
+  }
+
+  type GetIssuerClientGroupByPayload<T extends IssuerClientGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<IssuerClientGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof IssuerClientGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], IssuerClientGroupByOutputType[P]>
+            : GetScalarType<T[P], IssuerClientGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type IssuerClientSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    issuerId?: boolean
+    clientId?: boolean
+    createdAt?: boolean
+    issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    client?: boolean | ClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["issuerClient"]>
+
+  export type IssuerClientSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    issuerId?: boolean
+    clientId?: boolean
+    createdAt?: boolean
+    issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    client?: boolean | ClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["issuerClient"]>
+
+  export type IssuerClientSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    issuerId?: boolean
+    clientId?: boolean
+    createdAt?: boolean
+    issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    client?: boolean | ClientDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["issuerClient"]>
+
+  export type IssuerClientSelectScalar = {
+    id?: boolean
+    issuerId?: boolean
+    clientId?: boolean
+    createdAt?: boolean
+  }
+
+  export type IssuerClientOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "issuerId" | "clientId" | "createdAt", ExtArgs["result"]["issuerClient"]>
+  export type IssuerClientInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    client?: boolean | ClientDefaultArgs<ExtArgs>
+  }
+  export type IssuerClientIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    client?: boolean | ClientDefaultArgs<ExtArgs>
+  }
+  export type IssuerClientIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    client?: boolean | ClientDefaultArgs<ExtArgs>
+  }
+
+  export type $IssuerClientPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "IssuerClient"
+    objects: {
+      issuer: Prisma.$IssuerPayload<ExtArgs>
+      client: Prisma.$ClientPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      issuerId: number
+      clientId: number
+      createdAt: Date
+    }, ExtArgs["result"]["issuerClient"]>
+    composites: {}
+  }
+
+  type IssuerClientGetPayload<S extends boolean | null | undefined | IssuerClientDefaultArgs> = $Result.GetResult<Prisma.$IssuerClientPayload, S>
+
+  type IssuerClientCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<IssuerClientFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: IssuerClientCountAggregateInputType | true
+    }
+
+  export interface IssuerClientDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['IssuerClient'], meta: { name: 'IssuerClient' } }
+    /**
+     * Find zero or one IssuerClient that matches the filter.
+     * @param {IssuerClientFindUniqueArgs} args - Arguments to find a IssuerClient
+     * @example
+     * // Get one IssuerClient
+     * const issuerClient = await prisma.issuerClient.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends IssuerClientFindUniqueArgs>(args: SelectSubset<T, IssuerClientFindUniqueArgs<ExtArgs>>): Prisma__IssuerClientClient<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one IssuerClient that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {IssuerClientFindUniqueOrThrowArgs} args - Arguments to find a IssuerClient
+     * @example
+     * // Get one IssuerClient
+     * const issuerClient = await prisma.issuerClient.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends IssuerClientFindUniqueOrThrowArgs>(args: SelectSubset<T, IssuerClientFindUniqueOrThrowArgs<ExtArgs>>): Prisma__IssuerClientClient<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first IssuerClient that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IssuerClientFindFirstArgs} args - Arguments to find a IssuerClient
+     * @example
+     * // Get one IssuerClient
+     * const issuerClient = await prisma.issuerClient.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends IssuerClientFindFirstArgs>(args?: SelectSubset<T, IssuerClientFindFirstArgs<ExtArgs>>): Prisma__IssuerClientClient<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first IssuerClient that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IssuerClientFindFirstOrThrowArgs} args - Arguments to find a IssuerClient
+     * @example
+     * // Get one IssuerClient
+     * const issuerClient = await prisma.issuerClient.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends IssuerClientFindFirstOrThrowArgs>(args?: SelectSubset<T, IssuerClientFindFirstOrThrowArgs<ExtArgs>>): Prisma__IssuerClientClient<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more IssuerClients that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IssuerClientFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all IssuerClients
+     * const issuerClients = await prisma.issuerClient.findMany()
+     * 
+     * // Get first 10 IssuerClients
+     * const issuerClients = await prisma.issuerClient.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const issuerClientWithIdOnly = await prisma.issuerClient.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends IssuerClientFindManyArgs>(args?: SelectSubset<T, IssuerClientFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a IssuerClient.
+     * @param {IssuerClientCreateArgs} args - Arguments to create a IssuerClient.
+     * @example
+     * // Create one IssuerClient
+     * const IssuerClient = await prisma.issuerClient.create({
+     *   data: {
+     *     // ... data to create a IssuerClient
+     *   }
+     * })
+     * 
+     */
+    create<T extends IssuerClientCreateArgs>(args: SelectSubset<T, IssuerClientCreateArgs<ExtArgs>>): Prisma__IssuerClientClient<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many IssuerClients.
+     * @param {IssuerClientCreateManyArgs} args - Arguments to create many IssuerClients.
+     * @example
+     * // Create many IssuerClients
+     * const issuerClient = await prisma.issuerClient.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends IssuerClientCreateManyArgs>(args?: SelectSubset<T, IssuerClientCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many IssuerClients and returns the data saved in the database.
+     * @param {IssuerClientCreateManyAndReturnArgs} args - Arguments to create many IssuerClients.
+     * @example
+     * // Create many IssuerClients
+     * const issuerClient = await prisma.issuerClient.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many IssuerClients and only return the `id`
+     * const issuerClientWithIdOnly = await prisma.issuerClient.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends IssuerClientCreateManyAndReturnArgs>(args?: SelectSubset<T, IssuerClientCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a IssuerClient.
+     * @param {IssuerClientDeleteArgs} args - Arguments to delete one IssuerClient.
+     * @example
+     * // Delete one IssuerClient
+     * const IssuerClient = await prisma.issuerClient.delete({
+     *   where: {
+     *     // ... filter to delete one IssuerClient
+     *   }
+     * })
+     * 
+     */
+    delete<T extends IssuerClientDeleteArgs>(args: SelectSubset<T, IssuerClientDeleteArgs<ExtArgs>>): Prisma__IssuerClientClient<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one IssuerClient.
+     * @param {IssuerClientUpdateArgs} args - Arguments to update one IssuerClient.
+     * @example
+     * // Update one IssuerClient
+     * const issuerClient = await prisma.issuerClient.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends IssuerClientUpdateArgs>(args: SelectSubset<T, IssuerClientUpdateArgs<ExtArgs>>): Prisma__IssuerClientClient<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more IssuerClients.
+     * @param {IssuerClientDeleteManyArgs} args - Arguments to filter IssuerClients to delete.
+     * @example
+     * // Delete a few IssuerClients
+     * const { count } = await prisma.issuerClient.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends IssuerClientDeleteManyArgs>(args?: SelectSubset<T, IssuerClientDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more IssuerClients.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IssuerClientUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many IssuerClients
+     * const issuerClient = await prisma.issuerClient.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends IssuerClientUpdateManyArgs>(args: SelectSubset<T, IssuerClientUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more IssuerClients and returns the data updated in the database.
+     * @param {IssuerClientUpdateManyAndReturnArgs} args - Arguments to update many IssuerClients.
+     * @example
+     * // Update many IssuerClients
+     * const issuerClient = await prisma.issuerClient.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more IssuerClients and only return the `id`
+     * const issuerClientWithIdOnly = await prisma.issuerClient.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends IssuerClientUpdateManyAndReturnArgs>(args: SelectSubset<T, IssuerClientUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one IssuerClient.
+     * @param {IssuerClientUpsertArgs} args - Arguments to update or create a IssuerClient.
+     * @example
+     * // Update or create a IssuerClient
+     * const issuerClient = await prisma.issuerClient.upsert({
+     *   create: {
+     *     // ... data to create a IssuerClient
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the IssuerClient we want to update
+     *   }
+     * })
+     */
+    upsert<T extends IssuerClientUpsertArgs>(args: SelectSubset<T, IssuerClientUpsertArgs<ExtArgs>>): Prisma__IssuerClientClient<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of IssuerClients.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IssuerClientCountArgs} args - Arguments to filter IssuerClients to count.
+     * @example
+     * // Count the number of IssuerClients
+     * const count = await prisma.issuerClient.count({
+     *   where: {
+     *     // ... the filter for the IssuerClients we want to count
+     *   }
+     * })
+    **/
+    count<T extends IssuerClientCountArgs>(
+      args?: Subset<T, IssuerClientCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], IssuerClientCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a IssuerClient.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IssuerClientAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends IssuerClientAggregateArgs>(args: Subset<T, IssuerClientAggregateArgs>): Prisma.PrismaPromise<GetIssuerClientAggregateType<T>>
+
+    /**
+     * Group by IssuerClient.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IssuerClientGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends IssuerClientGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: IssuerClientGroupByArgs['orderBy'] }
+        : { orderBy?: IssuerClientGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, IssuerClientGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetIssuerClientGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the IssuerClient model
+   */
+  readonly fields: IssuerClientFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for IssuerClient.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__IssuerClientClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    issuer<T extends IssuerDefaultArgs<ExtArgs> = {}>(args?: Subset<T, IssuerDefaultArgs<ExtArgs>>): Prisma__IssuerClient<$Result.GetResult<Prisma.$IssuerPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    client<T extends ClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ClientDefaultArgs<ExtArgs>>): Prisma__ClientClient<$Result.GetResult<Prisma.$ClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the IssuerClient model
+   */
+  interface IssuerClientFieldRefs {
+    readonly id: FieldRef<"IssuerClient", 'Int'>
+    readonly issuerId: FieldRef<"IssuerClient", 'Int'>
+    readonly clientId: FieldRef<"IssuerClient", 'Int'>
+    readonly createdAt: FieldRef<"IssuerClient", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * IssuerClient findUnique
+   */
+  export type IssuerClientFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientInclude<ExtArgs> | null
+    /**
+     * Filter, which IssuerClient to fetch.
+     */
+    where: IssuerClientWhereUniqueInput
+  }
+
+  /**
+   * IssuerClient findUniqueOrThrow
+   */
+  export type IssuerClientFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientInclude<ExtArgs> | null
+    /**
+     * Filter, which IssuerClient to fetch.
+     */
+    where: IssuerClientWhereUniqueInput
+  }
+
+  /**
+   * IssuerClient findFirst
+   */
+  export type IssuerClientFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientInclude<ExtArgs> | null
+    /**
+     * Filter, which IssuerClient to fetch.
+     */
+    where?: IssuerClientWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IssuerClients to fetch.
+     */
+    orderBy?: IssuerClientOrderByWithRelationInput | IssuerClientOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for IssuerClients.
+     */
+    cursor?: IssuerClientWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IssuerClients from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IssuerClients.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of IssuerClients.
+     */
+    distinct?: IssuerClientScalarFieldEnum | IssuerClientScalarFieldEnum[]
+  }
+
+  /**
+   * IssuerClient findFirstOrThrow
+   */
+  export type IssuerClientFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientInclude<ExtArgs> | null
+    /**
+     * Filter, which IssuerClient to fetch.
+     */
+    where?: IssuerClientWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IssuerClients to fetch.
+     */
+    orderBy?: IssuerClientOrderByWithRelationInput | IssuerClientOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for IssuerClients.
+     */
+    cursor?: IssuerClientWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IssuerClients from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IssuerClients.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of IssuerClients.
+     */
+    distinct?: IssuerClientScalarFieldEnum | IssuerClientScalarFieldEnum[]
+  }
+
+  /**
+   * IssuerClient findMany
+   */
+  export type IssuerClientFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientInclude<ExtArgs> | null
+    /**
+     * Filter, which IssuerClients to fetch.
+     */
+    where?: IssuerClientWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IssuerClients to fetch.
+     */
+    orderBy?: IssuerClientOrderByWithRelationInput | IssuerClientOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing IssuerClients.
+     */
+    cursor?: IssuerClientWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IssuerClients from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IssuerClients.
+     */
+    skip?: number
+    distinct?: IssuerClientScalarFieldEnum | IssuerClientScalarFieldEnum[]
+  }
+
+  /**
+   * IssuerClient create
+   */
+  export type IssuerClientCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientInclude<ExtArgs> | null
+    /**
+     * The data needed to create a IssuerClient.
+     */
+    data: XOR<IssuerClientCreateInput, IssuerClientUncheckedCreateInput>
+  }
+
+  /**
+   * IssuerClient createMany
+   */
+  export type IssuerClientCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many IssuerClients.
+     */
+    data: IssuerClientCreateManyInput | IssuerClientCreateManyInput[]
+  }
+
+  /**
+   * IssuerClient createManyAndReturn
+   */
+  export type IssuerClientCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * The data used to create many IssuerClients.
+     */
+    data: IssuerClientCreateManyInput | IssuerClientCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * IssuerClient update
+   */
+  export type IssuerClientUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientInclude<ExtArgs> | null
+    /**
+     * The data needed to update a IssuerClient.
+     */
+    data: XOR<IssuerClientUpdateInput, IssuerClientUncheckedUpdateInput>
+    /**
+     * Choose, which IssuerClient to update.
+     */
+    where: IssuerClientWhereUniqueInput
+  }
+
+  /**
+   * IssuerClient updateMany
+   */
+  export type IssuerClientUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update IssuerClients.
+     */
+    data: XOR<IssuerClientUpdateManyMutationInput, IssuerClientUncheckedUpdateManyInput>
+    /**
+     * Filter which IssuerClients to update
+     */
+    where?: IssuerClientWhereInput
+    /**
+     * Limit how many IssuerClients to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * IssuerClient updateManyAndReturn
+   */
+  export type IssuerClientUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * The data used to update IssuerClients.
+     */
+    data: XOR<IssuerClientUpdateManyMutationInput, IssuerClientUncheckedUpdateManyInput>
+    /**
+     * Filter which IssuerClients to update
+     */
+    where?: IssuerClientWhereInput
+    /**
+     * Limit how many IssuerClients to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * IssuerClient upsert
+   */
+  export type IssuerClientUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientInclude<ExtArgs> | null
+    /**
+     * The filter to search for the IssuerClient to update in case it exists.
+     */
+    where: IssuerClientWhereUniqueInput
+    /**
+     * In case the IssuerClient found by the `where` argument doesn't exist, create a new IssuerClient with this data.
+     */
+    create: XOR<IssuerClientCreateInput, IssuerClientUncheckedCreateInput>
+    /**
+     * In case the IssuerClient was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<IssuerClientUpdateInput, IssuerClientUncheckedUpdateInput>
+  }
+
+  /**
+   * IssuerClient delete
+   */
+  export type IssuerClientDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientInclude<ExtArgs> | null
+    /**
+     * Filter which IssuerClient to delete.
+     */
+    where: IssuerClientWhereUniqueInput
+  }
+
+  /**
+   * IssuerClient deleteMany
+   */
+  export type IssuerClientDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which IssuerClients to delete
+     */
+    where?: IssuerClientWhereInput
+    /**
+     * Limit how many IssuerClients to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * IssuerClient without action
+   */
+  export type IssuerClientDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IssuerClient
+     */
+    select?: IssuerClientSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IssuerClient
+     */
+    omit?: IssuerClientOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: IssuerClientInclude<ExtArgs> | null
   }
 
 
@@ -11459,6 +12717,16 @@ export namespace Prisma {
   export type ClientScalarFieldEnum = (typeof ClientScalarFieldEnum)[keyof typeof ClientScalarFieldEnum]
 
 
+  export const IssuerClientScalarFieldEnum: {
+    id: 'id',
+    issuerId: 'issuerId',
+    clientId: 'clientId',
+    createdAt: 'createdAt'
+  };
+
+  export type IssuerClientScalarFieldEnum = (typeof IssuerClientScalarFieldEnum)[keyof typeof IssuerClientScalarFieldEnum]
+
+
   export const ProductScalarFieldEnum: {
     id: 'id',
     nombre: 'nombre',
@@ -11623,6 +12891,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Issuer"> | Date | string
     updatedAt?: DateTimeFilter<"Issuer"> | Date | string
     invoices?: InvoiceListRelationFilter
+    clients?: IssuerClientListRelationFilter
     paymentRequests?: PaymentRequestListRelationFilter
   }
 
@@ -11654,6 +12923,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     invoices?: InvoiceOrderByRelationAggregateInput
+    clients?: IssuerClientOrderByRelationAggregateInput
     paymentRequests?: PaymentRequestOrderByRelationAggregateInput
   }
 
@@ -11688,6 +12958,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Issuer"> | Date | string
     updatedAt?: DateTimeFilter<"Issuer"> | Date | string
     invoices?: InvoiceListRelationFilter
+    clients?: IssuerClientListRelationFilter
     paymentRequests?: PaymentRequestListRelationFilter
   }, "id" | "ruc">
 
@@ -11960,6 +13231,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Client"> | Date | string
     updatedAt?: DateTimeFilter<"Client"> | Date | string
     invoices?: InvoiceListRelationFilter
+    issuers?: IssuerClientListRelationFilter
   }
 
   export type ClientOrderByWithRelationInput = {
@@ -11974,6 +13246,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     invoices?: InvoiceOrderByRelationAggregateInput
+    issuers?: IssuerClientOrderByRelationAggregateInput
   }
 
   export type ClientWhereUniqueInput = Prisma.AtLeast<{
@@ -11991,6 +13264,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Client"> | Date | string
     updatedAt?: DateTimeFilter<"Client"> | Date | string
     invoices?: InvoiceListRelationFilter
+    issuers?: IssuerClientListRelationFilter
   }, "id" | "identificacion">
 
   export type ClientOrderByWithAggregationInput = {
@@ -12025,6 +13299,62 @@ export namespace Prisma {
     telefono?: StringNullableWithAggregatesFilter<"Client"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Client"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Client"> | Date | string
+  }
+
+  export type IssuerClientWhereInput = {
+    AND?: IssuerClientWhereInput | IssuerClientWhereInput[]
+    OR?: IssuerClientWhereInput[]
+    NOT?: IssuerClientWhereInput | IssuerClientWhereInput[]
+    id?: IntFilter<"IssuerClient"> | number
+    issuerId?: IntFilter<"IssuerClient"> | number
+    clientId?: IntFilter<"IssuerClient"> | number
+    createdAt?: DateTimeFilter<"IssuerClient"> | Date | string
+    issuer?: XOR<IssuerScalarRelationFilter, IssuerWhereInput>
+    client?: XOR<ClientScalarRelationFilter, ClientWhereInput>
+  }
+
+  export type IssuerClientOrderByWithRelationInput = {
+    id?: SortOrder
+    issuerId?: SortOrder
+    clientId?: SortOrder
+    createdAt?: SortOrder
+    issuer?: IssuerOrderByWithRelationInput
+    client?: ClientOrderByWithRelationInput
+  }
+
+  export type IssuerClientWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    issuerId_clientId?: IssuerClientIssuerIdClientIdCompoundUniqueInput
+    AND?: IssuerClientWhereInput | IssuerClientWhereInput[]
+    OR?: IssuerClientWhereInput[]
+    NOT?: IssuerClientWhereInput | IssuerClientWhereInput[]
+    issuerId?: IntFilter<"IssuerClient"> | number
+    clientId?: IntFilter<"IssuerClient"> | number
+    createdAt?: DateTimeFilter<"IssuerClient"> | Date | string
+    issuer?: XOR<IssuerScalarRelationFilter, IssuerWhereInput>
+    client?: XOR<ClientScalarRelationFilter, ClientWhereInput>
+  }, "id" | "issuerId_clientId">
+
+  export type IssuerClientOrderByWithAggregationInput = {
+    id?: SortOrder
+    issuerId?: SortOrder
+    clientId?: SortOrder
+    createdAt?: SortOrder
+    _count?: IssuerClientCountOrderByAggregateInput
+    _avg?: IssuerClientAvgOrderByAggregateInput
+    _max?: IssuerClientMaxOrderByAggregateInput
+    _min?: IssuerClientMinOrderByAggregateInput
+    _sum?: IssuerClientSumOrderByAggregateInput
+  }
+
+  export type IssuerClientScalarWhereWithAggregatesInput = {
+    AND?: IssuerClientScalarWhereWithAggregatesInput | IssuerClientScalarWhereWithAggregatesInput[]
+    OR?: IssuerClientScalarWhereWithAggregatesInput[]
+    NOT?: IssuerClientScalarWhereWithAggregatesInput | IssuerClientScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"IssuerClient"> | number
+    issuerId?: IntWithAggregatesFilter<"IssuerClient"> | number
+    clientId?: IntWithAggregatesFilter<"IssuerClient"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"IssuerClient"> | Date | string
   }
 
   export type ProductWhereInput = {
@@ -12441,6 +13771,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     invoices?: InvoiceCreateNestedManyWithoutIssuerInput
+    clients?: IssuerClientCreateNestedManyWithoutIssuerInput
     paymentRequests?: PaymentRequestCreateNestedManyWithoutIssuerInput
   }
 
@@ -12472,6 +13803,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     invoices?: InvoiceUncheckedCreateNestedManyWithoutIssuerInput
+    clients?: IssuerClientUncheckedCreateNestedManyWithoutIssuerInput
     paymentRequests?: PaymentRequestUncheckedCreateNestedManyWithoutIssuerInput
   }
 
@@ -12502,6 +13834,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUpdateManyWithoutIssuerNestedInput
+    clients?: IssuerClientUpdateManyWithoutIssuerNestedInput
     paymentRequests?: PaymentRequestUpdateManyWithoutIssuerNestedInput
   }
 
@@ -12533,6 +13866,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUncheckedUpdateManyWithoutIssuerNestedInput
+    clients?: IssuerClientUncheckedUpdateManyWithoutIssuerNestedInput
     paymentRequests?: PaymentRequestUncheckedUpdateManyWithoutIssuerNestedInput
   }
 
@@ -12854,6 +14188,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     invoices?: InvoiceCreateNestedManyWithoutClientInput
+    issuers?: IssuerClientCreateNestedManyWithoutClientInput
   }
 
   export type ClientUncheckedCreateInput = {
@@ -12868,6 +14203,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     invoices?: InvoiceUncheckedCreateNestedManyWithoutClientInput
+    issuers?: IssuerClientUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type ClientUpdateInput = {
@@ -12881,6 +14217,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUpdateManyWithoutClientNestedInput
+    issuers?: IssuerClientUpdateManyWithoutClientNestedInput
   }
 
   export type ClientUncheckedUpdateInput = {
@@ -12895,6 +14232,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUncheckedUpdateManyWithoutClientNestedInput
+    issuers?: IssuerClientUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type ClientCreateManyInput = {
@@ -12933,6 +14271,50 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IssuerClientCreateInput = {
+    createdAt?: Date | string
+    issuer: IssuerCreateNestedOneWithoutClientsInput
+    client: ClientCreateNestedOneWithoutIssuersInput
+  }
+
+  export type IssuerClientUncheckedCreateInput = {
+    id?: number
+    issuerId: number
+    clientId: number
+    createdAt?: Date | string
+  }
+
+  export type IssuerClientUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuer?: IssuerUpdateOneRequiredWithoutClientsNestedInput
+    client?: ClientUpdateOneRequiredWithoutIssuersNestedInput
+  }
+
+  export type IssuerClientUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    issuerId?: IntFieldUpdateOperationsInput | number
+    clientId?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IssuerClientCreateManyInput = {
+    id?: number
+    issuerId: number
+    clientId: number
+    createdAt?: Date | string
+  }
+
+  export type IssuerClientUpdateManyMutationInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IssuerClientUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    issuerId?: IntFieldUpdateOperationsInput | number
+    clientId?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ProductCreateInput = {
@@ -13432,6 +14814,12 @@ export namespace Prisma {
     none?: InvoiceWhereInput
   }
 
+  export type IssuerClientListRelationFilter = {
+    every?: IssuerClientWhereInput
+    some?: IssuerClientWhereInput
+    none?: IssuerClientWhereInput
+  }
+
   export type PaymentRequestListRelationFilter = {
     every?: PaymentRequestWhereInput
     some?: PaymentRequestWhereInput
@@ -13444,6 +14832,10 @@ export namespace Prisma {
   }
 
   export type InvoiceOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type IssuerClientOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -13805,6 +15197,54 @@ export namespace Prisma {
     id?: SortOrder
   }
 
+  export type IssuerScalarRelationFilter = {
+    is?: IssuerWhereInput
+    isNot?: IssuerWhereInput
+  }
+
+  export type ClientScalarRelationFilter = {
+    is?: ClientWhereInput
+    isNot?: ClientWhereInput
+  }
+
+  export type IssuerClientIssuerIdClientIdCompoundUniqueInput = {
+    issuerId: number
+    clientId: number
+  }
+
+  export type IssuerClientCountOrderByAggregateInput = {
+    id?: SortOrder
+    issuerId?: SortOrder
+    clientId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type IssuerClientAvgOrderByAggregateInput = {
+    id?: SortOrder
+    issuerId?: SortOrder
+    clientId?: SortOrder
+  }
+
+  export type IssuerClientMaxOrderByAggregateInput = {
+    id?: SortOrder
+    issuerId?: SortOrder
+    clientId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type IssuerClientMinOrderByAggregateInput = {
+    id?: SortOrder
+    issuerId?: SortOrder
+    clientId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type IssuerClientSumOrderByAggregateInput = {
+    id?: SortOrder
+    issuerId?: SortOrder
+    clientId?: SortOrder
+  }
+
   export type InvoiceItemListRelationFilter = {
     every?: InvoiceItemWhereInput
     some?: InvoiceItemWhereInput
@@ -13861,16 +15301,6 @@ export namespace Prisma {
     id?: SortOrder
     precio?: SortOrder
     iva?: SortOrder
-  }
-
-  export type ClientScalarRelationFilter = {
-    is?: ClientWhereInput
-    isNot?: ClientWhereInput
-  }
-
-  export type IssuerScalarRelationFilter = {
-    is?: IssuerWhereInput
-    isNot?: IssuerWhereInput
   }
 
   export type InvoiceCountOrderByAggregateInput = {
@@ -14119,6 +15549,13 @@ export namespace Prisma {
     connect?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
   }
 
+  export type IssuerClientCreateNestedManyWithoutIssuerInput = {
+    create?: XOR<IssuerClientCreateWithoutIssuerInput, IssuerClientUncheckedCreateWithoutIssuerInput> | IssuerClientCreateWithoutIssuerInput[] | IssuerClientUncheckedCreateWithoutIssuerInput[]
+    connectOrCreate?: IssuerClientCreateOrConnectWithoutIssuerInput | IssuerClientCreateOrConnectWithoutIssuerInput[]
+    createMany?: IssuerClientCreateManyIssuerInputEnvelope
+    connect?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+  }
+
   export type PaymentRequestCreateNestedManyWithoutIssuerInput = {
     create?: XOR<PaymentRequestCreateWithoutIssuerInput, PaymentRequestUncheckedCreateWithoutIssuerInput> | PaymentRequestCreateWithoutIssuerInput[] | PaymentRequestUncheckedCreateWithoutIssuerInput[]
     connectOrCreate?: PaymentRequestCreateOrConnectWithoutIssuerInput | PaymentRequestCreateOrConnectWithoutIssuerInput[]
@@ -14131,6 +15568,13 @@ export namespace Prisma {
     connectOrCreate?: InvoiceCreateOrConnectWithoutIssuerInput | InvoiceCreateOrConnectWithoutIssuerInput[]
     createMany?: InvoiceCreateManyIssuerInputEnvelope
     connect?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
+  }
+
+  export type IssuerClientUncheckedCreateNestedManyWithoutIssuerInput = {
+    create?: XOR<IssuerClientCreateWithoutIssuerInput, IssuerClientUncheckedCreateWithoutIssuerInput> | IssuerClientCreateWithoutIssuerInput[] | IssuerClientUncheckedCreateWithoutIssuerInput[]
+    connectOrCreate?: IssuerClientCreateOrConnectWithoutIssuerInput | IssuerClientCreateOrConnectWithoutIssuerInput[]
+    createMany?: IssuerClientCreateManyIssuerInputEnvelope
+    connect?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
   }
 
   export type PaymentRequestUncheckedCreateNestedManyWithoutIssuerInput = {
@@ -14186,6 +15630,20 @@ export namespace Prisma {
     deleteMany?: InvoiceScalarWhereInput | InvoiceScalarWhereInput[]
   }
 
+  export type IssuerClientUpdateManyWithoutIssuerNestedInput = {
+    create?: XOR<IssuerClientCreateWithoutIssuerInput, IssuerClientUncheckedCreateWithoutIssuerInput> | IssuerClientCreateWithoutIssuerInput[] | IssuerClientUncheckedCreateWithoutIssuerInput[]
+    connectOrCreate?: IssuerClientCreateOrConnectWithoutIssuerInput | IssuerClientCreateOrConnectWithoutIssuerInput[]
+    upsert?: IssuerClientUpsertWithWhereUniqueWithoutIssuerInput | IssuerClientUpsertWithWhereUniqueWithoutIssuerInput[]
+    createMany?: IssuerClientCreateManyIssuerInputEnvelope
+    set?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    disconnect?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    delete?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    connect?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    update?: IssuerClientUpdateWithWhereUniqueWithoutIssuerInput | IssuerClientUpdateWithWhereUniqueWithoutIssuerInput[]
+    updateMany?: IssuerClientUpdateManyWithWhereWithoutIssuerInput | IssuerClientUpdateManyWithWhereWithoutIssuerInput[]
+    deleteMany?: IssuerClientScalarWhereInput | IssuerClientScalarWhereInput[]
+  }
+
   export type PaymentRequestUpdateManyWithoutIssuerNestedInput = {
     create?: XOR<PaymentRequestCreateWithoutIssuerInput, PaymentRequestUncheckedCreateWithoutIssuerInput> | PaymentRequestCreateWithoutIssuerInput[] | PaymentRequestUncheckedCreateWithoutIssuerInput[]
     connectOrCreate?: PaymentRequestCreateOrConnectWithoutIssuerInput | PaymentRequestCreateOrConnectWithoutIssuerInput[]
@@ -14214,6 +15672,20 @@ export namespace Prisma {
     deleteMany?: InvoiceScalarWhereInput | InvoiceScalarWhereInput[]
   }
 
+  export type IssuerClientUncheckedUpdateManyWithoutIssuerNestedInput = {
+    create?: XOR<IssuerClientCreateWithoutIssuerInput, IssuerClientUncheckedCreateWithoutIssuerInput> | IssuerClientCreateWithoutIssuerInput[] | IssuerClientUncheckedCreateWithoutIssuerInput[]
+    connectOrCreate?: IssuerClientCreateOrConnectWithoutIssuerInput | IssuerClientCreateOrConnectWithoutIssuerInput[]
+    upsert?: IssuerClientUpsertWithWhereUniqueWithoutIssuerInput | IssuerClientUpsertWithWhereUniqueWithoutIssuerInput[]
+    createMany?: IssuerClientCreateManyIssuerInputEnvelope
+    set?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    disconnect?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    delete?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    connect?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    update?: IssuerClientUpdateWithWhereUniqueWithoutIssuerInput | IssuerClientUpdateWithWhereUniqueWithoutIssuerInput[]
+    updateMany?: IssuerClientUpdateManyWithWhereWithoutIssuerInput | IssuerClientUpdateManyWithWhereWithoutIssuerInput[]
+    deleteMany?: IssuerClientScalarWhereInput | IssuerClientScalarWhereInput[]
+  }
+
   export type PaymentRequestUncheckedUpdateManyWithoutIssuerNestedInput = {
     create?: XOR<PaymentRequestCreateWithoutIssuerInput, PaymentRequestUncheckedCreateWithoutIssuerInput> | PaymentRequestCreateWithoutIssuerInput[] | PaymentRequestUncheckedCreateWithoutIssuerInput[]
     connectOrCreate?: PaymentRequestCreateOrConnectWithoutIssuerInput | PaymentRequestCreateOrConnectWithoutIssuerInput[]
@@ -14235,11 +15707,25 @@ export namespace Prisma {
     connect?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
   }
 
+  export type IssuerClientCreateNestedManyWithoutClientInput = {
+    create?: XOR<IssuerClientCreateWithoutClientInput, IssuerClientUncheckedCreateWithoutClientInput> | IssuerClientCreateWithoutClientInput[] | IssuerClientUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: IssuerClientCreateOrConnectWithoutClientInput | IssuerClientCreateOrConnectWithoutClientInput[]
+    createMany?: IssuerClientCreateManyClientInputEnvelope
+    connect?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+  }
+
   export type InvoiceUncheckedCreateNestedManyWithoutClientInput = {
     create?: XOR<InvoiceCreateWithoutClientInput, InvoiceUncheckedCreateWithoutClientInput> | InvoiceCreateWithoutClientInput[] | InvoiceUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InvoiceCreateOrConnectWithoutClientInput | InvoiceCreateOrConnectWithoutClientInput[]
     createMany?: InvoiceCreateManyClientInputEnvelope
     connect?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
+  }
+
+  export type IssuerClientUncheckedCreateNestedManyWithoutClientInput = {
+    create?: XOR<IssuerClientCreateWithoutClientInput, IssuerClientUncheckedCreateWithoutClientInput> | IssuerClientCreateWithoutClientInput[] | IssuerClientUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: IssuerClientCreateOrConnectWithoutClientInput | IssuerClientCreateOrConnectWithoutClientInput[]
+    createMany?: IssuerClientCreateManyClientInputEnvelope
+    connect?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
   }
 
   export type InvoiceUpdateManyWithoutClientNestedInput = {
@@ -14256,6 +15742,20 @@ export namespace Prisma {
     deleteMany?: InvoiceScalarWhereInput | InvoiceScalarWhereInput[]
   }
 
+  export type IssuerClientUpdateManyWithoutClientNestedInput = {
+    create?: XOR<IssuerClientCreateWithoutClientInput, IssuerClientUncheckedCreateWithoutClientInput> | IssuerClientCreateWithoutClientInput[] | IssuerClientUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: IssuerClientCreateOrConnectWithoutClientInput | IssuerClientCreateOrConnectWithoutClientInput[]
+    upsert?: IssuerClientUpsertWithWhereUniqueWithoutClientInput | IssuerClientUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: IssuerClientCreateManyClientInputEnvelope
+    set?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    disconnect?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    delete?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    connect?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    update?: IssuerClientUpdateWithWhereUniqueWithoutClientInput | IssuerClientUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: IssuerClientUpdateManyWithWhereWithoutClientInput | IssuerClientUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: IssuerClientScalarWhereInput | IssuerClientScalarWhereInput[]
+  }
+
   export type InvoiceUncheckedUpdateManyWithoutClientNestedInput = {
     create?: XOR<InvoiceCreateWithoutClientInput, InvoiceUncheckedCreateWithoutClientInput> | InvoiceCreateWithoutClientInput[] | InvoiceUncheckedCreateWithoutClientInput[]
     connectOrCreate?: InvoiceCreateOrConnectWithoutClientInput | InvoiceCreateOrConnectWithoutClientInput[]
@@ -14268,6 +15768,48 @@ export namespace Prisma {
     update?: InvoiceUpdateWithWhereUniqueWithoutClientInput | InvoiceUpdateWithWhereUniqueWithoutClientInput[]
     updateMany?: InvoiceUpdateManyWithWhereWithoutClientInput | InvoiceUpdateManyWithWhereWithoutClientInput[]
     deleteMany?: InvoiceScalarWhereInput | InvoiceScalarWhereInput[]
+  }
+
+  export type IssuerClientUncheckedUpdateManyWithoutClientNestedInput = {
+    create?: XOR<IssuerClientCreateWithoutClientInput, IssuerClientUncheckedCreateWithoutClientInput> | IssuerClientCreateWithoutClientInput[] | IssuerClientUncheckedCreateWithoutClientInput[]
+    connectOrCreate?: IssuerClientCreateOrConnectWithoutClientInput | IssuerClientCreateOrConnectWithoutClientInput[]
+    upsert?: IssuerClientUpsertWithWhereUniqueWithoutClientInput | IssuerClientUpsertWithWhereUniqueWithoutClientInput[]
+    createMany?: IssuerClientCreateManyClientInputEnvelope
+    set?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    disconnect?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    delete?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    connect?: IssuerClientWhereUniqueInput | IssuerClientWhereUniqueInput[]
+    update?: IssuerClientUpdateWithWhereUniqueWithoutClientInput | IssuerClientUpdateWithWhereUniqueWithoutClientInput[]
+    updateMany?: IssuerClientUpdateManyWithWhereWithoutClientInput | IssuerClientUpdateManyWithWhereWithoutClientInput[]
+    deleteMany?: IssuerClientScalarWhereInput | IssuerClientScalarWhereInput[]
+  }
+
+  export type IssuerCreateNestedOneWithoutClientsInput = {
+    create?: XOR<IssuerCreateWithoutClientsInput, IssuerUncheckedCreateWithoutClientsInput>
+    connectOrCreate?: IssuerCreateOrConnectWithoutClientsInput
+    connect?: IssuerWhereUniqueInput
+  }
+
+  export type ClientCreateNestedOneWithoutIssuersInput = {
+    create?: XOR<ClientCreateWithoutIssuersInput, ClientUncheckedCreateWithoutIssuersInput>
+    connectOrCreate?: ClientCreateOrConnectWithoutIssuersInput
+    connect?: ClientWhereUniqueInput
+  }
+
+  export type IssuerUpdateOneRequiredWithoutClientsNestedInput = {
+    create?: XOR<IssuerCreateWithoutClientsInput, IssuerUncheckedCreateWithoutClientsInput>
+    connectOrCreate?: IssuerCreateOrConnectWithoutClientsInput
+    upsert?: IssuerUpsertWithoutClientsInput
+    connect?: IssuerWhereUniqueInput
+    update?: XOR<XOR<IssuerUpdateToOneWithWhereWithoutClientsInput, IssuerUpdateWithoutClientsInput>, IssuerUncheckedUpdateWithoutClientsInput>
+  }
+
+  export type ClientUpdateOneRequiredWithoutIssuersNestedInput = {
+    create?: XOR<ClientCreateWithoutIssuersInput, ClientUncheckedCreateWithoutIssuersInput>
+    connectOrCreate?: ClientCreateOrConnectWithoutIssuersInput
+    upsert?: ClientUpsertWithoutIssuersInput
+    connect?: ClientWhereUniqueInput
+    update?: XOR<XOR<ClientUpdateToOneWithWhereWithoutIssuersInput, ClientUpdateWithoutIssuersInput>, ClientUncheckedUpdateWithoutIssuersInput>
   }
 
   export type InvoiceItemCreateNestedManyWithoutProductInput = {
@@ -14670,6 +16212,26 @@ export namespace Prisma {
     data: InvoiceCreateManyIssuerInput | InvoiceCreateManyIssuerInput[]
   }
 
+  export type IssuerClientCreateWithoutIssuerInput = {
+    createdAt?: Date | string
+    client: ClientCreateNestedOneWithoutIssuersInput
+  }
+
+  export type IssuerClientUncheckedCreateWithoutIssuerInput = {
+    id?: number
+    clientId: number
+    createdAt?: Date | string
+  }
+
+  export type IssuerClientCreateOrConnectWithoutIssuerInput = {
+    where: IssuerClientWhereUniqueInput
+    create: XOR<IssuerClientCreateWithoutIssuerInput, IssuerClientUncheckedCreateWithoutIssuerInput>
+  }
+
+  export type IssuerClientCreateManyIssuerInputEnvelope = {
+    data: IssuerClientCreateManyIssuerInput | IssuerClientCreateManyIssuerInput[]
+  }
+
   export type PaymentRequestCreateWithoutIssuerInput = {
     ruc: string
     razonSocial: string
@@ -14743,6 +16305,32 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Invoice"> | Date | string
     clientId?: IntFilter<"Invoice"> | number
     issuerId?: IntFilter<"Invoice"> | number
+  }
+
+  export type IssuerClientUpsertWithWhereUniqueWithoutIssuerInput = {
+    where: IssuerClientWhereUniqueInput
+    update: XOR<IssuerClientUpdateWithoutIssuerInput, IssuerClientUncheckedUpdateWithoutIssuerInput>
+    create: XOR<IssuerClientCreateWithoutIssuerInput, IssuerClientUncheckedCreateWithoutIssuerInput>
+  }
+
+  export type IssuerClientUpdateWithWhereUniqueWithoutIssuerInput = {
+    where: IssuerClientWhereUniqueInput
+    data: XOR<IssuerClientUpdateWithoutIssuerInput, IssuerClientUncheckedUpdateWithoutIssuerInput>
+  }
+
+  export type IssuerClientUpdateManyWithWhereWithoutIssuerInput = {
+    where: IssuerClientScalarWhereInput
+    data: XOR<IssuerClientUpdateManyMutationInput, IssuerClientUncheckedUpdateManyWithoutIssuerInput>
+  }
+
+  export type IssuerClientScalarWhereInput = {
+    AND?: IssuerClientScalarWhereInput | IssuerClientScalarWhereInput[]
+    OR?: IssuerClientScalarWhereInput[]
+    NOT?: IssuerClientScalarWhereInput | IssuerClientScalarWhereInput[]
+    id?: IntFilter<"IssuerClient"> | number
+    issuerId?: IntFilter<"IssuerClient"> | number
+    clientId?: IntFilter<"IssuerClient"> | number
+    createdAt?: DateTimeFilter<"IssuerClient"> | Date | string
   }
 
   export type PaymentRequestUpsertWithWhereUniqueWithoutIssuerInput = {
@@ -14830,6 +16418,26 @@ export namespace Prisma {
     data: InvoiceCreateManyClientInput | InvoiceCreateManyClientInput[]
   }
 
+  export type IssuerClientCreateWithoutClientInput = {
+    createdAt?: Date | string
+    issuer: IssuerCreateNestedOneWithoutClientsInput
+  }
+
+  export type IssuerClientUncheckedCreateWithoutClientInput = {
+    id?: number
+    issuerId: number
+    createdAt?: Date | string
+  }
+
+  export type IssuerClientCreateOrConnectWithoutClientInput = {
+    where: IssuerClientWhereUniqueInput
+    create: XOR<IssuerClientCreateWithoutClientInput, IssuerClientUncheckedCreateWithoutClientInput>
+  }
+
+  export type IssuerClientCreateManyClientInputEnvelope = {
+    data: IssuerClientCreateManyClientInput | IssuerClientCreateManyClientInput[]
+  }
+
   export type InvoiceUpsertWithWhereUniqueWithoutClientInput = {
     where: InvoiceWhereUniqueInput
     update: XOR<InvoiceUpdateWithoutClientInput, InvoiceUncheckedUpdateWithoutClientInput>
@@ -14844,6 +16452,230 @@ export namespace Prisma {
   export type InvoiceUpdateManyWithWhereWithoutClientInput = {
     where: InvoiceScalarWhereInput
     data: XOR<InvoiceUpdateManyMutationInput, InvoiceUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type IssuerClientUpsertWithWhereUniqueWithoutClientInput = {
+    where: IssuerClientWhereUniqueInput
+    update: XOR<IssuerClientUpdateWithoutClientInput, IssuerClientUncheckedUpdateWithoutClientInput>
+    create: XOR<IssuerClientCreateWithoutClientInput, IssuerClientUncheckedCreateWithoutClientInput>
+  }
+
+  export type IssuerClientUpdateWithWhereUniqueWithoutClientInput = {
+    where: IssuerClientWhereUniqueInput
+    data: XOR<IssuerClientUpdateWithoutClientInput, IssuerClientUncheckedUpdateWithoutClientInput>
+  }
+
+  export type IssuerClientUpdateManyWithWhereWithoutClientInput = {
+    where: IssuerClientScalarWhereInput
+    data: XOR<IssuerClientUpdateManyMutationInput, IssuerClientUncheckedUpdateManyWithoutClientInput>
+  }
+
+  export type IssuerCreateWithoutClientsInput = {
+    ruc: string
+    nombres: string
+    apellidos: string
+    nombreEmpresa: string
+    razonSocial: string
+    direccion: string
+    email: string
+    celular: string
+    establecimiento?: string
+    puntoEmision?: string
+    obligadoContabilidad?: boolean
+    regimen?: string
+    ambiente?: number
+    firmaElectronica?: string | null
+    codigoSri?: string | null
+    startSecuencial?: string
+    password?: string
+    status?: string
+    planType?: string
+    monthlyFee?: number
+    balance?: number
+    subscriptionEnds?: Date | string
+    logo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    invoices?: InvoiceCreateNestedManyWithoutIssuerInput
+    paymentRequests?: PaymentRequestCreateNestedManyWithoutIssuerInput
+  }
+
+  export type IssuerUncheckedCreateWithoutClientsInput = {
+    id?: number
+    ruc: string
+    nombres: string
+    apellidos: string
+    nombreEmpresa: string
+    razonSocial: string
+    direccion: string
+    email: string
+    celular: string
+    establecimiento?: string
+    puntoEmision?: string
+    obligadoContabilidad?: boolean
+    regimen?: string
+    ambiente?: number
+    firmaElectronica?: string | null
+    codigoSri?: string | null
+    startSecuencial?: string
+    password?: string
+    status?: string
+    planType?: string
+    monthlyFee?: number
+    balance?: number
+    subscriptionEnds?: Date | string
+    logo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    invoices?: InvoiceUncheckedCreateNestedManyWithoutIssuerInput
+    paymentRequests?: PaymentRequestUncheckedCreateNestedManyWithoutIssuerInput
+  }
+
+  export type IssuerCreateOrConnectWithoutClientsInput = {
+    where: IssuerWhereUniqueInput
+    create: XOR<IssuerCreateWithoutClientsInput, IssuerUncheckedCreateWithoutClientsInput>
+  }
+
+  export type ClientCreateWithoutIssuersInput = {
+    nombres: string
+    tipoIdentificacion: string
+    identificacion: string
+    direccion: string
+    mail: string
+    celular: string
+    telefono?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    invoices?: InvoiceCreateNestedManyWithoutClientInput
+  }
+
+  export type ClientUncheckedCreateWithoutIssuersInput = {
+    id?: number
+    nombres: string
+    tipoIdentificacion: string
+    identificacion: string
+    direccion: string
+    mail: string
+    celular: string
+    telefono?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    invoices?: InvoiceUncheckedCreateNestedManyWithoutClientInput
+  }
+
+  export type ClientCreateOrConnectWithoutIssuersInput = {
+    where: ClientWhereUniqueInput
+    create: XOR<ClientCreateWithoutIssuersInput, ClientUncheckedCreateWithoutIssuersInput>
+  }
+
+  export type IssuerUpsertWithoutClientsInput = {
+    update: XOR<IssuerUpdateWithoutClientsInput, IssuerUncheckedUpdateWithoutClientsInput>
+    create: XOR<IssuerCreateWithoutClientsInput, IssuerUncheckedCreateWithoutClientsInput>
+    where?: IssuerWhereInput
+  }
+
+  export type IssuerUpdateToOneWithWhereWithoutClientsInput = {
+    where?: IssuerWhereInput
+    data: XOR<IssuerUpdateWithoutClientsInput, IssuerUncheckedUpdateWithoutClientsInput>
+  }
+
+  export type IssuerUpdateWithoutClientsInput = {
+    ruc?: StringFieldUpdateOperationsInput | string
+    nombres?: StringFieldUpdateOperationsInput | string
+    apellidos?: StringFieldUpdateOperationsInput | string
+    nombreEmpresa?: StringFieldUpdateOperationsInput | string
+    razonSocial?: StringFieldUpdateOperationsInput | string
+    direccion?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    celular?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    obligadoContabilidad?: BoolFieldUpdateOperationsInput | boolean
+    regimen?: StringFieldUpdateOperationsInput | string
+    ambiente?: IntFieldUpdateOperationsInput | number
+    firmaElectronica?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoSri?: NullableStringFieldUpdateOperationsInput | string | null
+    startSecuencial?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    planType?: StringFieldUpdateOperationsInput | string
+    monthlyFee?: FloatFieldUpdateOperationsInput | number
+    balance?: FloatFieldUpdateOperationsInput | number
+    subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    invoices?: InvoiceUpdateManyWithoutIssuerNestedInput
+    paymentRequests?: PaymentRequestUpdateManyWithoutIssuerNestedInput
+  }
+
+  export type IssuerUncheckedUpdateWithoutClientsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    ruc?: StringFieldUpdateOperationsInput | string
+    nombres?: StringFieldUpdateOperationsInput | string
+    apellidos?: StringFieldUpdateOperationsInput | string
+    nombreEmpresa?: StringFieldUpdateOperationsInput | string
+    razonSocial?: StringFieldUpdateOperationsInput | string
+    direccion?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    celular?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    obligadoContabilidad?: BoolFieldUpdateOperationsInput | boolean
+    regimen?: StringFieldUpdateOperationsInput | string
+    ambiente?: IntFieldUpdateOperationsInput | number
+    firmaElectronica?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoSri?: NullableStringFieldUpdateOperationsInput | string | null
+    startSecuencial?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    planType?: StringFieldUpdateOperationsInput | string
+    monthlyFee?: FloatFieldUpdateOperationsInput | number
+    balance?: FloatFieldUpdateOperationsInput | number
+    subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    invoices?: InvoiceUncheckedUpdateManyWithoutIssuerNestedInput
+    paymentRequests?: PaymentRequestUncheckedUpdateManyWithoutIssuerNestedInput
+  }
+
+  export type ClientUpsertWithoutIssuersInput = {
+    update: XOR<ClientUpdateWithoutIssuersInput, ClientUncheckedUpdateWithoutIssuersInput>
+    create: XOR<ClientCreateWithoutIssuersInput, ClientUncheckedCreateWithoutIssuersInput>
+    where?: ClientWhereInput
+  }
+
+  export type ClientUpdateToOneWithWhereWithoutIssuersInput = {
+    where?: ClientWhereInput
+    data: XOR<ClientUpdateWithoutIssuersInput, ClientUncheckedUpdateWithoutIssuersInput>
+  }
+
+  export type ClientUpdateWithoutIssuersInput = {
+    nombres?: StringFieldUpdateOperationsInput | string
+    tipoIdentificacion?: StringFieldUpdateOperationsInput | string
+    identificacion?: StringFieldUpdateOperationsInput | string
+    direccion?: StringFieldUpdateOperationsInput | string
+    mail?: StringFieldUpdateOperationsInput | string
+    celular?: StringFieldUpdateOperationsInput | string
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    invoices?: InvoiceUpdateManyWithoutClientNestedInput
+  }
+
+  export type ClientUncheckedUpdateWithoutIssuersInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    nombres?: StringFieldUpdateOperationsInput | string
+    tipoIdentificacion?: StringFieldUpdateOperationsInput | string
+    identificacion?: StringFieldUpdateOperationsInput | string
+    direccion?: StringFieldUpdateOperationsInput | string
+    mail?: StringFieldUpdateOperationsInput | string
+    celular?: StringFieldUpdateOperationsInput | string
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    invoices?: InvoiceUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type InvoiceItemCreateWithoutProductInput = {
@@ -14923,6 +16755,7 @@ export namespace Prisma {
     telefono?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    issuers?: IssuerClientCreateNestedManyWithoutClientInput
   }
 
   export type ClientUncheckedCreateWithoutInvoicesInput = {
@@ -14936,6 +16769,7 @@ export namespace Prisma {
     telefono?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    issuers?: IssuerClientUncheckedCreateNestedManyWithoutClientInput
   }
 
   export type ClientCreateOrConnectWithoutInvoicesInput = {
@@ -14969,6 +16803,7 @@ export namespace Prisma {
     logo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    clients?: IssuerClientCreateNestedManyWithoutIssuerInput
     paymentRequests?: PaymentRequestCreateNestedManyWithoutIssuerInput
   }
 
@@ -14999,6 +16834,7 @@ export namespace Prisma {
     logo?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    clients?: IssuerClientUncheckedCreateNestedManyWithoutIssuerInput
     paymentRequests?: PaymentRequestUncheckedCreateNestedManyWithoutIssuerInput
   }
 
@@ -15062,6 +16898,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuers?: IssuerClientUpdateManyWithoutClientNestedInput
   }
 
   export type ClientUncheckedUpdateWithoutInvoicesInput = {
@@ -15075,6 +16912,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuers?: IssuerClientUncheckedUpdateManyWithoutClientNestedInput
   }
 
   export type IssuerUpsertWithoutInvoicesInput = {
@@ -15114,6 +16952,7 @@ export namespace Prisma {
     logo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clients?: IssuerClientUpdateManyWithoutIssuerNestedInput
     paymentRequests?: PaymentRequestUpdateManyWithoutIssuerNestedInput
   }
 
@@ -15144,6 +16983,7 @@ export namespace Prisma {
     logo?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clients?: IssuerClientUncheckedUpdateManyWithoutIssuerNestedInput
     paymentRequests?: PaymentRequestUncheckedUpdateManyWithoutIssuerNestedInput
   }
 
@@ -15354,6 +17194,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     invoices?: InvoiceCreateNestedManyWithoutIssuerInput
+    clients?: IssuerClientCreateNestedManyWithoutIssuerInput
   }
 
   export type IssuerUncheckedCreateWithoutPaymentRequestsInput = {
@@ -15384,6 +17225,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     invoices?: InvoiceUncheckedCreateNestedManyWithoutIssuerInput
+    clients?: IssuerClientUncheckedCreateNestedManyWithoutIssuerInput
   }
 
   export type IssuerCreateOrConnectWithoutPaymentRequestsInput = {
@@ -15429,6 +17271,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUpdateManyWithoutIssuerNestedInput
+    clients?: IssuerClientUpdateManyWithoutIssuerNestedInput
   }
 
   export type IssuerUncheckedUpdateWithoutPaymentRequestsInput = {
@@ -15459,6 +17302,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUncheckedUpdateManyWithoutIssuerNestedInput
+    clients?: IssuerClientUncheckedUpdateManyWithoutIssuerNestedInput
   }
 
   export type InvoiceCreateManyIssuerInput = {
@@ -15480,6 +17324,12 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     clientId: number
+  }
+
+  export type IssuerClientCreateManyIssuerInput = {
+    id?: number
+    clientId: number
+    createdAt?: Date | string
   }
 
   export type PaymentRequestCreateManyIssuerInput = {
@@ -15559,6 +17409,23 @@ export namespace Prisma {
     clientId?: IntFieldUpdateOperationsInput | number
   }
 
+  export type IssuerClientUpdateWithoutIssuerInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: ClientUpdateOneRequiredWithoutIssuersNestedInput
+  }
+
+  export type IssuerClientUncheckedUpdateWithoutIssuerInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    clientId?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IssuerClientUncheckedUpdateManyWithoutIssuerInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    clientId?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type PaymentRequestUpdateWithoutIssuerInput = {
     ruc?: StringFieldUpdateOperationsInput | string
     razonSocial?: StringFieldUpdateOperationsInput | string
@@ -15616,6 +17483,12 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     issuerId: number
+  }
+
+  export type IssuerClientCreateManyClientInput = {
+    id?: number
+    issuerId: number
+    createdAt?: Date | string
   }
 
   export type InvoiceUpdateWithoutClientInput = {
@@ -15680,6 +17553,23 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     issuerId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type IssuerClientUpdateWithoutClientInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuer?: IssuerUpdateOneRequiredWithoutClientsNestedInput
+  }
+
+  export type IssuerClientUncheckedUpdateWithoutClientInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    issuerId?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IssuerClientUncheckedUpdateManyWithoutClientInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    issuerId?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type InvoiceItemCreateManyProductInput = {

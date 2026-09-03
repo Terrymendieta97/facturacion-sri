@@ -43,6 +43,7 @@ model Issuer {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   invoices        Invoice[]
+  clients         IssuerClient[]
   paymentRequests PaymentRequest[]
 }
 
@@ -86,17 +87,30 @@ model BankAccount {
 }
 
 model Client {
-  id                 Int       @id @default(autoincrement())
+  id                 Int            @id @default(autoincrement())
   nombres            String
   tipoIdentificacion String // "04" (RUC), "05" (Cédula), "06" (Pasaporte), "07" (Consumidor Final)
-  identificacion     String    @unique
+  identificacion     String         @unique
   direccion          String
   mail               String
   celular            String
   telefono           String? // Teléfono convencional adicional
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   invoices           Invoice[]
+  issuers            IssuerClient[]
+}
+
+model IssuerClient {
+  id        Int      @id @default(autoincrement())
+  issuerId  Int
+  clientId  Int
+  createdAt DateTime @default(now())
+
+  issuer Issuer @relation(fields: [issuerId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([issuerId, clientId])
 }
 
 model Product {

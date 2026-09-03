@@ -43,6 +43,7 @@ model Issuer {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   invoices            Invoice[]
+  clients             IssuerClient[]
   paymentRequests     PaymentRequest[]
 }
 
@@ -98,6 +99,19 @@ model Client {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   invoices           Invoice[]
+  issuers            IssuerClient[]
+}
+
+model IssuerClient {
+  id        Int      @id @default(autoincrement())
+  issuerId  Int
+  clientId  Int
+  createdAt DateTime @default(now())
+
+  issuer    Issuer   @relation(fields: [issuerId], references: [id], onDelete: Cascade)
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([issuerId, clientId])
 }
 
 model Product {

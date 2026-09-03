@@ -113,7 +113,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Este número de RUC ya se encuentra registrado." }, { status: 400 });
       }
 
-      // Obtener saldo de regalo por defecto del SystemConfig
+      // Obtener saldo de cortesía por defecto del SystemConfig
       let sysConfig = await db.systemConfig.findFirst();
       if (!sysConfig) {
         sysConfig = await db.systemConfig.create({
@@ -121,14 +121,18 @@ export async function POST(request: Request) {
             adminPassword: "1104759574.1998",
             adminWhatsapp: "593999999999",
             bankAccounts: "Banco Pichincha - Ahorros: 2200123456 (Beneficiario: FácilSRI)",
-            defaultBalance: 5.0,
+            defaultBalance: 1.0,
+            pricePerInvoice: 0.10,
+            monthlyPlanFee: 15.0,
           },
         });
       }
 
-      // El plan por defecto inicia con 30 días de suscripción mensual activa
+      // Los nuevos usuarios inician en la modalidad BILLETERA (Pago por Factura) con $1.00 gratis
       const subscriptionEnds = new Date();
       subscriptionEnds.setDate(subscriptionEnds.getDate() + 30);
+
+      const initialBalance = typeof sysConfig.defaultBalance === "number" ? sysConfig.defaultBalance : 1.0;
 
       const newIssuer = await db.issuer.create({
         data: {
@@ -142,9 +146,9 @@ export async function POST(request: Request) {
           celular,
           password,
           status: "ACTIVE",
-          planType: "MONTHLY",
-          monthlyFee: 15.0,
-          balance: sysConfig.defaultBalance,
+          planType: "PAY_PER_INVOICE",
+          monthlyFee: sysConfig.monthlyPlanFee ?? 15.0,
+          balance: initialBalance,
           subscriptionEnds,
           startSecuencial: "000000001",
         },
