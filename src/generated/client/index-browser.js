@@ -143,6 +143,8 @@ exports.Prisma.IssuerScalarFieldEnum = {
   balance: 'balance',
   subscriptionEnds: 'subscriptionEnds',
   logo: 'logo',
+  apiKey: 'apiKey',
+  apiKeyCreatedAt: 'apiKeyCreatedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -154,6 +156,7 @@ exports.Prisma.SystemConfigScalarFieldEnum = {
   bankAccounts: 'bankAccounts',
   defaultBalance: 'defaultBalance',
   systemName: 'systemName',
+  pageTitle: 'pageTitle',
   systemLogo: 'systemLogo',
   systemFavicon: 'systemFavicon',
   loginTitle: 'loginTitle',

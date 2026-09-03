@@ -1790,6 +1790,8 @@ export namespace Prisma {
     balance: number | null
     subscriptionEnds: Date | null
     logo: string | null
+    apiKey: string | null
+    apiKeyCreatedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1819,6 +1821,8 @@ export namespace Prisma {
     balance: number | null
     subscriptionEnds: Date | null
     logo: string | null
+    apiKey: string | null
+    apiKeyCreatedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1848,6 +1852,8 @@ export namespace Prisma {
     balance: number
     subscriptionEnds: number
     logo: number
+    apiKey: number
+    apiKeyCreatedAt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1893,6 +1899,8 @@ export namespace Prisma {
     balance?: true
     subscriptionEnds?: true
     logo?: true
+    apiKey?: true
+    apiKeyCreatedAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1922,6 +1930,8 @@ export namespace Prisma {
     balance?: true
     subscriptionEnds?: true
     logo?: true
+    apiKey?: true
+    apiKeyCreatedAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1951,6 +1961,8 @@ export namespace Prisma {
     balance?: true
     subscriptionEnds?: true
     logo?: true
+    apiKey?: true
+    apiKeyCreatedAt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -2067,6 +2079,8 @@ export namespace Prisma {
     balance: number
     subscriptionEnds: Date
     logo: string | null
+    apiKey: string | null
+    apiKeyCreatedAt: Date | null
     createdAt: Date
     updatedAt: Date
     _count: IssuerCountAggregateOutputType | null
@@ -2115,6 +2129,8 @@ export namespace Prisma {
     balance?: boolean
     subscriptionEnds?: boolean
     logo?: boolean
+    apiKey?: boolean
+    apiKeyCreatedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     invoices?: boolean | Issuer$invoicesArgs<ExtArgs>
@@ -2148,6 +2164,8 @@ export namespace Prisma {
     balance?: boolean
     subscriptionEnds?: boolean
     logo?: boolean
+    apiKey?: boolean
+    apiKeyCreatedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["issuer"]>
@@ -2177,6 +2195,8 @@ export namespace Prisma {
     balance?: boolean
     subscriptionEnds?: boolean
     logo?: boolean
+    apiKey?: boolean
+    apiKeyCreatedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["issuer"]>
@@ -2206,11 +2226,13 @@ export namespace Prisma {
     balance?: boolean
     subscriptionEnds?: boolean
     logo?: boolean
+    apiKey?: boolean
+    apiKeyCreatedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type IssuerOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ruc" | "nombres" | "apellidos" | "nombreEmpresa" | "razonSocial" | "direccion" | "email" | "celular" | "establecimiento" | "puntoEmision" | "obligadoContabilidad" | "regimen" | "ambiente" | "firmaElectronica" | "codigoSri" | "startSecuencial" | "password" | "status" | "planType" | "monthlyFee" | "balance" | "subscriptionEnds" | "logo" | "createdAt" | "updatedAt", ExtArgs["result"]["issuer"]>
+  export type IssuerOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ruc" | "nombres" | "apellidos" | "nombreEmpresa" | "razonSocial" | "direccion" | "email" | "celular" | "establecimiento" | "puntoEmision" | "obligadoContabilidad" | "regimen" | "ambiente" | "firmaElectronica" | "codigoSri" | "startSecuencial" | "password" | "status" | "planType" | "monthlyFee" | "balance" | "subscriptionEnds" | "logo" | "apiKey" | "apiKeyCreatedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["issuer"]>
   export type IssuerInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     invoices?: boolean | Issuer$invoicesArgs<ExtArgs>
     clients?: boolean | Issuer$clientsArgs<ExtArgs>
@@ -2252,6 +2274,8 @@ export namespace Prisma {
       balance: number
       subscriptionEnds: Date
       logo: string | null
+      apiKey: string | null
+      apiKeyCreatedAt: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["issuer"]>
@@ -2704,6 +2728,8 @@ export namespace Prisma {
     readonly balance: FieldRef<"Issuer", 'Float'>
     readonly subscriptionEnds: FieldRef<"Issuer", 'DateTime'>
     readonly logo: FieldRef<"Issuer", 'String'>
+    readonly apiKey: FieldRef<"Issuer", 'String'>
+    readonly apiKeyCreatedAt: FieldRef<"Issuer", 'DateTime'>
     readonly createdAt: FieldRef<"Issuer", 'DateTime'>
     readonly updatedAt: FieldRef<"Issuer", 'DateTime'>
   }
@@ -3215,6 +3241,7 @@ export namespace Prisma {
     bankAccounts: string | null
     defaultBalance: number | null
     systemName: string | null
+    pageTitle: string | null
     systemLogo: string | null
     systemFavicon: string | null
     loginTitle: string | null
@@ -3234,6 +3261,7 @@ export namespace Prisma {
     bankAccounts: string | null
     defaultBalance: number | null
     systemName: string | null
+    pageTitle: string | null
     systemLogo: string | null
     systemFavicon: string | null
     loginTitle: string | null
@@ -3253,6 +3281,7 @@ export namespace Prisma {
     bankAccounts: number
     defaultBalance: number
     systemName: number
+    pageTitle: number
     systemLogo: number
     systemFavicon: number
     loginTitle: number
@@ -3288,6 +3317,7 @@ export namespace Prisma {
     bankAccounts?: true
     defaultBalance?: true
     systemName?: true
+    pageTitle?: true
     systemLogo?: true
     systemFavicon?: true
     loginTitle?: true
@@ -3307,6 +3337,7 @@ export namespace Prisma {
     bankAccounts?: true
     defaultBalance?: true
     systemName?: true
+    pageTitle?: true
     systemLogo?: true
     systemFavicon?: true
     loginTitle?: true
@@ -3326,6 +3357,7 @@ export namespace Prisma {
     bankAccounts?: true
     defaultBalance?: true
     systemName?: true
+    pageTitle?: true
     systemLogo?: true
     systemFavicon?: true
     loginTitle?: true
@@ -3432,6 +3464,7 @@ export namespace Prisma {
     bankAccounts: string
     defaultBalance: number
     systemName: string
+    pageTitle: string
     systemLogo: string | null
     systemFavicon: string | null
     loginTitle: string
@@ -3470,6 +3503,7 @@ export namespace Prisma {
     bankAccounts?: boolean
     defaultBalance?: boolean
     systemName?: boolean
+    pageTitle?: boolean
     systemLogo?: boolean
     systemFavicon?: boolean
     loginTitle?: boolean
@@ -3489,6 +3523,7 @@ export namespace Prisma {
     bankAccounts?: boolean
     defaultBalance?: boolean
     systemName?: boolean
+    pageTitle?: boolean
     systemLogo?: boolean
     systemFavicon?: boolean
     loginTitle?: boolean
@@ -3508,6 +3543,7 @@ export namespace Prisma {
     bankAccounts?: boolean
     defaultBalance?: boolean
     systemName?: boolean
+    pageTitle?: boolean
     systemLogo?: boolean
     systemFavicon?: boolean
     loginTitle?: boolean
@@ -3527,6 +3563,7 @@ export namespace Prisma {
     bankAccounts?: boolean
     defaultBalance?: boolean
     systemName?: boolean
+    pageTitle?: boolean
     systemLogo?: boolean
     systemFavicon?: boolean
     loginTitle?: boolean
@@ -3539,7 +3576,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type SystemConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "adminPassword" | "adminWhatsapp" | "bankAccounts" | "defaultBalance" | "systemName" | "systemLogo" | "systemFavicon" | "loginTitle" | "loginSubtitle" | "metaDescription" | "metaKeywords" | "pricePerInvoice" | "monthlyPlanFee" | "createdAt" | "updatedAt", ExtArgs["result"]["systemConfig"]>
+  export type SystemConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "adminPassword" | "adminWhatsapp" | "bankAccounts" | "defaultBalance" | "systemName" | "pageTitle" | "systemLogo" | "systemFavicon" | "loginTitle" | "loginSubtitle" | "metaDescription" | "metaKeywords" | "pricePerInvoice" | "monthlyPlanFee" | "createdAt" | "updatedAt", ExtArgs["result"]["systemConfig"]>
 
   export type $SystemConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "SystemConfig"
@@ -3551,6 +3588,7 @@ export namespace Prisma {
       bankAccounts: string
       defaultBalance: number
       systemName: string
+      pageTitle: string
       systemLogo: string | null
       systemFavicon: string | null
       loginTitle: string
@@ -3990,6 +4028,7 @@ export namespace Prisma {
     readonly bankAccounts: FieldRef<"SystemConfig", 'String'>
     readonly defaultBalance: FieldRef<"SystemConfig", 'Float'>
     readonly systemName: FieldRef<"SystemConfig", 'String'>
+    readonly pageTitle: FieldRef<"SystemConfig", 'String'>
     readonly systemLogo: FieldRef<"SystemConfig", 'String'>
     readonly systemFavicon: FieldRef<"SystemConfig", 'String'>
     readonly loginTitle: FieldRef<"SystemConfig", 'String'>
@@ -12656,6 +12695,8 @@ export namespace Prisma {
     balance: 'balance',
     subscriptionEnds: 'subscriptionEnds',
     logo: 'logo',
+    apiKey: 'apiKey',
+    apiKeyCreatedAt: 'apiKeyCreatedAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -12670,6 +12711,7 @@ export namespace Prisma {
     bankAccounts: 'bankAccounts',
     defaultBalance: 'defaultBalance',
     systemName: 'systemName',
+    pageTitle: 'pageTitle',
     systemLogo: 'systemLogo',
     systemFavicon: 'systemFavicon',
     loginTitle: 'loginTitle',
@@ -12888,6 +12930,8 @@ export namespace Prisma {
     balance?: FloatFilter<"Issuer"> | number
     subscriptionEnds?: DateTimeFilter<"Issuer"> | Date | string
     logo?: StringNullableFilter<"Issuer"> | string | null
+    apiKey?: StringNullableFilter<"Issuer"> | string | null
+    apiKeyCreatedAt?: DateTimeNullableFilter<"Issuer"> | Date | string | null
     createdAt?: DateTimeFilter<"Issuer"> | Date | string
     updatedAt?: DateTimeFilter<"Issuer"> | Date | string
     invoices?: InvoiceListRelationFilter
@@ -12920,6 +12964,8 @@ export namespace Prisma {
     balance?: SortOrder
     subscriptionEnds?: SortOrder
     logo?: SortOrderInput | SortOrder
+    apiKey?: SortOrderInput | SortOrder
+    apiKeyCreatedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     invoices?: InvoiceOrderByRelationAggregateInput
@@ -12930,6 +12976,7 @@ export namespace Prisma {
   export type IssuerWhereUniqueInput = Prisma.AtLeast<{
     id?: number
     ruc?: string
+    apiKey?: string
     AND?: IssuerWhereInput | IssuerWhereInput[]
     OR?: IssuerWhereInput[]
     NOT?: IssuerWhereInput | IssuerWhereInput[]
@@ -12955,12 +13002,13 @@ export namespace Prisma {
     balance?: FloatFilter<"Issuer"> | number
     subscriptionEnds?: DateTimeFilter<"Issuer"> | Date | string
     logo?: StringNullableFilter<"Issuer"> | string | null
+    apiKeyCreatedAt?: DateTimeNullableFilter<"Issuer"> | Date | string | null
     createdAt?: DateTimeFilter<"Issuer"> | Date | string
     updatedAt?: DateTimeFilter<"Issuer"> | Date | string
     invoices?: InvoiceListRelationFilter
     clients?: IssuerClientListRelationFilter
     paymentRequests?: PaymentRequestListRelationFilter
-  }, "id" | "ruc">
+  }, "id" | "ruc" | "apiKey">
 
   export type IssuerOrderByWithAggregationInput = {
     id?: SortOrder
@@ -12987,6 +13035,8 @@ export namespace Prisma {
     balance?: SortOrder
     subscriptionEnds?: SortOrder
     logo?: SortOrderInput | SortOrder
+    apiKey?: SortOrderInput | SortOrder
+    apiKeyCreatedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: IssuerCountOrderByAggregateInput
@@ -13024,6 +13074,8 @@ export namespace Prisma {
     balance?: FloatWithAggregatesFilter<"Issuer"> | number
     subscriptionEnds?: DateTimeWithAggregatesFilter<"Issuer"> | Date | string
     logo?: StringNullableWithAggregatesFilter<"Issuer"> | string | null
+    apiKey?: StringNullableWithAggregatesFilter<"Issuer"> | string | null
+    apiKeyCreatedAt?: DateTimeNullableWithAggregatesFilter<"Issuer"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Issuer"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Issuer"> | Date | string
   }
@@ -13038,6 +13090,7 @@ export namespace Prisma {
     bankAccounts?: StringFilter<"SystemConfig"> | string
     defaultBalance?: FloatFilter<"SystemConfig"> | number
     systemName?: StringFilter<"SystemConfig"> | string
+    pageTitle?: StringFilter<"SystemConfig"> | string
     systemLogo?: StringNullableFilter<"SystemConfig"> | string | null
     systemFavicon?: StringNullableFilter<"SystemConfig"> | string | null
     loginTitle?: StringFilter<"SystemConfig"> | string
@@ -13057,6 +13110,7 @@ export namespace Prisma {
     bankAccounts?: SortOrder
     defaultBalance?: SortOrder
     systemName?: SortOrder
+    pageTitle?: SortOrder
     systemLogo?: SortOrderInput | SortOrder
     systemFavicon?: SortOrderInput | SortOrder
     loginTitle?: SortOrder
@@ -13079,6 +13133,7 @@ export namespace Prisma {
     bankAccounts?: StringFilter<"SystemConfig"> | string
     defaultBalance?: FloatFilter<"SystemConfig"> | number
     systemName?: StringFilter<"SystemConfig"> | string
+    pageTitle?: StringFilter<"SystemConfig"> | string
     systemLogo?: StringNullableFilter<"SystemConfig"> | string | null
     systemFavicon?: StringNullableFilter<"SystemConfig"> | string | null
     loginTitle?: StringFilter<"SystemConfig"> | string
@@ -13098,6 +13153,7 @@ export namespace Prisma {
     bankAccounts?: SortOrder
     defaultBalance?: SortOrder
     systemName?: SortOrder
+    pageTitle?: SortOrder
     systemLogo?: SortOrderInput | SortOrder
     systemFavicon?: SortOrderInput | SortOrder
     loginTitle?: SortOrder
@@ -13125,6 +13181,7 @@ export namespace Prisma {
     bankAccounts?: StringWithAggregatesFilter<"SystemConfig"> | string
     defaultBalance?: FloatWithAggregatesFilter<"SystemConfig"> | number
     systemName?: StringWithAggregatesFilter<"SystemConfig"> | string
+    pageTitle?: StringWithAggregatesFilter<"SystemConfig"> | string
     systemLogo?: StringNullableWithAggregatesFilter<"SystemConfig"> | string | null
     systemFavicon?: StringNullableWithAggregatesFilter<"SystemConfig"> | string | null
     loginTitle?: StringWithAggregatesFilter<"SystemConfig"> | string
@@ -13768,6 +13825,8 @@ export namespace Prisma {
     balance?: number
     subscriptionEnds?: Date | string
     logo?: string | null
+    apiKey?: string | null
+    apiKeyCreatedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     invoices?: InvoiceCreateNestedManyWithoutIssuerInput
@@ -13800,6 +13859,8 @@ export namespace Prisma {
     balance?: number
     subscriptionEnds?: Date | string
     logo?: string | null
+    apiKey?: string | null
+    apiKeyCreatedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     invoices?: InvoiceUncheckedCreateNestedManyWithoutIssuerInput
@@ -13831,6 +13892,8 @@ export namespace Prisma {
     balance?: FloatFieldUpdateOperationsInput | number
     subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
     logo?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKeyCreatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUpdateManyWithoutIssuerNestedInput
@@ -13863,6 +13926,8 @@ export namespace Prisma {
     balance?: FloatFieldUpdateOperationsInput | number
     subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
     logo?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKeyCreatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUncheckedUpdateManyWithoutIssuerNestedInput
@@ -13895,6 +13960,8 @@ export namespace Prisma {
     balance?: number
     subscriptionEnds?: Date | string
     logo?: string | null
+    apiKey?: string | null
+    apiKeyCreatedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -13923,6 +13990,8 @@ export namespace Prisma {
     balance?: FloatFieldUpdateOperationsInput | number
     subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
     logo?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKeyCreatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -13952,6 +14021,8 @@ export namespace Prisma {
     balance?: FloatFieldUpdateOperationsInput | number
     subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
     logo?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKeyCreatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -13963,6 +14034,7 @@ export namespace Prisma {
     bankAccounts?: string
     defaultBalance?: number
     systemName?: string
+    pageTitle?: string
     systemLogo?: string | null
     systemFavicon?: string | null
     loginTitle?: string
@@ -13982,6 +14054,7 @@ export namespace Prisma {
     bankAccounts?: string
     defaultBalance?: number
     systemName?: string
+    pageTitle?: string
     systemLogo?: string | null
     systemFavicon?: string | null
     loginTitle?: string
@@ -14001,6 +14074,7 @@ export namespace Prisma {
     bankAccounts?: StringFieldUpdateOperationsInput | string
     defaultBalance?: FloatFieldUpdateOperationsInput | number
     systemName?: StringFieldUpdateOperationsInput | string
+    pageTitle?: StringFieldUpdateOperationsInput | string
     systemLogo?: NullableStringFieldUpdateOperationsInput | string | null
     systemFavicon?: NullableStringFieldUpdateOperationsInput | string | null
     loginTitle?: StringFieldUpdateOperationsInput | string
@@ -14020,6 +14094,7 @@ export namespace Prisma {
     bankAccounts?: StringFieldUpdateOperationsInput | string
     defaultBalance?: FloatFieldUpdateOperationsInput | number
     systemName?: StringFieldUpdateOperationsInput | string
+    pageTitle?: StringFieldUpdateOperationsInput | string
     systemLogo?: NullableStringFieldUpdateOperationsInput | string | null
     systemFavicon?: NullableStringFieldUpdateOperationsInput | string | null
     loginTitle?: StringFieldUpdateOperationsInput | string
@@ -14039,6 +14114,7 @@ export namespace Prisma {
     bankAccounts?: string
     defaultBalance?: number
     systemName?: string
+    pageTitle?: string
     systemLogo?: string | null
     systemFavicon?: string | null
     loginTitle?: string
@@ -14058,6 +14134,7 @@ export namespace Prisma {
     bankAccounts?: StringFieldUpdateOperationsInput | string
     defaultBalance?: FloatFieldUpdateOperationsInput | number
     systemName?: StringFieldUpdateOperationsInput | string
+    pageTitle?: StringFieldUpdateOperationsInput | string
     systemLogo?: NullableStringFieldUpdateOperationsInput | string | null
     systemFavicon?: NullableStringFieldUpdateOperationsInput | string | null
     loginTitle?: StringFieldUpdateOperationsInput | string
@@ -14077,6 +14154,7 @@ export namespace Prisma {
     bankAccounts?: StringFieldUpdateOperationsInput | string
     defaultBalance?: FloatFieldUpdateOperationsInput | number
     systemName?: StringFieldUpdateOperationsInput | string
+    pageTitle?: StringFieldUpdateOperationsInput | string
     systemLogo?: NullableStringFieldUpdateOperationsInput | string | null
     systemFavicon?: NullableStringFieldUpdateOperationsInput | string | null
     loginTitle?: StringFieldUpdateOperationsInput | string
@@ -14808,6 +14886,17 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type InvoiceListRelationFilter = {
     every?: InvoiceWhereInput
     some?: InvoiceWhereInput
@@ -14868,6 +14957,8 @@ export namespace Prisma {
     balance?: SortOrder
     subscriptionEnds?: SortOrder
     logo?: SortOrder
+    apiKey?: SortOrder
+    apiKeyCreatedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -14904,6 +14995,8 @@ export namespace Prisma {
     balance?: SortOrder
     subscriptionEnds?: SortOrder
     logo?: SortOrder
+    apiKey?: SortOrder
+    apiKeyCreatedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -14933,6 +15026,8 @@ export namespace Prisma {
     balance?: SortOrder
     subscriptionEnds?: SortOrder
     logo?: SortOrder
+    apiKey?: SortOrder
+    apiKeyCreatedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -15032,6 +15127,20 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
   export type SystemConfigCountOrderByAggregateInput = {
     id?: SortOrder
     adminPassword?: SortOrder
@@ -15039,6 +15148,7 @@ export namespace Prisma {
     bankAccounts?: SortOrder
     defaultBalance?: SortOrder
     systemName?: SortOrder
+    pageTitle?: SortOrder
     systemLogo?: SortOrder
     systemFavicon?: SortOrder
     loginTitle?: SortOrder
@@ -15065,6 +15175,7 @@ export namespace Prisma {
     bankAccounts?: SortOrder
     defaultBalance?: SortOrder
     systemName?: SortOrder
+    pageTitle?: SortOrder
     systemLogo?: SortOrder
     systemFavicon?: SortOrder
     loginTitle?: SortOrder
@@ -15084,6 +15195,7 @@ export namespace Prisma {
     bankAccounts?: SortOrder
     defaultBalance?: SortOrder
     systemName?: SortOrder
+    pageTitle?: SortOrder
     systemLogo?: SortOrder
     systemFavicon?: SortOrder
     loginTitle?: SortOrder
@@ -15463,17 +15575,6 @@ export namespace Prisma {
     productId?: SortOrder
   }
 
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | null
-    notIn?: Date[] | string[] | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type PaymentRequestCountOrderByAggregateInput = {
     id?: SortOrder
     ruc?: SortOrder
@@ -15526,20 +15627,6 @@ export namespace Prisma {
     id?: SortOrder
     monto?: SortOrder
     issuerId?: SortOrder
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | null
-    notIn?: Date[] | string[] | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type InvoiceCreateNestedManyWithoutIssuerInput = {
@@ -15614,6 +15701,10 @@ export namespace Prisma {
 
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
   }
 
   export type InvoiceUpdateManyWithoutIssuerNestedInput = {
@@ -15958,10 +16049,6 @@ export namespace Prisma {
     connect?: IssuerWhereUniqueInput
   }
 
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
-  }
-
   export type IssuerUpdateOneRequiredWithoutPaymentRequestsNestedInput = {
     create?: XOR<IssuerCreateWithoutPaymentRequestsInput, IssuerUncheckedCreateWithoutPaymentRequestsInput>
     connectOrCreate?: IssuerCreateOrConnectWithoutPaymentRequestsInput
@@ -16034,6 +16121,17 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | null
+    notIn?: Date[] | string[] | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -16133,17 +16231,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
-  }
-
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | null
-    notIn?: Date[] | string[] | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -16494,6 +16581,8 @@ export namespace Prisma {
     balance?: number
     subscriptionEnds?: Date | string
     logo?: string | null
+    apiKey?: string | null
+    apiKeyCreatedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     invoices?: InvoiceCreateNestedManyWithoutIssuerInput
@@ -16525,6 +16614,8 @@ export namespace Prisma {
     balance?: number
     subscriptionEnds?: Date | string
     logo?: string | null
+    apiKey?: string | null
+    apiKeyCreatedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     invoices?: InvoiceUncheckedCreateNestedManyWithoutIssuerInput
@@ -16603,6 +16694,8 @@ export namespace Prisma {
     balance?: FloatFieldUpdateOperationsInput | number
     subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
     logo?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKeyCreatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUpdateManyWithoutIssuerNestedInput
@@ -16634,6 +16727,8 @@ export namespace Prisma {
     balance?: FloatFieldUpdateOperationsInput | number
     subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
     logo?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKeyCreatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUncheckedUpdateManyWithoutIssuerNestedInput
@@ -16801,6 +16896,8 @@ export namespace Prisma {
     balance?: number
     subscriptionEnds?: Date | string
     logo?: string | null
+    apiKey?: string | null
+    apiKeyCreatedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     clients?: IssuerClientCreateNestedManyWithoutIssuerInput
@@ -16832,6 +16929,8 @@ export namespace Prisma {
     balance?: number
     subscriptionEnds?: Date | string
     logo?: string | null
+    apiKey?: string | null
+    apiKeyCreatedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     clients?: IssuerClientUncheckedCreateNestedManyWithoutIssuerInput
@@ -16950,6 +17049,8 @@ export namespace Prisma {
     balance?: FloatFieldUpdateOperationsInput | number
     subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
     logo?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKeyCreatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clients?: IssuerClientUpdateManyWithoutIssuerNestedInput
@@ -16981,6 +17082,8 @@ export namespace Prisma {
     balance?: FloatFieldUpdateOperationsInput | number
     subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
     logo?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKeyCreatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clients?: IssuerClientUncheckedUpdateManyWithoutIssuerNestedInput
@@ -17191,6 +17294,8 @@ export namespace Prisma {
     balance?: number
     subscriptionEnds?: Date | string
     logo?: string | null
+    apiKey?: string | null
+    apiKeyCreatedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     invoices?: InvoiceCreateNestedManyWithoutIssuerInput
@@ -17222,6 +17327,8 @@ export namespace Prisma {
     balance?: number
     subscriptionEnds?: Date | string
     logo?: string | null
+    apiKey?: string | null
+    apiKeyCreatedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     invoices?: InvoiceUncheckedCreateNestedManyWithoutIssuerInput
@@ -17268,6 +17375,8 @@ export namespace Prisma {
     balance?: FloatFieldUpdateOperationsInput | number
     subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
     logo?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKeyCreatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUpdateManyWithoutIssuerNestedInput
@@ -17299,6 +17408,8 @@ export namespace Prisma {
     balance?: FloatFieldUpdateOperationsInput | number
     subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
     logo?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKeyCreatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUncheckedUpdateManyWithoutIssuerNestedInput

@@ -16,11 +16,12 @@ export async function GET() {
           adminWhatsapp: "593999999999",
           bankAccounts: "Banco Pichincha - Ahorros: 2200123456",
           defaultBalance: 5.0,
-          systemName: "FácilSRI",
-          loginTitle: "FácilSRI",
+          systemName: "Lojafac",
+          pageTitle: "Lojafac - Facturación Electrónica Ecuador",
+          loginTitle: "Lojafac",
           loginSubtitle: "Sistema de Facturación Electrónica Ecuatoriana. Emite facturas, retenciones y guías autorizadas por el SRI al instante.",
-          metaDescription: "Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas autorizadas por el SRI.",
-          metaKeywords: "facturacion sri, ecuador, facturas electronicas, comprobantes sri, retenciones, guias de remision",
+          metaDescription: "Lojafac - Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas autorizadas por el SRI.",
+          metaKeywords: "lojafac, facturacion sri, ecuador, facturas electronicas, comprobantes sri, retenciones, guias de remision",
           pricePerInvoice: 0.10,
           monthlyPlanFee: 15.0,
         },
@@ -33,10 +34,11 @@ export async function GET() {
       adminWhatsapp: config.adminWhatsapp,
       bankAccounts: config.bankAccounts,
       defaultBalance: config.defaultBalance,
-      systemName: config.systemName,
+      systemName: config.systemName || "Lojafac",
+      pageTitle: config.pageTitle || `${config.systemName || "Lojafac"} - Facturación Electrónica Ecuador`,
       systemLogo: config.systemLogo,
       systemFavicon: config.systemFavicon,
-      loginTitle: config.loginTitle,
+      loginTitle: config.loginTitle || config.systemName || "Lojafac",
       loginSubtitle: config.loginSubtitle,
       metaDescription: config.metaDescription,
       metaKeywords: config.metaKeywords,
@@ -65,6 +67,7 @@ export async function POST(request: Request) {
       bankAccounts,
       defaultBalance,
       systemName,
+      pageTitle,
       systemLogo,
       systemFavicon,
       loginTitle,
@@ -94,6 +97,7 @@ export async function POST(request: Request) {
     if (defaultBalance !== undefined) dataToSave.defaultBalance = parseFloat(defaultBalance) >= 0 ? parseFloat(defaultBalance) : 5.0;
 
     if (systemName !== undefined) dataToSave.systemName = systemName;
+    if (pageTitle !== undefined) dataToSave.pageTitle = pageTitle;
     if (systemLogo !== undefined) dataToSave.systemLogo = systemLogo;
     if (systemFavicon !== undefined) dataToSave.systemFavicon = systemFavicon;
     if (loginTitle !== undefined) dataToSave.loginTitle = loginTitle;
@@ -132,6 +136,7 @@ export async function POST(request: Request) {
         bankAccounts: savedConfig.bankAccounts,
         defaultBalance: savedConfig.defaultBalance,
         systemName: savedConfig.systemName,
+        pageTitle: savedConfig.pageTitle,
         systemLogo: savedConfig.systemLogo,
         systemFavicon: savedConfig.systemFavicon,
         loginTitle: savedConfig.loginTitle,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import LandingPage from "@/components/LandingPage";
 import {
   FileText,
   Users,
@@ -44,7 +45,22 @@ import {
   ShieldAlert,
   ArrowLeft,
   LogIn,
-  UserPlus
+  UserPlus,
+  Code2,
+  Key,
+  Copy,
+  Terminal,
+  ExternalLink,
+  FileCode,
+  BookOpen,
+  Layers,
+  Globe,
+  ShoppingBag,
+  Cpu,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  Info
 } from "lucide-react";
 
 // --- INTERFACES ---
@@ -119,7 +135,7 @@ interface Invoice {
   }>;
 }
 
-type Tab = "dashboard" | "pos" | "billing" | "history" | "clients" | "products" | "settings" | "guia" | "admin" | "admin_approvals" | "admin_companies" | "admin_branding" | "admin_email_test";
+type Tab = "dashboard" | "pos" | "billing" | "history" | "clients" | "products" | "settings" | "api_integrations" | "guia" | "admin" | "admin_approvals" | "admin_companies" | "admin_branding" | "admin_email_test";
 
 export default function Home() {
   // --- ESTADOS DE SESIÓN Y SAAS ---
@@ -128,12 +144,14 @@ export default function Home() {
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
   
+
   const [systemConfig, setSystemConfig] = useState<{
     id: number;
     adminWhatsapp: string;
     bankAccounts: string;
     defaultBalance: number;
     systemName?: string;
+    pageTitle?: string;
     systemLogo?: string | null;
     systemFavicon?: string | null;
     loginTitle?: string;
@@ -143,6 +161,24 @@ export default function Home() {
     pricePerInvoice?: number;
     monthlyPlanFee?: number;
   } | null>(null);
+
+  // Sincronización en tiempo real del Título de Navegador y Favicon
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const activeTitle = systemConfig?.pageTitle || (systemConfig?.systemName ? `${systemConfig.systemName} - Facturación Electrónica Ecuador` : "Lojafac - Facturación Electrónica Ecuador");
+      document.title = activeTitle;
+
+      if (systemConfig?.systemFavicon) {
+        let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+        if (!link) {
+          link = document.createElement("link");
+          link.rel = "icon";
+          document.getElementsByTagName("head")[0].appendChild(link);
+        }
+        link.href = systemConfig.systemFavicon;
+      }
+    }
+  }, [systemConfig]);
 
   // --- ESTADOS DE CARGA Y DATOS ---
   const [issuer, setIssuer] = useState<Issuer | null>(null);
@@ -161,6 +197,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [activeAuthTab, setActiveAuthTab] = useState<"login" | "register" | "admin">("login");
+  const [showAuthModal, setShowAuthModal] = useState(false);
   
   // --- ESTADOS PARA CONTRASEÑAS VISIBLES ---
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -232,8 +269,8 @@ export default function Home() {
   // --- PRUEBAS DE CORREO ELECTRONICO ---
   const [testEmailForm, setTestEmailForm] = useState({
     to: "",
-    subject: "[Prueba de Sistema] Verificación de Envío de Correo - FácilSRI",
-    message: "Hola, este es un correo de prueba enviado desde el Panel de Administración de FácilSRI para verificar la conectividad del servidor SMTP de Gmail."
+    subject: "[Prueba de Sistema] Verificación de Envío de Correo - Lojafac",
+    message: "Hola, este es un correo de prueba enviado desde el Panel de Administración de Lojafac para verificar la conectividad del servidor SMTP de Gmail."
   });
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string; messageId?: string } | null>(null);
@@ -308,13 +345,14 @@ export default function Home() {
   const [adminSubTab, setAdminSubTab] = useState<"BRANDING" | "GLOBAL" | "PLANS">("BRANDING");
   
   const [brandForm, setBrandForm] = useState({
-    systemName: "FácilSRI",
+    systemName: "Lojafac",
+    pageTitle: "Lojafac - Facturación Electrónica Ecuador",
     systemLogo: "",
     systemFavicon: "",
-    loginTitle: "FácilSRI",
+    loginTitle: "Lojafac",
     loginSubtitle: "Sistema de Facturación Electrónica Ecuatoriana. Emite facturas, retenciones y guías autorizadas por el SRI al instante.",
-    metaDescription: "Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas autorizadas por el SRI.",
-    metaKeywords: "facturacion sri, ecuador, facturas electronicas, comprobantes sri, retenciones, guias de remision",
+    metaDescription: "Lojafac - Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas autorizadas por el SRI.",
+    metaKeywords: "lojafac, facturacion sri, ecuador, facturas electronicas, comprobantes sri, retenciones, guias de remision",
   });
 
   const [globalParamsForm, setGlobalParamsForm] = useState({
@@ -596,6 +634,7 @@ export default function Home() {
         fetchProducts();
         fetchInvoices();
         fetchMembershipRequests();
+        fetchApiKey();
       } else if (isAdminLoggedIn) {
         fetchCompanies();
         fetchAdminPaymentRequests();
@@ -616,7 +655,7 @@ export default function Home() {
         list.push({
           id: "sub-warning",
           title: "Suscripción por Vencer",
-          description: `⚠️ Tu suscripción de FácilSRI vence en ${diffDays} días (el ${String(ends.getDate()).padStart(2, "0")}/${String(ends.getMonth()+1).padStart(2, "0")}/${ends.getFullYear()}). Recuerda regularizar tu cuenta a tiempo para evitar bloqueos del SRI.`,
+          description: `⚠️ Tu suscripción de Lojafac vence en ${diffDays} días (el ${String(ends.getDate()).padStart(2, "0")}/${String(ends.getMonth()+1).padStart(2, "0")}/${ends.getFullYear()}). Recuerda regularizar tu cuenta a tiempo para evitar bloqueos del SRI.`,
           type: "warning",
           date: "Sistema",
           read: false
@@ -625,7 +664,7 @@ export default function Home() {
         list.push({
           id: "sub-expired",
           title: "Suscripción Vencida",
-          description: `⚠️ Tu suscripción mensual de FácilSRI ha vencido. Regulariza tu cuenta poniéndote en contacto con tu proveedor para reactivar la emisión de facturas.`,
+          description: `⚠️ Tu suscripción mensual de Lojafac ha vencido. Regulariza tu cuenta poniéndote en contacto con tu proveedor para reactivar la emisión de facturas.`,
           type: "warning",
           date: "Sistema",
           read: false
@@ -637,7 +676,7 @@ export default function Home() {
     if (issuer) {
       list.push({
         id: "welcome-sr",
-        title: "¡Bienvenido a FácilSRI!",
+        title: "¡Bienvenido a Lojafac!",
         description: `🎉 Has configurado exitosamente el emisor tributario para ${issuer.nombreEmpresa}. Ya puedes emitir comprobantes autorizados de prueba o producción.`,
         type: "success",
         date: "Sistema",
@@ -654,13 +693,14 @@ export default function Home() {
       setSystemConfig(result.data);
       if (result.data) {
         setBrandForm({
-          systemName: result.data.systemName || "FácilSRI",
+          systemName: result.data.systemName || "Lojafac",
+          pageTitle: result.data.pageTitle || `${result.data.systemName || "Lojafac"} - Facturación Electrónica Ecuador`,
           systemLogo: result.data.systemLogo || "",
           systemFavicon: result.data.systemFavicon || "",
-          loginTitle: result.data.loginTitle || "FácilSRI",
+          loginTitle: result.data.loginTitle || result.data.systemName || "Lojafac",
           loginSubtitle: result.data.loginSubtitle || "Sistema de Facturación Electrónica Ecuatoriana. Emite facturas, retenciones y guías autorizadas por el SRI al instante.",
-          metaDescription: result.data.metaDescription || "Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas autorizadas por el SRI.",
-          metaKeywords: result.data.metaKeywords || "facturacion sri, ecuador, facturas electronicas, comprobantes sri, retenciones, guias de remision",
+          metaDescription: result.data.metaDescription || "Lojafac - Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas autorizadas por el SRI.",
+          metaKeywords: result.data.metaKeywords || "lojafac, facturacion sri, ecuador, facturas electronicas, comprobantes sri, retenciones, guias de remision",
         });
         setGlobalParamsForm((prev) => ({
           ...prev,
@@ -1139,9 +1179,9 @@ export default function Home() {
     bankAccounts: "",
     defaultBalance: "5.0",
     newAdminPassword: "",
-    systemName: "FácilSRI",
+    systemName: "Lojafac",
     systemLogo: "",
-    loginTitle: "FácilSRI",
+    loginTitle: "Lojafac",
     loginSubtitle: "",
   });
 
@@ -1152,9 +1192,9 @@ export default function Home() {
         bankAccounts: systemConfig.bankAccounts,
         defaultBalance: String(systemConfig.defaultBalance),
         newAdminPassword: "",
-        systemName: systemConfig.systemName || "FácilSRI",
+        systemName: systemConfig.systemName || "Lojafac",
         systemLogo: systemConfig.systemLogo || "",
-        loginTitle: systemConfig.loginTitle || "FácilSRI",
+        loginTitle: systemConfig.loginTitle || "Lojafac",
         loginSubtitle: systemConfig.loginSubtitle || "",
       });
     }
@@ -1323,6 +1363,130 @@ export default function Home() {
   const [adminSearch, setAdminSearch] = useState("");
   const [clientSearch, setClientSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
+
+  // --- ESTADOS Y FUNCIONES PARA API REST & E-COMMERCE ---
+  const [apiKeyData, setApiKeyData] = useState<{ apiKey: string | null; apiKeyCreatedAt: string | null }>({
+    apiKey: null,
+    apiKeyCreatedAt: null,
+  });
+  const [loadingApiKey, setLoadingApiKey] = useState(false);
+  const [apiKeyCopied, setApiKeyCopied] = useState(false);
+  const [showApiKeyPlain, setShowApiKeyPlain] = useState(false);
+  const [selectedApiSnippetLang, setSelectedApiSnippetLang] = useState<"woocommerce" | "shopify" | "php" | "node" | "python" | "curl">("woocommerce");
+  const [apiSnippetCopied, setApiSnippetCopied] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [wooSubTab, setWooSubTab] = useState<"all_in_one" | "field_only" | "invoice_only">("all_in_one");
+
+  // Sandbox Tester State
+  const [sandboxPayload, setSandboxPayload] = useState({
+    client: {
+      identificacion: "1105164683",
+      nombres: "ESTEFANIA LOAIZA (CLIENTE ECOMMERCE)",
+      mail: "cliente_tienda@email.com",
+      direccion: "AV. CATACOCHA Y 18 DE NOVIEMBRE",
+      celular: "0999999999",
+      tipoIdentificacion: "05",
+    },
+    items: [
+      {
+        codigoPrincipal: "TIENDA-001",
+        nombre: "CAMISA CASUAL DEPORTIVA",
+        cantidad: 1,
+        precioUnitario: 25.0,
+        iva: 15.0,
+        descuento: 0,
+      },
+    ],
+    formaPago: "01",
+    observaciones: "Pedido #10542 en tienda online WooCommerce",
+  });
+  const [sandboxLoading, setSandboxLoading] = useState(false);
+  const [sandboxResponse, setSandboxResponse] = useState<any>(null);
+
+  const fetchApiKey = async () => {
+    setLoadingApiKey(true);
+    const res = await safeFetch("/api/issuer/api-key");
+    setLoadingApiKey(false);
+    if (res.ok) {
+      setApiKeyData({
+        apiKey: res.data.apiKey || null,
+        apiKeyCreatedAt: res.data.apiKeyCreatedAt || null,
+      });
+    }
+  };
+
+  const handleGenerateApiKey = async () => {
+    if (apiKeyData.apiKey && !confirm("¿Está seguro de regenerar su API Key? La clave actual dejará de funcionar de inmediato en sus tiendas y sistemas externos.")) {
+      return;
+    }
+    setLoadingApiKey(true);
+    const res = await safeFetch("/api/issuer/api-key", { method: "POST" });
+    setLoadingApiKey(false);
+    if (res.ok) {
+      setApiKeyData({
+        apiKey: res.data.apiKey,
+        apiKeyCreatedAt: res.data.apiKeyCreatedAt,
+      });
+      alert("✓ Nueva API Key generada con éxito.");
+    } else {
+      alert(res.error || "Fallo al generar API Key.");
+    }
+  };
+
+  const handleRevokeApiKey = async () => {
+    if (!confirm("¿Está seguro de revocar y eliminar su API Key? Sus tiendas y sistemas externos ya no podrán emitir facturas.")) {
+      return;
+    }
+    setLoadingApiKey(true);
+    const res = await safeFetch("/api/issuer/api-key", { method: "DELETE" });
+    setLoadingApiKey(false);
+    if (res.ok) {
+      setApiKeyData({ apiKey: null, apiKeyCreatedAt: null });
+      alert("API Key revocada correctamente.");
+    } else {
+      alert(res.error || "Fallo al revocar API Key.");
+    }
+  };
+
+  const handleCopyApiKey = () => {
+    if (!apiKeyData.apiKey) return;
+    navigator.clipboard.writeText(apiKeyData.apiKey);
+    setApiKeyCopied(true);
+    setTimeout(() => setApiKeyCopied(false), 2500);
+  };
+
+  const handleRunApiSandbox = async () => {
+    if (!apiKeyData.apiKey) {
+      alert("Primero debe generar una API Key activa para utilizar el Sandbox.");
+      return;
+    }
+    setSandboxLoading(true);
+    setSandboxResponse(null);
+    try {
+      const response = await fetch("/api/v1/invoices", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKeyData.apiKey}`,
+        },
+        body: JSON.stringify(sandboxPayload),
+      });
+      const data = await response.json();
+      setSandboxResponse({
+        status: response.status,
+        statusText: response.statusText,
+        data,
+      });
+    } catch (err: any) {
+      setSandboxResponse({
+        status: 500,
+        statusText: "Error de red",
+        data: { error: err.message || err },
+      });
+    } finally {
+      setSandboxLoading(false);
+    }
+  };
 
   // --- LÓGICA DE AGREGAR ITEM LIBRE O DINÁMICO EN FACTURACIÓN ---
   const addFreeItemToInvoice = () => {
@@ -2735,436 +2899,9 @@ export default function Home() {
   const chartSalesData = getFilteredSalesChartData();
   const maxChartSaleVal = Math.max(...chartSalesData.map((w) => w.value), 10);
 
-  // --- SI NO SE HA INICIADO SESIÓN (PANTALLA DE BIENVENIDA) ---
+  // --- SI NO SE HA INICIADO SESIÓN (LANDING PAGE COMERCIAL) ---
   if (!activeIssuerId && !isAdminLoggedIn) {
-    return (
-      <div className="min-h-screen bg-[#f8f9fe] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
-        <div className="max-w-md w-full bg-white rounded-[32px] border border-[#e8ebf7] shadow-[0_16px_48px_rgba(26,54,124,0.06)] p-10">
-          
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              {systemConfig?.systemLogo ? (
-                <img 
-                  src={systemConfig.systemLogo} 
-                  alt="Logo Sistema" 
-                  className="h-16 w-auto max-w-[150px] object-contain rounded-xl"
-                />
-              ) : (
-                <div className="h-16 w-16 rounded-[22px] bg-blue-600 flex items-center justify-center text-white font-black text-3xl shadow-lg shadow-blue-600/15">
-                  {systemConfig?.systemName ? systemConfig.systemName.charAt(0).toUpperCase() : "F"}
-                </div>
-              )}
-            </div>
-            <h2 className="text-[26px] font-black text-[#0f172a] tracking-tight">
-              {systemConfig?.loginTitle || "FácilSRI Ecuador"}
-            </h2>
-            <p className="text-sm text-[#64748b] mt-2 max-w-xs mx-auto leading-relaxed">
-              {systemConfig?.loginSubtitle || "Plataforma robusta, comercial y minimalista de facturación electrónica."}
-            </p>
-          </div>
-
-          {/* Tabs Selector */}
-          <div className="flex border-b border-[#e8ebf7] mb-8">
-            <button
-              onClick={() => setActiveAuthTab("login")}
-              className={`flex-1 pb-3 text-sm font-bold border-b-[3px] text-center transition-all duration-300 ${
-                activeAuthTab === "login"
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-[#94a3b8] hover:text-[#475569]"
-              }`}
-            >
-              Iniciar Sesión
-            </button>
-            <button
-              onClick={() => setActiveAuthTab("register")}
-              className={`flex-1 pb-3 text-sm font-bold border-b-[3px] text-center transition-all duration-300 ${
-                activeAuthTab === "register"
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-[#94a3b8] hover:text-[#475569]"
-              }`}
-            >
-              Registrarse
-            </button>
-            <button
-              onClick={() => setActiveAuthTab("admin")}
-              className={`flex-1 pb-3 text-sm font-bold border-b-[3px] text-center transition-all duration-300 ${
-                activeAuthTab === "admin"
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-[#94a3b8] hover:text-[#475569]"
-              }`}
-            >
-              Supervisor
-            </button>
-          </div>
-
-          {activeAuthTab === "login" && (
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div>
-                <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
-                  RUC o Correo Electrónico
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Building className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    placeholder="ej. 1792384756001 o emisor@ejemplo.com"
-                    value={loginForm.ruc}
-                    onChange={(e) => setLoginForm({ ...loginForm, ruc: e.target.value })}
-                    className="block w-full pl-12 pr-4 py-3.5 border border-[#e2e8f0] focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none text-sm transition-all bg-[#fbfcfd] focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
-                  Contraseña de Acceso
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type={showLoginPassword ? "text" : "password"}
-                    required
-                    placeholder="Contraseña asignada"
-                    value={loginForm.password}
-                    onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                    className="block w-full pl-12 pr-12 py-3.5 border border-[#e2e8f0] focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none text-sm transition-all bg-[#fbfcfd] focus:bg-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowLoginPassword(!showLoginPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-650 transition-colors cursor-pointer"
-                  >
-                    {showLoginPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-lg shadow-blue-600/10 hover:shadow-xl transition-all duration-200 text-sm tracking-wide mt-3 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/20"
-              >
-                Ingresar al Sistema
-              </button>
-            </form>
-          )}
-
-          {activeAuthTab === "register" && (
-            <form onSubmit={handleRegister} className="space-y-4 max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 flex items-center space-x-3 text-emerald-900 shadow-3xs">
-                <div className="h-8 w-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-                <div className="text-xs">
-                  <span className="font-extrabold block uppercase tracking-tight text-emerald-950">¡Regalo de Bienvenida!</span>
-                  <span className="text-[11px] text-emerald-700 font-medium">Regístrate gratis y recibe <strong>$1.00 USD (10 Facturas Gratis)</strong> para empezar a emitir al SRI.</span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-1">
-                  Número de RUC (13 dígitos)
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="ej. 1716943834001"
-                  value={registerForm.ruc}
-                  onChange={(e) => setRegisterForm({ ...registerForm, ruc: e.target.value })}
-                  className="block w-full px-4 py-2.5 border border-[#e2e8f0] focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none text-sm transition-all bg-[#fbfcfd] focus:bg-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-1">
-                    Nombres
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="ej. Juan Carlos"
-                    value={registerForm.nombres}
-                    onChange={(e) => setRegisterForm({ ...registerForm, nombres: e.target.value })}
-                    className="block w-full px-4 py-2.5 border border-[#e2e8f0] focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none text-sm transition-all bg-[#fbfcfd] focus:bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-1">
-                    Apellidos
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="ej. Pérez Andrade"
-                    value={registerForm.apellidos}
-                    onChange={(e) => setRegisterForm({ ...registerForm, apellidos: e.target.value })}
-                    className="block w-full px-4 py-2.5 border border-[#e2e8f0] focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none text-sm transition-all bg-[#fbfcfd] focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-1">
-                  Nombre Comercial (Empresa)
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="ej. Distribuidora del Norte"
-                  value={registerForm.nombreEmpresa}
-                  onChange={(e) => setRegisterForm({ ...registerForm, nombreEmpresa: e.target.value })}
-                  className="block w-full px-4 py-2.5 border border-[#e2e8f0] focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none text-sm transition-all bg-[#fbfcfd] focus:bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-1">
-                  Razón Social
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="ej. DistribuidoraNorte S.A."
-                  value={registerForm.razonSocial}
-                  onChange={(e) => setRegisterForm({ ...registerForm, razonSocial: e.target.value })}
-                  className="block w-full px-4 py-2.5 border border-[#e2e8f0] focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none text-sm transition-all bg-[#fbfcfd] focus:bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-1">
-                  Dirección Matriz
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="ej. Av. 10 de Agosto N45, Quito"
-                  value={registerForm.direccion}
-                  onChange={(e) => setRegisterForm({ ...registerForm, direccion: e.target.value })}
-                  className="block w-full px-4 py-2.5 border border-[#e2e8f0] focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none text-sm transition-all bg-[#fbfcfd] focus:bg-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-1">
-                    Correo Electrónico
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="ej. perez@mail.com"
-                    value={registerForm.email}
-                    onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                    className="block w-full px-4 py-2.5 border border-[#e2e8f0] focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none text-sm transition-all bg-[#fbfcfd] focus:bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-1">
-                    Celular
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="ej. 0998765432"
-                    value={registerForm.celular}
-                    onChange={(e) => setRegisterForm({ ...registerForm, celular: e.target.value })}
-                    className="block w-full px-4 py-2.5 border border-[#e2e8f0] focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none text-sm transition-all bg-[#fbfcfd] focus:bg-white"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-1">
-                  Cree una Contraseña de Acceso
-                </label>
-                <div className="relative">
-                  <input
-                    type={showRegisterPassword ? "text" : "password"}
-                    required
-                    placeholder="Mínimo 6 caracteres"
-                    value={registerForm.password}
-                    onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                    className="block w-full pl-4 pr-12 py-2.5 border border-[#e2e8f0] focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none text-sm transition-all bg-[#fbfcfd] focus:bg-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-650 transition-colors cursor-pointer"
-                  >
-                    {showRegisterPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <p className="text-[11px] text-[#64748b] mt-2 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
-                * Al registrarse recibirá automáticamente {systemConfig ? `$${systemConfig.defaultBalance.toFixed(2)}` : "$5.00"} de saldo inicial de cortesía para pruebas del SRI en Ecuador.
-              </p>
-
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 px-4 rounded-2xl shadow-lg shadow-blue-600/10 hover:shadow-xl transition-all duration-200 text-sm tracking-wide mt-2 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/20"
-              >
-                Crear Empresa y Empezar
-              </button>
-            </form>
-          )}
-
-          {activeAuthTab === "admin" && (
-            <form onSubmit={handleAdminLogin} className="space-y-5">
-              <div>
-                <label className="block text-xs font-bold text-[#475569] uppercase tracking-wider mb-2">
-                  Contraseña del Super Supervisor SaaS
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type={showAdminLoginPassword ? "text" : "password"}
-                    required
-                    placeholder="Ingrese contraseña de admin"
-                    value={adminPasswordInput}
-                    onChange={(e) => setAdminPasswordInput(e.target.value)}
-                    className="block w-full pl-12 pr-12 py-3.5 border border-[#e2e8f0] focus:border-blue-600 focus:ring-4 focus:ring-blue-600/5 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none text-sm transition-all bg-[#fbfcfd] focus:bg-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowAdminLoginPassword(!showAdminLoginPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-650 transition-colors cursor-pointer"
-                  >
-                    {showAdminLoginPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-lg shadow-blue-600/10 hover:shadow-xl transition-all duration-200 text-sm tracking-wide mt-3 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/20"
-              >
-                Entrar al Panel de Supervisor
-              </button>
-            </form>
-          )}
-
-        </div>
-      </div>
-    );
-  }
-
-  // --- SI LA CUENTA SE ENCUENTRA SUSPENDIDA ---
-  if (isSuspended && !isAdminLoggedIn && !isImpersonating) {
-    const ruc = issuer?.ruc || "";
-    const name = issuer?.nombreEmpresa || "";
-    const waText = encodeURIComponent(`Hola, acabo de realizar la transferencia de pago. Por favor active mi cuenta de facturación FácilSRI para la empresa ${name} con RUC ${ruc}. Adjunto comprobante.`);
-    const waLink = `https://wa.me/${systemConfig?.adminWhatsapp}?text=${waText}`;
-
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
-        <div className="max-w-xl w-full bg-white rounded-xl shadow-sm border border-red-100 p-8 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-14 w-14 rounded-full bg-red-50 flex items-center justify-center text-red-500">
-              <AlertTriangle className="h-8 w-8" />
-            </div>
-          </div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Cuenta Temporalmente Suspendida</h2>
-          
-          <div className="mt-4 p-4 bg-red-50/50 border border-red-100 rounded-lg text-sm text-red-700 text-left">
-            <strong>Motivo de Suspensión:</strong>
-            <p className="mt-1 text-slate-600 leading-relaxed">
-              {getSuspensionReason()}
-            </p>
-          </div>
-
-          <div className="mt-6 text-left">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center">
-              <CreditCard className="h-4 w-4 mr-1 text-blue-500" /> Cuentas para Transferencia / Depósito Bancario
-            </h3>
-            {bankAccountsList && bankAccountsList.filter((b) => b.activo !== false).length > 0 ? (
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                {bankAccountsList
-                  .filter((b) => b.activo !== false)
-                  .map((acc) => (
-                    <div
-                      key={acc.id}
-                      className="p-3 rounded-xl border border-slate-200 bg-white flex items-center justify-between shadow-2xs"
-                    >
-                      <div className="space-y-0.5 text-xs">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-extrabold text-slate-800">{acc.banco}</span>
-                          <span className="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
-                            {acc.tipoCuenta}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2 font-mono text-slate-800">
-                          <span className="font-black text-slate-900">{acc.numeroCuenta}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyText(acc.numeroCuenta, `Número de cuenta ${acc.banco}`)}
-                            className="text-[10px] text-blue-600 hover:text-blue-800 font-sans font-bold hover:underline ml-1 cursor-pointer"
-                          >
-                            📋 Copiar
-                          </button>
-                        </div>
-                        <div className="text-[10px] text-slate-500">
-                          <span>Titular:</span> {acc.titular} {acc.identificacionTitular && `(${acc.identificacionTitular})`}
-                        </div>
-                      </div>
-
-                      {acc.qrCode && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setPreviewQrModal({
-                              isOpen: true,
-                              banco: acc.banco,
-                              qrCode: acc.qrCode,
-                              titular: acc.titular,
-                              numeroCuenta: acc.numeroCuenta,
-                              tipoCuenta: acc.tipoCuenta,
-                            })
-                          }
-                          className="shrink-0 p-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded-xl text-emerald-700 text-[10px] font-bold flex flex-col items-center justify-center transition-colors cursor-pointer"
-                        >
-                          <QrCode className="h-5 w-5 text-emerald-600 mb-0.5" />
-                          <span>Ver QR</span>
-                        </button>
-                      )}
-                    </div>
-                  ))}
-              </div>
-            ) : (
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 font-mono text-xs text-slate-600 whitespace-pre-wrap leading-normal">
-                {systemConfig?.bankAccounts || "Cargando cuentas..."}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-8 space-y-3">
-            <a
-              href={waLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full inline-flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-sm text-sm transition-transform hover:scale-[1.01] duration-150"
-            >
-              <MessageSquare className="h-5 w-5 mr-2" /> Enviar Comprobante por WhatsApp
-            </a>
-            
-            <button
-              onClick={handleLogout}
-              className="w-full border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors"
-            >
-              Cerrar Sesión
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <LandingPage systemConfig={systemConfig} />;
   }
 
   // --- APLICACIÓN COMPLETA (EMISOR O SUPERVISOR) ---
@@ -3228,7 +2965,7 @@ export default function Home() {
                 </div>
               )}
               <span className="font-extrabold text-slate-900 text-lg tracking-tight">
-                {isAdminLoggedIn ? "Admin Panel" : (systemConfig?.systemName || "FácilSRI")}
+                {isAdminLoggedIn ? "Admin Panel" : (systemConfig?.systemName || "Lojafac")}
               </span>
             </div>
             {isAdminLoggedIn && (
@@ -3346,6 +3083,18 @@ export default function Home() {
                 >
                   <Settings className="h-4.5 w-4.5" />
                   <span>Configuración Emisor</span>
+                </button>
+
+                <button
+                  onClick={() => { setActiveTab("api_integrations"); setIsMobileSidebarOpen(false); fetchApiKey(); }}
+                  className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
+                    activeTab === "api_integrations"
+                      ? "bg-violet-600 text-white shadow-lg shadow-violet-600/10"
+                      : "text-slate-500 hover:bg-[#e8ebf7]/40 hover:text-slate-800"
+                  }`}
+                >
+                  <Code2 className="h-4.5 w-4.5" />
+                  <span>API & Ecommerce</span>
                 </button>
 
                 <button
@@ -3509,6 +3258,7 @@ export default function Home() {
                 {activeTab === "clients" && "Directorio de Clientes"}
                 {activeTab === "products" && "Catálogo de Productos"}
                 {activeTab === "settings" && "Configuración Emisor"}
+                {activeTab === "api_integrations" && "API REST & Integraciones E-commerce"}
                 {activeTab === "guia" && "Guía de Inicio Rápido"}
                 {activeTab === "admin" && "Consola SaaS Supervisor"}
                 {activeTab === "admin_approvals" && "Aprobaciones de Pagos SaaS"}
@@ -3524,6 +3274,7 @@ export default function Home() {
               {activeTab === "clients" && "Administra tus clientes y sus datos de facturación"}
               {activeTab === "products" && "Gestiona códigos, precios e impuestos (IVA)"}
               {activeTab === "settings" && "Gestiona tu firma .p12, datos tributarios y logo"}
+              {activeTab === "api_integrations" && "Conecta WooCommerce, Shopify, Apps móviles o ERPs para facturar en automático con el SRI"}
               {activeTab === "guia" && "Aprende cómo configurar tu cuenta paso a paso"}
               {activeTab === "admin" && "Visualiza empresas, activa/desactiva servicios y recarga saldos"}
               {activeTab === "admin_approvals" && "Cola de solicitudes de recargas y renovación de membresías"}
@@ -5981,7 +5732,7 @@ export default function Home() {
           {activeTab === "guia" && (
             <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-slate-800">Guía de Inicio Rápido FácilSRI</h2>
+                <h2 className="text-2xl font-bold text-slate-800">Guía de Inicio Rápido</h2>
                 <p className="text-slate-400 text-xs mt-1">Aprende a configurar tu cuenta y empieza a facturar de forma legal con el SRI en minutos.</p>
               </div>
 
@@ -6418,7 +6169,7 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                          Nombre Comercial del Sistema
+                          Nombre Comercial del Sistema (Marca)
                         </label>
                         <input
                           type="text"
@@ -6426,12 +6177,29 @@ export default function Home() {
                           value={brandForm.systemName}
                           onChange={(e) => setBrandForm({ ...brandForm, systemName: e.target.value })}
                           className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold"
+                          placeholder="ej. Lojafac"
                         />
                       </div>
 
                       <div>
                         <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                          Título de Pantalla de Inicio
+                          Título de la Pestaña del Navegador (Page Title)
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={brandForm.pageTitle}
+                          onChange={(e) => setBrandForm({ ...brandForm, pageTitle: e.target.value })}
+                          className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold"
+                          placeholder="ej. Lojafac - Facturación Electrónica Ecuador"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                          Título de Pantalla de Inicio / Login
                         </label>
                         <input
                           type="text"
@@ -6439,21 +6207,23 @@ export default function Home() {
                           value={brandForm.loginTitle}
                           onChange={(e) => setBrandForm({ ...brandForm, loginTitle: e.target.value })}
                           className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 text-xs focus:outline-none focus:border-blue-600 font-bold"
+                          placeholder="ej. Lojafac"
                         />
                       </div>
-                    </div>
 
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                        Subtítulo de Pantalla de Inicio
-                      </label>
-                      <textarea
-                        rows={2}
-                        required
-                        value={brandForm.loginSubtitle}
-                        onChange={(e) => setBrandForm({ ...brandForm, loginSubtitle: e.target.value })}
-                        className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700 text-xs focus:outline-none focus:border-blue-600 font-medium leading-relaxed"
-                      />
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                          Subtítulo de Pantalla de Inicio / Login
+                        </label>
+                        <textarea
+                          rows={2}
+                          required
+                          value={brandForm.loginSubtitle}
+                          onChange={(e) => setBrandForm({ ...brandForm, loginSubtitle: e.target.value })}
+                          className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-700 text-xs focus:outline-none focus:border-blue-600 font-medium leading-relaxed"
+                          placeholder="Sistema de Facturación Electrónica Ecuatoriana..."
+                        />
+                      </div>
                     </div>
 
                     {/* Metadatos SEO */}
@@ -6935,6 +6705,1441 @@ export default function Home() {
 
             </div>
           )}
+
+          {/* TAB: API REST & INTEGRACIONES E-COMMERCE */}
+          {activeTab === "api_integrations" && !isAdminLoggedIn && issuer && (
+            <div className="space-y-8 animate-fade-in max-w-6xl mx-auto pb-12">
+              
+              {/* BANNER PRINCIPAL DE INTEGRACIÓN */}
+              <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-slate-800 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                  <Code2 className="h-64 w-64 text-indigo-300" />
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                  <div className="flex items-center space-x-4">
+                    <div className="h-12 w-12 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center border border-indigo-500/30 shrink-0">
+                      <Code2 className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">API REST para E-commerce y Sistemas Externos</h2>
+                      <p className="text-xs text-indigo-200 mt-0.5">Emite facturas electrónicas autorizadas por el SRI desde WooCommerce, Shopify, Apps o ERPs con 1 sola petición HTTP.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider">
+                      🟢 API v1 Activa
+                    </span>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      issuer.ambiente === 2 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                    }`}>
+                      {issuer.ambiente === 2 ? "Producción SRI" : "Pruebas SRI"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Grid de Métricas y Estado Rápido */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-slate-800/80 text-xs">
+                  <div className="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60 backdrop-blur-xs">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Formato de Intercambio</span>
+                    <span className="font-mono font-bold text-indigo-200">JSON (REST over HTTPS)</span>
+                  </div>
+                  <div className="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60 backdrop-blur-xs">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Autenticación</span>
+                    <span className="font-mono font-bold text-indigo-200">Bearer Token (API Key)</span>
+                  </div>
+                  <div className="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60 backdrop-blur-xs">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Entrega Automática</span>
+                    <span className="font-mono font-bold text-indigo-200">RIDE en PDF + XML + Email</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* TARJETA 1: GESTIÓN DE API KEY SECRETA */}
+              <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs">
+                <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
+                      <Key className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Tu API Key Secreta</h3>
+                      <p className="text-xs text-slate-500">Utiliza esta clave en los encabezados HTTP de tus tiendas online para autorizar las solicitudes.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {apiKeyData.apiKey ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        Clave de Autenticación (Bearer Token)
+                      </label>
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type={showApiKeyPlain ? "text" : "password"}
+                            readOnly
+                            value={apiKeyData.apiKey}
+                            className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-mono text-xs font-bold focus:outline-none select-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowApiKeyPlain(!showApiKeyPlain)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                          >
+                            {showApiKeyPlain ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleCopyApiKey}
+                          className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-2xl flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+                        >
+                          {apiKeyCopied ? (
+                            <>
+                              <Check className="h-4 w-4 text-emerald-300" />
+                              <span>¡Copiado!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-4 w-4" />
+                              <span>Copiar API Key</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={loadingApiKey}
+                          onClick={handleGenerateApiKey}
+                          className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 cursor-pointer shrink-0"
+                        >
+                          <RefreshCw className={`h-4 w-4 ${loadingApiKey ? "animate-spin" : ""}`} />
+                          <span>Regenerar</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={loadingApiKey}
+                          onClick={handleRevokeApiKey}
+                          className="px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-2xl flex items-center justify-center space-x-1.5 transition-all active:scale-95 cursor-pointer shrink-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>Revocar</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {apiKeyData.apiKeyCreatedAt && (
+                      <p className="text-[11px] text-slate-400 font-semibold flex items-center">
+                        <Clock className="h-3.5 w-3.5 mr-1" />
+                        Generada el: {new Date(apiKeyData.apiKeyCreatedAt).toLocaleString("es-EC")}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-4">
+                    <div className="h-12 w-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto">
+                      <Key className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-800">Aún no has generado una API Key</h4>
+                      <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                        Genera tu primera clave para permitir que tiendas WooCommerce, Shopify, aplicaciones móviles o ERPs puedan emitir facturas con tus datos del SRI.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={loadingApiKey}
+                      onClick={handleGenerateApiKey}
+                      className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-2xl shadow-md transition-all active:scale-95 cursor-pointer inline-flex items-center space-x-2"
+                    >
+                      {loadingApiKey ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      <span>Generar mi API Key de Facturación</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* TARJETA 2: ENDPOINTS DISPONIBLES */}
+              <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+                <div className="flex items-center space-x-3 pb-4 border-b border-slate-100">
+                  <div className="h-10 w-10 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                    <Terminal className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">Endpoints de la API v1</h3>
+                    <p className="text-xs text-slate-500">Rutas REST públicas disponibles para la integración con tus sistemas.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/70 space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-black rounded-md">POST</span>
+                      <span className="font-mono text-xs font-bold text-slate-800">/api/v1/invoices</span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Emite una factura electrónica en 1 solo paso: firma el XML, envía al SRI, genera el PDF RIDE y envía correo al cliente.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/70 space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-black rounded-md">GET</span>
+                      <span className="font-mono text-xs font-bold text-slate-800">/api/v1/invoices/:claveAcceso</span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Consulta el estado de una factura emitida y obtiene los enlaces públicos para descargar el RIDE en PDF y el XML firmado.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/70 space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-black rounded-md">GET</span>
+                      <span className="font-mono text-xs font-bold text-slate-800">/api/v1/clients/lookup?identificacion=...</span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Valida y consulta datos de una cédula o RUC en la base de datos nacional para autocompletar el checkout de tu tienda online.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/70 space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-black rounded-md">GET</span>
+                      <span className="font-mono text-xs font-bold text-slate-800">/api/v1/status</span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Verifica el estado de conectividad, ambiente tributario (Pruebas/Producción) y saldo de billetera disponible.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* TARJETA 3: GUÍAS PASO A PASO POR CMS Y LENGUAJE */}
+              <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                      <BookOpen className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Guías Paso a Paso de Integración por CMS y Lenguaje</h3>
+                      <p className="text-xs text-slate-500">Aprende paso a paso cómo capturar la cédula, configurar el IVA y emitir facturas en cada plataforma.</p>
+                    </div>
+                  </div>
+
+                  {/* SELECTOR DE PLATAFORMAS CON BADGES */}
+                  <div className="flex flex-wrap gap-1.5 bg-slate-100 p-1.5 rounded-2xl">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedApiSnippetLang("woocommerce")}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                        selectedApiSnippetLang === "woocommerce" ? "bg-purple-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <ShoppingBag className="h-3.5 w-3.5" />
+                      <span>WooCommerce</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedApiSnippetLang("shopify")}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                        selectedApiSnippetLang === "shopify" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <Globe className="h-3.5 w-3.5" />
+                      <span>Shopify</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedApiSnippetLang("php")}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                        selectedApiSnippetLang === "php" ? "bg-blue-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <Layers className="h-3.5 w-3.5" />
+                      <span>PHP / Laravel</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedApiSnippetLang("node")}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                        selectedApiSnippetLang === "node" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <Cpu className="h-3.5 w-3.5" />
+                      <span>Node.js / JS</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedApiSnippetLang("python")}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                        selectedApiSnippetLang === "python" ? "bg-amber-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <Terminal className="h-3.5 w-3.5" />
+                      <span>Python</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedApiSnippetLang("curl")}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                        selectedApiSnippetLang === "curl" ? "bg-slate-900 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <Code2 className="h-3.5 w-3.5" />
+                      <span>cURL / Postman</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* CONTENIDO DETALLADO PASO A PASO POR CADA PLATAFORMA */}
+                {(() => {
+                  const activeKey = apiKeyData.apiKey || "sri_live_xxxxxxxxxxxxxxxxxxxxxxxx";
+                  const originUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+
+                  if (selectedApiSnippetLang === "woocommerce") {
+                    return (
+                      <div className="space-y-6">
+                        {/* Cabecera WooCommerce */}
+                        <div className="p-5 bg-gradient-to-r from-purple-50 via-purple-50/50 to-white border border-purple-200 rounded-3xl flex items-start space-x-4">
+                          <div className="h-10 w-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
+                            Woo
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-black text-purple-950 uppercase tracking-tight">Guía Completa para WordPress & WooCommerce</h4>
+                            <p className="text-xs text-purple-800 mt-1 leading-relaxed">
+                              Por defecto, WooCommerce <strong>no incluye el campo de Cédula o RUC</strong> en el formulario de pago. A continuación tienes las 2 soluciones para crearlo y facturar automáticamente:
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Comparación de Métodos para Crear el Campo Cédula/RUC */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Método 1: Código Todo en Uno */}
+                          <div className="p-5 bg-slate-50 border border-purple-200 rounded-2xl space-y-3 relative overflow-hidden">
+                            <div className="flex items-center justify-between">
+                              <span className="px-2.5 py-0.5 bg-purple-600 text-white text-[10px] font-black rounded-full uppercase">
+                                ⭐ Método 1 (Recomendado)
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-400">100% Automático</span>
+                            </div>
+                            <h5 className="text-xs font-black text-slate-800">Código "Todo en Uno" sin plugins extra</h5>
+                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                              Pega el código inferior en el archivo <code className="font-bold text-purple-700 font-mono">functions.php</code> de tu tema o en el plugin gratuito <strong>Code Snippets</strong>. Este código:
+                            </p>
+                            <ul className="text-[11px] text-slate-600 space-y-1 list-disc list-inside">
+                              <li>Crea el campo <strong>"Cédula o RUC para Factura"</strong> en el Checkout.</li>
+                              <li>Valida que tenga 10 o 13 dígitos numéricos.</li>
+                              <li>Exige el campo si la compra supera los <strong>$50</strong> (norma SRI).</li>
+                              <li>Emite la factura en el SRI automáticamente tras el pago.</li>
+                              <li>Guarda la Clave de Acceso y el enlace al PDF en las Notas del Pedido.</li>
+                            </ul>
+                          </div>
+
+                          {/* Método 2: Plugin Gratuito */}
+                          <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="px-2.5 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-black rounded-full uppercase">
+                                Método 2
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-400">Vía Plugin</span>
+                            </div>
+                            <h5 className="text-xs font-black text-slate-800">Con Plugin "Checkout Field Editor"</h5>
+                            <p className="text-[11px] text-slate-600 leading-relaxed">
+                              Si prefieres usar un plugin para gestionar los campos del checkout:
+                            </p>
+                            <ol className="text-[11px] text-slate-600 space-y-1 list-decimal list-inside">
+                              <li>Instala el plugin gratuito <strong>Checkout Field Editor for WooCommerce</strong>.</li>
+                              <li>Ve a <strong>WooCommerce &gt; Formularios de pago</strong>.</li>
+                              <li>Agrega un campo de texto llamado exactamente: <code className="font-bold text-purple-700 font-mono">billing_cedula_ruc</code>.</li>
+                              <li>Etiqueta: <em>"Cédula o RUC para Factura Electrónica"</em>.</li>
+                            </ol>
+                          </div>
+                        </div>
+
+                        {/* Selector de Sub-Snippet */}
+                        <div className="flex items-center space-x-2 border-b border-slate-200 pb-2">
+                          <button
+                            type="button"
+                            onClick={() => setWooSubTab("all_in_one")}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                              wooSubTab === "all_in_one" ? "bg-purple-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            ⭐ Código Completo (Campo + Facturación SRI)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setWooSubTab("field_only")}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                              wooSubTab === "field_only" ? "bg-purple-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            Solo Crear Campo Cédula/RUC
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setWooSubTab("invoice_only")}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                              wooSubTab === "invoice_only" ? "bg-purple-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            Solo Hook de Facturación al Pagar
+                          </button>
+                        </div>
+
+                        {/* Bloque de Código WooCommerce */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                              {wooSubTab === "all_in_one" && "Código PHP Completo para functions.php"}
+                              {wooSubTab === "field_only" && "Código PHP para Crear y Validar Campo de Cédula"}
+                              {wooSubTab === "invoice_only" && "Código PHP para el Hook de Pago Completado"}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const el = document.getElementById("woo-code-block");
+                                if (el) {
+                                  navigator.clipboard.writeText(el.innerText);
+                                  setApiSnippetCopied(true);
+                                  setTimeout(() => setApiSnippetCopied(false), 2500);
+                                }
+                              }}
+                              className="px-3.5 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer transition-colors"
+                            >
+                              {apiSnippetCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                              <span>{apiSnippetCopied ? "¡Código Copiado!" : "Copiar Código PHP"}</span>
+                            </button>
+                          </div>
+
+                          <pre id="woo-code-block" className="bg-slate-900 text-purple-200 p-5 rounded-2xl overflow-x-auto text-xs font-mono leading-relaxed border border-slate-800 max-h-96">
+{(() => {
+  if (wooSubTab === "all_in_one") {
+    return `<?php
+/**
+ * =========================================================================
+ * INTEGRACIÓN 100% AUTOMÁTICA DE FACTURACIÓN ELECTRÓNICA SRI CON WOOCOMMERCE
+ * =========================================================================
+ * Pega este código en el archivo functions.php de tu tema hijo
+ * o créalo como un nuevo snippet en el plugin gratuito "Code Snippets".
+ */
+
+// 1. AGREGAR EL CAMPO DE CÉDULA / RUC EN EL FORMULARIO DE CHECKOUT
+add_filter('woocommerce_checkout_fields', 'facilsri_agregar_campo_cedula_checkout');
+function facilsri_agregar_campo_cedula_checkout($fields) {
+    $fields['billing']['billing_cedula_ruc'] = array(
+        'type'        => 'text',
+        'label'       => __('Cédula o RUC para Factura Electrónica', 'woocommerce'),
+        'placeholder' => _x('Ej: 1105164683 o 1105164683001', 'placeholder', 'woocommerce'),
+        'required'    => false, // Si es > $50 se exige en la validación inferior
+        'class'       => array('form-row-wide'),
+        'clear'       => true,
+        'priority'    => 25
+    );
+    return $fields;
+}
+
+// 2. VALIDAR LA CÉDULA O RUC Y LA REGLA DE LOS $50 DEL SRI
+add_action('woocommerce_checkout_process', 'facilsri_validar_cedula_checkout');
+function facilsri_validar_cedula_checkout() {
+    $cedula = isset($_POST['billing_cedula_ruc']) ? sanitize_text_field($_POST['billing_cedula_ruc']) : '';
+    $total_carrito = WC()->cart ? WC()->cart->get_total('edit') : 0;
+
+    // Regla SRI: Si el pedido supera los $50, la identificación con datos es obligatoria
+    if ($total_carrito >= 50 && empty($cedula)) {
+        wc_add_notice(__('Según la normativa del SRI en Ecuador, las compras mayores a $50 requieren ingresar obligatoriamente su Cédula o RUC.', 'woocommerce'), 'error');
+        return;
+    }
+
+    if (!empty($cedula)) {
+        $len = strlen(trim($cedula));
+        if ($len !== 10 && $len !== 13) {
+            wc_add_notice(__('La identificación ingresada no es válida. Debe tener 10 dígitos (Cédula) o 13 dígitos (RUC).', 'woocommerce'), 'error');
+        }
+    }
+}
+
+// 3. GUARDAR EL CAMPO DE CÉDULA EN LOS METADATOS DE LA ORDEN
+add_action('woocommerce_checkout_update_order_meta', 'facilsri_guardar_cedula_en_orden');
+function facilsri_guardar_cedula_en_orden($order_id) {
+    if (!empty($_POST['billing_cedula_ruc'])) {
+        update_post_meta($order_id, '_billing_cedula_ruc', sanitize_text_field($_POST['billing_cedula_ruc']));
+    }
+}
+
+// 4. MOSTRAR LA CÉDULA EN EL PANEL DE ADMINISTRACIÓN DE PEDIDOS
+add_action('woocommerce_admin_order_data_after_billing_address', 'facilsri_mostrar_cedula_en_admin_pedido', 10, 1);
+function facilsri_mostrar_cedula_en_admin_pedido($order) {
+    $cedula = $order->get_meta('_billing_cedula_ruc');
+    if ($cedula) {
+        echo '<p><strong>' . __('Cédula / RUC SRI:', 'woocommerce') . '</strong> ' . esc_html($cedula) . '</p>';
+    }
+}
+
+// 5. DISPARAR LA FACTURA ELECTRÓNICA AUTOMÁTICAMENTE TRAS EL PAGO
+add_action('woocommerce_payment_complete', 'facilsri_emitir_factura_sri_automatica');
+add_action('woocommerce_order_status_completed', 'facilsri_emitir_factura_sri_automatica');
+
+function facilsri_emitir_factura_sri_automatica($order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+
+    // Evitar facturar dos veces la misma orden
+    if ($order->get_meta('_sri_clave_acceso')) {
+        return;
+    }
+
+    // Configuración de Lojafac
+    $api_key = '${activeKey}';
+    $endpoint = '${originUrl}/api/v1/invoices';
+
+    // Obtener identificación del comprador
+    $identificacion = $order->get_meta('_billing_cedula_ruc');
+    if (empty($identificacion)) {
+        $identificacion = '9999999999999'; // Consumidor Final
+    }
+    $identificacion = trim($identificacion);
+    $tipoId = $identificacion === '9999999999999' ? '07' : (strlen($identificacion) === 13 ? '04' : '05');
+
+    // Extraer productos del carrito
+    $items = [];
+    foreach ($order->get_items() as $item_id => $item) {
+        $product = $item->get_product();
+        $sku = $product ? ($product->get_sku() ?: 'PROD-' . $product->get_id()) : 'ITEM-' . $item_id;
+        $precioUnitario = (float) $order->get_item_subtotal($item, false, false);
+
+        $items[] = [
+            'codigoPrincipal' => $sku,
+            'nombre'          => $item->get_name(),
+            'cantidad'        => $item->get_quantity(),
+            'precioUnitario'  => $precioUnitario,
+            'iva'             => 15.0, // Tarifa IVA vigente Ecuador
+            'descuento'       => 0
+        ];
+    }
+
+    // Payload para Lojafac
+    $payload = [
+        'client' => [
+            'identificacion'     => $identificacion,
+            'nombres'            => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+            'direccion'          => $order->get_billing_address_1() . ', ' . $order->get_billing_city(),
+            'mail'               => $order->get_billing_email(),
+            'celular'            => $order->get_billing_phone() ?: '0999999999',
+            'tipoIdentificacion' => $tipoId
+        ],
+        'items'         => $items,
+        'formaPago'     => '20', // Otros con utilización del sistema financiero
+        'observaciones' => 'Pedido WooCommerce #' . $order_id
+    ];
+
+    // Llamada HTTP a la API
+    $response = wp_remote_post($endpoint, [
+        'headers' => [
+            'Content-Type'  => 'application/json',
+            'Authorization' => 'Bearer ' . $api_key,
+        ],
+        'body'    => json_encode($payload),
+        'timeout' => 45,
+    ]);
+
+    if (!is_wp_error($response)) {
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        if (!empty($data['success'])) {
+            $order->add_order_note('✓ Factura SRI Autorizada: ' . $data['claveAcceso'] . ' (Secuencial: ' . $data['secuencial'] . ')');
+            $order->update_meta_data('_sri_clave_acceso', $data['claveAcceso']);
+            $order->update_meta_data('_sri_ride_url', $data['documentos']['rideUrl']);
+            $order->update_meta_data('_sri_xml_url', $data['documentos']['xmlUrl']);
+            $order->save();
+        } else {
+            $order->add_order_note('⚠️ Error al emitir factura SRI: ' . ($data['error'] ?? 'Error desconocido'));
+        }
+    }
+}`;
+  }
+
+  if (wooSubTab === "field_only") {
+    return `<?php
+// CÓDIGO PARA CREAR EL CAMPO DE CÉDULA/RUC EN EL CHECKOUT DE WOOCOMMERCE
+add_filter('woocommerce_checkout_fields', 'facilsri_agregar_campo_cedula');
+function facilsri_agregar_campo_cedula($fields) {
+    $fields['billing']['billing_cedula_ruc'] = array(
+        'type'        => 'text',
+        'label'       => __('Cédula o RUC para Factura', 'woocommerce'),
+        'placeholder' => _x('Ej: 1105164683 o 1105164683001', 'placeholder', 'woocommerce'),
+        'required'    => false,
+        'class'       => array('form-row-wide'),
+        'priority'    => 25
+    );
+    return $fields;
+}
+
+add_action('woocommerce_checkout_update_order_meta', 'facilsri_guardar_cedula');
+function facilsri_guardar_cedula($order_id) {
+    if (!empty($_POST['billing_cedula_ruc'])) {
+        update_post_meta($order_id, '_billing_cedula_ruc', sanitize_text_field($_POST['billing_cedula_ruc']));
+    }
+}`;
+  }
+
+  if (wooSubTab === "invoice_only") {
+    return `<?php
+// CÓDIGO PARA DISPARAR LA FACTURA TRAS EL PAGO (SI YA TIENES EL CAMPO DE CÉDULA CREADO)
+add_action('woocommerce_payment_complete', 'facilsri_auto_facturar');
+function facilsri_auto_facturar($order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order || $order->get_meta('_sri_clave_acceso')) return;
+
+    $api_key = '${activeKey}';
+    $endpoint = '${originUrl}/api/v1/invoices';
+    $cedula = $order->get_meta('_billing_cedula_ruc') ?: '9999999999999';
+
+    $items = [];
+    foreach ($order->get_items() as $item_id => $item) {
+        $product = $item->get_product();
+        $items[] = [
+            'codigoPrincipal' => $product ? ($product->get_sku() ?: 'PROD-' . $product->get_id()) : 'ITEM-' . $item_id,
+            'nombre'          => $item->get_name(),
+            'cantidad'        => $item->get_quantity(),
+            'precioUnitario'  => (float) $order->get_item_subtotal($item, false, false),
+            'iva'             => 15.0,
+            'descuento'       => 0
+        ];
+    }
+
+    $payload = [
+        'client' => [
+            'identificacion'     => trim($cedula),
+            'nombres'            => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+            'direccion'          => $order->get_billing_address_1() . ', ' . $order->get_billing_city(),
+            'mail'               => $order->get_billing_email(),
+            'celular'            => $order->get_billing_phone() ?: '0999999999',
+            'tipoIdentificacion' => $cedula === '9999999999999' ? '07' : (strlen($cedula) === 13 ? '04' : '05')
+        ],
+        'items'         => $items,
+        'formaPago'     => '20',
+        'observaciones' => 'Pedido WooCommerce #' . $order_id
+    ];
+
+    wp_remote_post($endpoint, [
+        'headers' => [
+            'Content-Type'  => 'application/json',
+            'Authorization' => 'Bearer ' . $api_key,
+        ],
+        'body'    => json_encode($payload),
+        'timeout' => 45,
+    ]);
+}`;
+  }
+  return "";
+})()}
+                          </pre>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (selectedApiSnippetLang === "shopify") {
+                    return (
+                      <div className="space-y-6">
+                        <div className="p-5 bg-gradient-to-r from-emerald-50 via-emerald-50/50 to-white border border-emerald-200 rounded-3xl flex items-start space-x-4">
+                          <div className="h-10 w-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
+                            Shop
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-black text-emerald-950 uppercase tracking-tight">Guía de Integración para Shopify (Webhooks & Middleware)</h4>
+                            <p className="text-xs text-emerald-800 mt-1 leading-relaxed">
+                              Shopify no permite modificar el código fuente de su checkout en planes estándar, pero puedes capturar la cédula o RUC usando sus campos nativos y disparar un webhook.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Opciones en Shopify */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                          <div className="p-4 bg-slate-50 border border-emerald-200 rounded-2xl space-y-2">
+                            <span className="h-6 w-6 rounded-full bg-emerald-600 text-white font-black text-[11px] flex items-center justify-center">1</span>
+                            <h5 className="font-bold text-slate-800">Opción A: Renombrar "Empresa"</h5>
+                            <p className="text-slate-600 leading-relaxed">
+                              En tu Shopify: <br/>
+                              <strong className="text-slate-800 font-mono text-[10px]">Tienda online &gt; Temas &gt; ... &gt; Editar contenido del tema predeterminado</strong>.<br/>
+                              Busca <code className="text-emerald-700 font-bold font-mono">Company</code> o <code className="text-emerald-700 font-bold font-mono">Empresa</code> y cámbialo a: <em>"Cédula o RUC para Factura Electrónica"</em>.
+                            </p>
+                          </div>
+
+                          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                            <span className="h-6 w-6 rounded-full bg-emerald-600 text-white font-black text-[11px] flex items-center justify-center">2</span>
+                            <h5 className="font-bold text-slate-800">Opción B: Notas del Carrito</h5>
+                            <p className="text-slate-600 leading-relaxed">
+                              Activa el campo de <strong>Notas del Pedido</strong> en el carrito de tu tema con el texto: <em>"Ingrese su Cédula o RUC si requiere factura con datos personales"</em>.
+                            </p>
+                          </div>
+
+                          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                            <span className="h-6 w-6 rounded-full bg-emerald-600 text-white font-black text-[11px] flex items-center justify-center">3</span>
+                            <h5 className="font-bold text-slate-800">Configurar Webhook en Shopify</h5>
+                            <p className="text-slate-600 leading-relaxed">
+                              Ve a: <strong className="text-slate-800 font-mono text-[10px]">Configuración &gt; Notificaciones &gt; Webhooks &gt; Crear Webhook</strong>.<br/>
+                              Evento: <strong>Creación de pedido (orders/create)</strong> o <strong>Pago (orders/paid)</strong>.<br/>
+                              URL: La URL de tu script middleware.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Script Middleware (Node.js / Express / Vercel Serverless)</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const code = `// Webhook Handler para Shopify (Node.js Express / Next.js API Route)
+import express from 'express';
+const app = express();
+app.use(express.json());
+
+const FACILSRI_API_KEY = '${activeKey}';
+const FACILSRI_URL = '${originUrl}/api/v1/invoices';
+
+app.post('/api/shopify-webhook', async (req, res) => {
+  try {
+    const shopifyOrder = req.body;
+    
+    // 1. Extraer cliente
+    const customer = shopifyOrder.customer || {};
+    const shipping = shopifyOrder.shipping_address || {};
+    const note = (shopifyOrder.note || '').trim();
+    
+    // Buscar cédula o RUC en la nota o en el campo de empresa
+    const identificacion = note || shipping.company || '9999999999999';
+    const tipoId = identificacion === '9999999999999' ? '07' : (identificacion.length === 13 ? '04' : '05');
+
+    // 2. Extraer productos
+    const items = shopifyOrder.line_items.map(item => ({
+      codigoPrincipal: item.sku || ('SKU-' + item.id),
+      nombre: item.title,
+      cantidad: item.quantity,
+      precioUnitario: parseFloat(item.price),
+      iva: 15.0,
+      descuento: parseFloat(item.total_discount || 0)
+    }));
+
+    // 3. Enviar a Lojafac
+    const response = await fetch(FACILSRI_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': \`Bearer \${FACILSRI_API_KEY}\`
+      },
+      body: JSON.stringify({
+        client: {
+          identificacion,
+          nombres: (customer.first_name || 'CLIENTE') + ' ' + (customer.last_name || 'SHOPIFY'),
+          direccion: shipping.address1 ? \`\${shipping.address1}, \${shipping.city}\` : 'S/N',
+          mail: customer.email || shopifyOrder.email || 'cliente@email.com',
+          celular: shipping.phone || customer.phone || '0999999999',
+          tipoIdentificacion: tipoId
+        },
+        items,
+        formaPago: '20', // Pasarela de pago / Tarjeta
+        observaciones: \`Pedido Shopify #\${shopifyOrder.order_number || shopifyOrder.id}\`
+      })
+    });
+
+    const result = await response.json();
+    console.log('Factura SRI generada para Shopify:', result);
+    return res.status(200).json({ success: true, sriResult: result });
+  } catch (error) {
+    console.error('Error procesando webhook de Shopify:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.listen(3001, () => console.log('Shopify Webhook Listener activo en puerto 3001'));`;
+                                navigator.clipboard.writeText(code);
+                                setApiSnippetCopied(true);
+                                setTimeout(() => setApiSnippetCopied(false), 2500);
+                              }}
+                              className="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold rounded-xl flex items-center space-x-1.5 cursor-pointer transition-colors"
+                            >
+                              {apiSnippetCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                              <span>{apiSnippetCopied ? "¡Código Copiado!" : "Copiar Script Shopify"}</span>
+                            </button>
+                          </div>
+
+                          <pre className="bg-slate-900 text-emerald-200 p-5 rounded-2xl overflow-x-auto text-xs font-mono leading-relaxed border border-slate-800 max-h-96">
+{`// Webhook Handler para Shopify (Node.js Express / Next.js API Route)
+import express from 'express';
+const app = express();
+app.use(express.json());
+
+const FACILSRI_API_KEY = '${activeKey}';
+const FACILSRI_URL = '${originUrl}/api/v1/invoices';
+
+app.post('/api/shopify-webhook', async (req, res) => {
+  try {
+    const shopifyOrder = req.body;
+    
+    // 1. Extraer cliente
+    const customer = shopifyOrder.customer || {};
+    const shipping = shopifyOrder.shipping_address || {};
+    const note = (shopifyOrder.note || '').trim();
+    
+    // Buscar cédula o RUC en la nota o en el campo de empresa
+    const identificacion = note || shipping.company || '9999999999999';
+    const tipoId = identificacion === '9999999999999' ? '07' : (identificacion.length === 13 ? '04' : '05');
+
+    // 2. Extraer productos
+    const items = shopifyOrder.line_items.map(item => ({
+      codigoPrincipal: item.sku || ('SKU-' + item.id),
+      nombre: item.title,
+      cantidad: item.quantity,
+      precioUnitario: parseFloat(item.price),
+      iva: 15.0,
+      descuento: parseFloat(item.total_discount || 0)
+    }));
+
+    // 3. Enviar a Lojafac
+    const response = await fetch(FACILSRI_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': \`Bearer \${FACILSRI_API_KEY}\`
+      },
+      body: JSON.stringify({
+        client: {
+          identificacion,
+          nombres: (customer.first_name || 'CLIENTE') + ' ' + (customer.last_name || 'SHOPIFY'),
+          direccion: shipping.address1 ? \`\${shipping.address1}, \${shipping.city}\` : 'S/N',
+          mail: customer.email || shopifyOrder.email || 'cliente@email.com',
+          celular: shipping.phone || customer.phone || '0999999999',
+          tipoIdentificacion: tipoId
+        },
+        items,
+        formaPago: '20', // Pasarela de pago / Tarjeta
+        observaciones: \`Pedido Shopify #\${shopifyOrder.order_number || shopifyOrder.id}\`
+      })
+    });
+
+    const result = await response.json();
+    console.log('Factura SRI generada para Shopify:', result);
+    return res.status(200).json({ success: true, sriResult: result });
+  } catch (error) {
+    console.error('Error procesando webhook de Shopify:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.listen(3001, () => console.log('Shopify Webhook Listener activo en puerto 3001'));`}
+                          </pre>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (selectedApiSnippetLang === "php") {
+                    return (
+                      <div className="space-y-6">
+                        <div className="p-5 bg-gradient-to-r from-blue-50 via-blue-50/50 to-white border border-blue-200 rounded-3xl flex items-start space-x-4">
+                          <div className="h-10 w-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
+                            PHP
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-black text-blue-950 uppercase tracking-tight">Guía para PHP Puro, Laravel, Symfony y CodeIgniter</h4>
+                            <p className="text-xs text-blue-800 mt-1 leading-relaxed">
+                              Clase de servicio lista para usar con cURL y validación automática de documentos ecuatorianos.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                            <span className="h-6 w-6 rounded-full bg-blue-600 text-white font-black text-[11px] flex items-center justify-center">1</span>
+                            <h5 className="font-bold text-slate-800">Variables de Entorno (.env)</h5>
+                            <p className="text-slate-600 font-mono text-[11px]">
+                              FACILSRI_API_KEY={activeKey}<br/>
+                              FACILSRI_BASE_URL={originUrl}
+                            </p>
+                          </div>
+
+                          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                            <span className="h-6 w-6 rounded-full bg-blue-600 text-white font-black text-[11px] flex items-center justify-center">2</span>
+                            <h5 className="font-bold text-slate-800">Invocación en Controladores</h5>
+                            <p className="text-slate-600 leading-relaxed">
+                              Instancia <code className="text-blue-700 font-bold font-mono">new SriBillingService()</code> y llama a <code className="text-blue-700 font-bold font-mono">emitirFactura($cliente, $items)</code> tras procesar la venta.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <pre className="bg-slate-900 text-blue-200 p-5 rounded-2xl overflow-x-auto text-xs font-mono leading-relaxed border border-slate-800 max-h-96">
+{`<?php
+// app/Services/SriBillingService.php (Laravel / PHP Puro)
+
+class SriBillingService {
+    private string $apiKey;
+    private string $baseUrl;
+
+    public function __construct() {
+        $this->apiKey = '${activeKey}';
+        $this->baseUrl = '${originUrl}/api/v1';
+    }
+
+    public function emitirFactura(array $cliente, array $items, string $observaciones = ''): array {
+        $endpoint = $this->baseUrl . '/invoices';
+
+        $identificacion = trim($cliente['identificacion'] ?? '9999999999999');
+        $tipoId = $cliente['tipoIdentificacion'] ?? ($identificacion === '9999999999999' ? '07' : (strlen($identificacion) === 13 ? '04' : '05'));
+
+        $payload = [
+            'client' => [
+                'identificacion'     => $identificacion,
+                'nombres'            => strtoupper($cliente['nombres'] ?? 'CONSUMIDOR FINAL'),
+                'direccion'          => strtoupper($cliente['direccion'] ?? 'S/N'),
+                'mail'               => strtolower($cliente['mail'] ?? 'cliente@email.com'),
+                'celular'            => $cliente['celular'] ?? '0999999999',
+                'tipoIdentificacion' => $tipoId
+            ],
+            'items'         => $items,
+            'formaPago'     => $cliente['formaPago'] ?? '20', // 20 = Tarjetas/Transferencias, 01 = Efectivo
+            'observaciones' => $observaciones
+        ];
+
+        $ch = curl_init($endpoint);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->apiKey
+        ]);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $result = json_decode($response, true);
+        return [
+            'httpCode' => $httpCode,
+            'success'  => !empty($result['success']),
+            'data'     => $result
+        ];
+    }
+}`}
+                          </pre>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (selectedApiSnippetLang === "node") {
+                    return (
+                      <div className="space-y-6">
+                        <div className="p-5 bg-gradient-to-r from-emerald-50 via-emerald-50/50 to-white border border-emerald-200 rounded-3xl flex items-start space-x-4">
+                          <div className="h-10 w-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
+                            JS
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-black text-emerald-950 uppercase tracking-tight">Guía para Node.js, Next.js, Express y TypeScript</h4>
+                            <p className="text-xs text-emerald-800 mt-1 leading-relaxed">
+                              Módulo cliente moderno con soporte asíncrono para emitir facturas y consultar comprobantes.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <pre className="bg-slate-900 text-emerald-200 p-5 rounded-2xl overflow-x-auto text-xs font-mono leading-relaxed border border-slate-800 max-h-96">
+{`// lib/facilsri-client.ts (Node.js / Next.js / Express)
+
+export async function emitirFacturaSRI(datosFactura: {
+  cliente: {
+    identificacion: string;
+    nombres: string;
+    direccion: string;
+    mail: string;
+    celular?: string;
+    tipoIdentificacion?: string;
+  };
+  items: Array<{
+    codigoPrincipal: string;
+    nombre: string;
+    cantidad: number;
+    precioUnitario: number;
+    iva?: number;
+    descuento?: number;
+  }>;
+  formaPago?: string;
+  observaciones?: string;
+}) {
+  const API_KEY = "${activeKey}";
+  const ENDPOINT = "${originUrl}/api/v1/invoices";
+
+  const ident = datosFactura.cliente.identificacion.trim();
+  const tipoId = datosFactura.cliente.tipoIdentificacion || (ident === "9999999999999" ? "07" : (ident.length === 13 ? "04" : "05"));
+
+  const response = await fetch(ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: \`Bearer \${API_KEY}\`
+    },
+    body: JSON.stringify({
+      client: {
+        ...datosFactura.cliente,
+        identificacion: ident,
+        tipoIdentificacion: tipoId
+      },
+      items: datosFactura.items.map(it => ({
+        ...it,
+        iva: it.iva !== undefined ? it.iva : 15.0,
+        descuento: it.descuento || 0
+      })),
+      formaPago: datosFactura.formaPago || "20",
+      observaciones: datosFactura.observaciones || "Emitido desde aplicación Node.js"
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || "Error al emitir factura en el SRI");
+  }
+
+  return {
+    estado: data.estado, // "AUTORIZADA"
+    claveAcceso: data.claveAcceso,
+    secuencial: data.secuencial,
+    rideUrl: data.documentos.rideUrl,
+    xmlUrl: data.documentos.xmlUrl
+  };
+}`}
+                          </pre>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (selectedApiSnippetLang === "python") {
+                    return (
+                      <div className="space-y-6">
+                        <div className="p-5 bg-gradient-to-r from-amber-50 via-amber-50/50 to-white border border-amber-200 rounded-3xl flex items-start space-x-4">
+                          <div className="h-10 w-10 rounded-2xl bg-amber-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
+                            Py
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-black text-amber-950 uppercase tracking-tight">Guía para Python (Django / FastAPI / Flask)</h4>
+                            <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                              Función modular con manejo de excepciones y timeouts para aplicaciones Python.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <pre className="bg-slate-900 text-amber-200 p-5 rounded-2xl overflow-x-auto text-xs font-mono leading-relaxed border border-slate-800 max-h-96">
+{`# services/sri_service.py (Python / Django / FastAPI)
+import requests
+
+API_KEY = "${activeKey}"
+ENDPOINT = "${originUrl}/api/v1/invoices"
+
+def emitir_factura_sri(cliente: dict, items: list, observaciones: str = "Venta online"):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}"
+    }
+
+    identificacion = str(cliente.get("identificacion", "9999999999999")).strip()
+    tipo_id = "07" if identificacion == "9999999999999" else ("04" if len(identificacion) == 13 else "05")
+
+    payload = {
+        "client": {
+            "identificacion": identificacion,
+            "nombres": cliente.get("nombres", "CONSUMIDOR FINAL").upper(),
+            "direccion": cliente.get("direccion", "S/N").upper(),
+            "mail": cliente.get("mail", "cliente@email.com").lower(),
+            "celular": cliente.get("celular", "0999999999"),
+            "tipoIdentificacion": cliente.get("tipoIdentificacion", tipo_id)
+        },
+        "items": [
+            {
+                "codigoPrincipal": str(it.get("codigoPrincipal", f"PROD-{idx+1}")),
+                "nombre": str(it.get("nombre", "PRODUCTO")).upper(),
+                "cantidad": float(it.get("cantidad", 1)),
+                "precioUnitario": float(it.get("precioUnitario", 0.0)),
+                "iva": float(it.get("iva", 15.0)),
+                "descuento": float(it.get("descuento", 0.0))
+            }
+            for idx, it in enumerate(items)
+        ],
+        "formaPago": cliente.get("formaPago", "20"),
+        "observaciones": observaciones
+    }
+
+    response = requests.post(ENDPOINT, json=payload, headers=headers, timeout=30)
+    data = response.json()
+
+    if response.status_code == 201 and data.get("success"):
+        return {
+            "success": True,
+            "estado": data.get("estado"),
+            "claveAcceso": data.get("claveAcceso"),
+            "secuencial": data.get("secuencial"),
+            "rideUrl": data.get("documentos", {}).get("rideUrl"),
+            "xmlUrl": data.get("documentos", {}).get("xmlUrl")
+        }
+    else:
+        return {
+            "success": False,
+            "error": data.get("error", "Fallo al autorizar con el SRI")
+        }`}
+                          </pre>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (selectedApiSnippetLang === "curl") {
+                    return (
+                      <div className="space-y-6">
+                        <div className="p-5 bg-slate-100 border border-slate-200 rounded-3xl flex items-start space-x-4">
+                          <div className="h-10 w-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
+                            cURL
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Comando cURL & Postman para Pruebas Rápidas</h4>
+                            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                              Ejecuta este comando directamente en tu terminal (Linux, Mac, PowerShell o Postman) para probar la emisión instantánea.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <pre className="bg-slate-900 text-slate-100 p-5 rounded-2xl overflow-x-auto text-xs font-mono leading-relaxed border border-slate-800 max-h-96">
+{`curl -X POST "${originUrl}/api/v1/invoices" \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${activeKey}" \\
+  -d '{
+    "client": {
+      "tipoIdentificacion": "05",
+      "identificacion": "1105164683",
+      "nombres": "ESTEFANIA LOAIZA",
+      "direccion": "AV. CATACOCHA Y 18 DE NOVIEMBRE",
+      "mail": "cliente@email.com",
+      "celular": "0999999999"
+    },
+    "items": [
+      {
+        "codigoPrincipal": "CAMISA-001",
+        "nombre": "CAMISA CASUAL AZUL",
+        "cantidad": 2,
+        "precioUnitario": 25.00,
+        "iva": 15.0,
+        "descuento": 0
+      }
+    ],
+    "formaPago": "20",
+    "observaciones": "Pedido online #10542"
+  }'`}
+                          </pre>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })()}
+
+                {/* SECCIÓN INTERACTIVA: PREGUNTAS FRECUENTES Y CASOS REALES (FAQS ACORDEONES) */}
+                <div className="space-y-4 pt-6 border-t border-slate-100">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-8 w-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                      <HelpCircle className="h-4.5 w-4.5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Preguntas Frecuentes y Solución de Dudas Frecuentes</h4>
+                      <p className="text-xs text-slate-500">Respuestas a los casos reales más comunes al integrar tiendas y aplicaciones con el SRI.</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {/* FAQ 1 */}
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden transition-all bg-white">
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaqIndex(openFaqIndex === 1 ? null : 1)}
+                        className="w-full p-4 text-left flex items-center justify-between font-bold text-xs text-slate-800 hover:bg-slate-50 cursor-pointer"
+                      >
+                        <span className="flex items-center space-x-2">
+                          <span className="text-purple-600">👤</span>
+                          <span>¿Qué pasa si el comprador no ingresa su cédula o compra como Consumidor Final?</span>
+                        </span>
+                        {openFaqIndex === 1 ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                      </button>
+                      {openFaqIndex === 1 && (
+                        <div className="p-4 pt-0 text-xs text-slate-600 leading-relaxed border-t border-slate-100 bg-slate-50/50 space-y-2">
+                          <p>
+                            Si el cliente no ingresa su identificación, el sistema envía automáticamente el código <code className="font-bold text-purple-700 font-mono">9999999999999</code> con tipo de documento <code className="font-bold text-purple-700 font-mono">07</code> (Consumidor Final).
+                          </p>
+                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px]">
+                            <strong>⚠️ Importante según la ley del SRI:</strong> En Ecuador, las compras a Consumidor Final solo están permitidas hasta <strong>$50.00</strong>. Si la compra supera los $50, el SRI exige obligatoriamente los datos reales del comprador (Cédula o RUC, Nombres y Correo). Nuestro snippet de WooCommerce incluye esta validación en el checkout.
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* FAQ 2 */}
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden transition-all bg-white">
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaqIndex(openFaqIndex === 2 ? null : 2)}
+                        className="w-full p-4 text-left flex items-center justify-between font-bold text-xs text-slate-800 hover:bg-slate-50 cursor-pointer"
+                      >
+                        <span className="flex items-center space-x-2">
+                          <span className="text-blue-600">💳</span>
+                          <span>¿Qué código de forma de pago se debe enviar para Tarjetas de Crédito, Payphone, Kushki o Transferencias?</span>
+                        </span>
+                        {openFaqIndex === 2 ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                      </button>
+                      {openFaqIndex === 2 && (
+                        <div className="p-4 pt-0 text-xs text-slate-600 leading-relaxed border-t border-slate-100 bg-slate-50/50 space-y-2">
+                          <p>
+                            Para comercio electrónico y pagos por internet (pasarelas como Payphone, Placetopay, Kushki, Datafast, Stripe, PayPal, botones de pago o transferencias bancarias), se debe utilizar el código del SRI:
+                          </p>
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 text-[11px] font-mono">
+                            <strong>Código 20:</strong> "OTROS CON UTILIZACION DEL SISTEMA FINANCIERO"
+                          </div>
+                          <p>
+                            Si el pedido se cobra contra entrega en efectivo físico, se utiliza el <strong>Código 01</strong> ("SIN UTILIZACION DEL SISTEMA FINANCIERO").
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* FAQ 3 */}
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden transition-all bg-white">
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaqIndex(openFaqIndex === 3 ? null : 3)}
+                        className="w-full p-4 text-left flex items-center justify-between font-bold text-xs text-slate-800 hover:bg-slate-50 cursor-pointer"
+                      >
+                        <span className="flex items-center space-x-2">
+                          <span className="text-emerald-600">📊</span>
+                          <span>¿Cómo se maneja el cálculo del IVA 15% y productos con tarifa 0% en el mismo carrito?</span>
+                        </span>
+                        {openFaqIndex === 3 ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                      </button>
+                      {openFaqIndex === 3 && (
+                        <div className="p-4 pt-0 text-xs text-slate-600 leading-relaxed border-t border-slate-100 bg-slate-50/50 space-y-2">
+                          <p>
+                            La API de Lojafac recibe el porcentaje de IVA por cada producto individual en el array <code className="font-bold text-purple-700 font-mono">items</code> (ej: <code className="font-mono">"iva": 15.0</code> o <code className="font-mono">"iva": 0.0</code>).
+                          </p>
+                          <p>
+                            El motor de facturación desglosa automáticamente los casilleros tributarios del SRI: <strong>Subtotal 15%</strong>, <strong>Subtotal 0%</strong>, <strong>Valor IVA</strong> y <strong>Total</strong>, cumpliendo estrictamente con la ficha técnica del SRI.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* FAQ 4 */}
+                    <div className="border border-slate-200 rounded-2xl overflow-hidden transition-all bg-white">
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaqIndex(openFaqIndex === 4 ? null : 4)}
+                        className="w-full p-4 text-left flex items-center justify-between font-bold text-xs text-slate-800 hover:bg-slate-50 cursor-pointer"
+                      >
+                        <span className="flex items-center space-x-2">
+                          <span className="text-indigo-600">📩</span>
+                          <span>¿Dónde y cómo recibe el comprador su factura electrónica?</span>
+                        </span>
+                        {openFaqIndex === 4 ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                      </button>
+                      {openFaqIndex === 4 && (
+                        <div className="p-4 pt-0 text-xs text-slate-600 leading-relaxed border-t border-slate-100 bg-slate-50/50 space-y-2">
+                          <p>
+                            El comprador recibe automáticamente en su correo electrónico el <strong>RIDE en formato PDF</strong> y el archivo <strong>XML firmado y autorizado</strong> como archivos adjuntos.
+                          </p>
+                          <p>
+                            Adicionalmente, la respuesta de la API entrega las URLs públicas <code className="font-mono text-[11px] text-indigo-700">documentos.rideUrl</code> y <code className="font-mono text-[11px] text-indigo-700">documentos.xmlUrl</code> para que tu tienda pueda mostrar un botón de descarga en la página de "Gracias por tu compra" o en la cuenta del cliente.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+
+              {/* TARJETA 4: SANDBOX INTERACTIVO (PROBADOR EN VIVO) */}
+              <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+                <div className="flex items-center space-x-3 pb-4 border-b border-slate-100">
+                  <div className="h-10 w-10 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">Sandbox / Probador de Emisión en Vivo</h3>
+                    <p className="text-xs text-slate-500">Prueba la emisión de una factura hacia la API v1 y observa la respuesta del SRI en tiempo real.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Formulario de Entrada */}
+                  <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                    <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Payload de Prueba (JSON Request)</h4>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cédula/RUC Cliente</label>
+                        <input
+                          type="text"
+                          value={sandboxPayload.client.identificacion}
+                          onChange={(e) => setSandboxPayload({ ...sandboxPayload, client: { ...sandboxPayload.client, identificacion: e.target.value } })}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nombre Cliente</label>
+                        <input
+                          type="text"
+                          value={sandboxPayload.client.nombres}
+                          onChange={(e) => setSandboxPayload({ ...sandboxPayload, client: { ...sandboxPayload.client, nombres: e.target.value } })}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Correo Cliente</label>
+                        <input
+                          type="email"
+                          value={sandboxPayload.client.mail}
+                          onChange={(e) => setSandboxPayload({ ...sandboxPayload, client: { ...sandboxPayload.client, mail: e.target.value } })}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Producto</label>
+                        <input
+                          type="text"
+                          value={sandboxPayload.items[0].nombre}
+                          onChange={(e) => setSandboxPayload({ ...sandboxPayload, items: [{ ...sandboxPayload.items[0], nombre: e.target.value }] })}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cantidad</label>
+                        <input
+                          type="number"
+                          value={sandboxPayload.items[0].cantidad}
+                          onChange={(e) => setSandboxPayload({ ...sandboxPayload, items: [{ ...sandboxPayload.items[0], cantidad: parseFloat(e.target.value) || 1 }] })}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Precio Unitario ($)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={sandboxPayload.items[0].precioUnitario}
+                          onChange={(e) => setSandboxPayload({ ...sandboxPayload, items: [{ ...sandboxPayload.items[0], precioUnitario: parseFloat(e.target.value) || 0 }] })}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">IVA (%)</label>
+                        <select
+                          value={sandboxPayload.items[0].iva}
+                          onChange={(e) => setSandboxPayload({ ...sandboxPayload, items: [{ ...sandboxPayload.items[0], iva: parseFloat(e.target.value) }] })}
+                          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
+                        >
+                          <option value="15">15%</option>
+                          <option value="12">12%</option>
+                          <option value="8">8%</option>
+                          <option value="0">0%</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={sandboxLoading || !apiKeyData.apiKey}
+                      onClick={handleRunApiSandbox}
+                      className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-extrabold text-xs rounded-2xl shadow-md transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center space-x-2"
+                    >
+                      {sandboxLoading ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                          <span>Emitiendo y Autorizando con SRI...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4" />
+                          <span>Ejecutar Petición POST /api/v1/invoices</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Visor de Respuesta */}
+                  <div className="space-y-4 bg-slate-900 p-5 rounded-2xl border border-slate-800 text-slate-100 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-400">Respuesta HTTP (Response)</span>
+                        {sandboxResponse && (
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                            sandboxResponse.status === 201 || sandboxResponse.status === 200 ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-red-500/20 text-red-400 border border-red-500/30"
+                          }`}>
+                            HTTP {sandboxResponse.status} {sandboxResponse.statusText}
+                          </span>
+                        )}
+                      </div>
+
+                      <pre className="text-[11px] font-mono leading-relaxed overflow-x-auto max-h-72 text-indigo-200">
+                        {sandboxResponse ? JSON.stringify(sandboxResponse.data, null, 2) : "// Presiona 'Ejecutar Petición' para ver la respuesta JSON del SRI..."}
+                      </pre>
+                    </div>
+
+                    {sandboxResponse?.data?.documentos?.rideUrl && (
+                      <div className="pt-3 border-t border-slate-800 flex items-center gap-2">
+                        <a
+                          href={sandboxResponse.data.documentos.rideUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl text-center flex items-center justify-center gap-1.5 transition-colors"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          <span>Descargar PDF RIDE</span>
+                        </a>
+                        <a
+                          href={sandboxResponse.data.documentos.xmlUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl text-center flex items-center justify-center gap-1.5 transition-colors border border-slate-700"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          <span>Ver XML SRI</span>
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
 
         </div>
       </main>
@@ -8797,7 +10002,7 @@ export default function Home() {
 
                       {/* Notificar por WhatsApp */}
                       <a
-                        href={`https://wa.me/${systemConfig?.adminWhatsapp || "593999999999"}?text=Hola%20Administrador,%20he%20registrado%20un%20pago%20en%20FácilSRI%20para%20mi%20RUC%20${issuer.ruc}%20(${issuer.nombreEmpresa})%20por%20un%20monto%20de%20$${selectedRequestType === "TOPUP" ? topupAmount : (systemConfig?.monthlyPlanFee ? systemConfig.monthlyPlanFee.toFixed(2) : "15.00")}%20para%20${selectedRequestType === "TOPUP" ? "Recarga de Billetera" : "Renovación de Membresía"}.%20Referencia%20del%20depósito:%20${paymentReference || "N/A"}.%20Quedo%20atento%20a%20la%20aprobación.%20Gracias!`}
+                        href={`https://wa.me/${systemConfig?.adminWhatsapp || "593999999999"}?text=Hola%20Administrador,%20he%20registrado%20un%20pago%20en%20Lojafac%20para%20mi%20RUC%20${issuer.ruc}%20(${issuer.nombreEmpresa})%20por%20un%20monto%20de%20$${selectedRequestType === "TOPUP" ? topupAmount : (systemConfig?.monthlyPlanFee ? systemConfig.monthlyPlanFee.toFixed(2) : "15.00")}%20para%20${selectedRequestType === "TOPUP" ? "Recarga de Billetera" : "Renovación de Membresía"}.%20Referencia%20del%20depósito:%20${paymentReference || "N/A"}.%20Quedo%20atento%20a%20la%20aprobación.%20Gracias!`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center bg-green-500 hover:bg-green-600 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors shadow-sm active:scale-[0.98]"
@@ -9293,7 +10498,7 @@ export default function Home() {
                 <input
                   type="text"
                   required
-                  placeholder="ej. FácilSRI SaaS Cía. Ltda."
+                  placeholder="ej. Lojafac SaaS Cía. Ltda."
                   value={bankForm.titular}
                   onChange={(e) => setBankForm({ ...bankForm, titular: e.target.value })}
                   className="block w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-blue-600 font-bold uppercase"
