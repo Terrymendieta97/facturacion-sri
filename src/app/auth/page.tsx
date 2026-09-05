@@ -121,9 +121,16 @@ function AuthForm() {
       if (res.ok && data.success) {
         localStorage.setItem("activeIssuerId", String(data.issuer.id));
         localStorage.removeItem("isAdminLoggedIn");
+        if (data.role === "OPERATOR" && data.emissionPoint) {
+          localStorage.setItem("userRole", "OPERATOR");
+          localStorage.setItem("operatorEmissionPoint", JSON.stringify(data.emissionPoint));
+        } else {
+          localStorage.setItem("userRole", "ADMIN");
+          localStorage.removeItem("operatorEmissionPoint");
+        }
         window.location.href = "/";
       } else {
-        alert(data.error || "RUC / Correo Electrónico o contraseña incorrectos.");
+        alert(data.error || "RUC, Correo, Usuario de Caja o contraseña incorrectos.");
       }
     } catch (err: any) {
       alert("Error al conectar con el servidor: " + err.message);
@@ -161,6 +168,8 @@ function AuthForm() {
       if (res.ok && data.success) {
         alert(`¡Empresa registrada con éxito! Te hemos acreditado $${defaultBalance.toFixed(2)} USD de saldo de cortesía. ¡Bienvenido!`);
         localStorage.setItem("activeIssuerId", String(data.issuer.id));
+        localStorage.setItem("userRole", "ADMIN");
+        localStorage.removeItem("operatorEmissionPoint");
         localStorage.removeItem("isAdminLoggedIn");
         window.location.href = "/";
       } else {
@@ -297,13 +306,13 @@ function AuthForm() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                RUC o Correo Electrónico
+                RUC, Correo Electrónico o Usuario de Caja
               </label>
               <div className="relative">
                 <input
                   type="text"
                   required
-                  placeholder="ej. 1104759574001 o micorreo@empresa.com"
+                  placeholder="ej. 1104759574001, micorreo@empresa.com o cajero1"
                   value={loginForm.identifier}
                   onChange={(e) => setLoginForm({ ...loginForm, identifier: e.target.value })}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-blue-600 transition-colors"

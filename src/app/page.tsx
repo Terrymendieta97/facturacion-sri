@@ -60,8 +60,13 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle2,
-  Info
+  Info,
+  Store,
+  FastForward,
+  Hash,
+  Edit2,
 } from "lucide-react";
+import EmissionPointsTab, { EmissionPoint } from "@/components/EmissionPointsTab";
 
 // --- INTERFACES ---
 interface Issuer {
@@ -116,6 +121,10 @@ interface Product {
 interface Invoice {
   id: number;
   secuencial: string;
+  establecimiento?: string;
+  puntoEmision?: string;
+  emissionPointId?: number | null;
+  emissionPoint?: EmissionPoint | null;
   claveAcceso: string | null;
   estado: string;
   fechaEmision: string;
@@ -135,7 +144,69 @@ interface Invoice {
   }>;
 }
 
-type Tab = "dashboard" | "pos" | "billing" | "history" | "clients" | "products" | "settings" | "api_integrations" | "guia" | "admin" | "admin_approvals" | "admin_companies" | "admin_branding" | "admin_email_test";
+type Tab = "dashboard" | "pos" | "billing" | "history" | "clients" | "products" | "emission_points" | "settings" | "api_integrations" | "guia" | "admin" | "admin_approvals" | "admin_companies" | "admin_branding" | "admin_email_test";
+
+/**
+ * Validador oficial de identificaciones ecuatorianas para evitar rechazos y bloqueos del SRI
+ */
+function validateEcuadorianId(id: string, type: string): { valid: boolean; message?: string } {
+  if (!id) return { valid: false, message: "La identificación del cliente es obligatoria." };
+  const cleanId = id.trim();
+
+  // Consumidor Final
+  if (type === "07" || cleanId === "9999999999999") {
+    return { valid: true };
+  }
+
+  // Cédula de Identidad (05) - 10 dígitos y Algoritmo Módulo 10
+  if (type === "05") {
+    if (cleanId.length !== 10 || !/^\d{10}$/.test(cleanId)) {
+      return { valid: false, message: "La cédula debe contener exactamente 10 dígitos numéricos." };
+    }
+    const prov = parseInt(cleanId.substring(0, 2), 10);
+    if ((prov < 1 || prov > 24) && prov !== 30) {
+      return { valid: false, message: "El código de provincia de la cédula no es válido (01 a 24)." };
+    }
+    const third = parseInt(cleanId.substring(2, 3), 10);
+    if (third >= 6) {
+      return { valid: false, message: "El tercer dígito de la cédula debe ser menor a 6 (persona natural ecuatoriana)." };
+    }
+    const coef = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      let val = parseInt(cleanId.charAt(i), 10) * coef[i];
+      if (val >= 10) val -= 9;
+      sum += val;
+    }
+    const verifier = (Math.ceil(sum / 10) * 10) - sum;
+    const lastDigit = parseInt(cleanId.charAt(9), 10);
+    if (verifier !== lastDigit && !(verifier === 10 && lastDigit === 0)) {
+      return { valid: false, message: "El número de cédula es inválido según el algoritmo oficial del SRI (Módulo 10)." };
+    }
+    return { valid: true };
+  }
+
+  // RUC (04) - 13 dígitos numéricos
+  if (type === "04") {
+    if (cleanId.length !== 13 || !/^\d{13}$/.test(cleanId)) {
+      return { valid: false, message: "El RUC debe contener exactamente 13 dígitos numéricos." };
+    }
+    if (!cleanId.endsWith("001") && !cleanId.endsWith("002") && !cleanId.endsWith("003")) {
+      return { valid: false, message: "El RUC debe finalizar con establecimiento activo (ej. 001)." };
+    }
+    return { valid: true };
+  }
+
+  // Pasaporte (06)
+  if (type === "06") {
+    if (cleanId.length < 3 || cleanId.length > 20) {
+      return { valid: false, message: "El pasaporte debe tener entre 3 y 20 caracteres." };
+    }
+    return { valid: true };
+  }
+
+  return { valid: true };
+}
 
 export default function Home() {
   // --- ESTADOS DE SESIÓN Y SAAS ---
@@ -194,6 +265,20 @@ export default function Home() {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
 
+  // --- ESTADOS MULTI-PUNTO DE EMISIÓN Y ROLES ---
+  const [userRole, setUserRole] = useState<"ADMIN" | "OPERATOR">("ADMIN");
+  const [operatorEmissionPoint, setOperatorEmissionPoint] = useState<EmissionPoint | null>(null);
+  const [emissionPoints, setEmissionPoints] = useState<EmissionPoint[]>([]);
+  const [loadingEmissionPoints, setLoadingEmissionPoints] = useState(false);
+  const [selectedEmissionPointId, setSelectedEmissionPointId] = useState<number | null>(null);
+  const [filterPuntoEmision, setFilterPuntoEmision] = useState<string>("ALL");
+
+  // Punto de Emisión Activo actual (para barra superior, POS y emisión)
+  const activeEmissionPoint: EmissionPoint | null = 
+    userRole === "OPERATOR"
+      ? (emissionPoints.find((ep) => ep.id === operatorEmissionPoint?.id) || operatorEmissionPoint)
+      : (emissionPoints.find((ep) => ep.id === selectedEmissionPointId) || emissionPoints[0] || null);
+
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [activeAuthTab, setActiveAuthTab] = useState<"login" | "register" | "admin">("login");
@@ -224,6 +309,11 @@ export default function Home() {
     message: "",
     loading: false,
   });
+
+  // --- ESTADOS PARA MODAL DE AJUSTE DE SECUENCIAL SRI ---
+  const [showSecuencialModal, setShowSecuencialModal] = useState(false);
+  const [customSequentialInput, setCustomSequentialInput] = useState("");
+  const [savingSequential, setSavingSequential] = useState(false);
 
   // --- ESTADOS PARA GESTIÓN DE MEMBRESÍA Y BILLETERA ---
   const [showMembershipModal, setShowMembershipModal] = useState(false);
@@ -573,6 +663,18 @@ export default function Home() {
       if (activeId) {
         headers.set("x-issuer-id", activeId);
       }
+      const cachedRole = localStorage.getItem("userRole");
+      if (cachedRole) {
+        headers.set("x-user-role", cachedRole);
+      }
+      const cachedEP = localStorage.getItem("operatorEmissionPoint");
+      if (cachedEP) {
+        try {
+          const parsed = JSON.parse(cachedEP);
+          if (parsed.id) headers.set("x-emission-point-id", String(parsed.id));
+          if (parsed.puntoEmision) headers.set("x-punto-emision", String(parsed.puntoEmision));
+        } catch (e) {}
+      }
 
       const res = await fetch(url, {
         ...options,
@@ -606,12 +708,34 @@ export default function Home() {
     const cachedId = localStorage.getItem("activeIssuerId");
     const cachedAdmin = localStorage.getItem("isAdminLoggedIn") === "true";
     const cachedImpersonating = sessionStorage.getItem("admin_impersonating") === "true";
-    
+    const cachedRole = localStorage.getItem("userRole") as "ADMIN" | "OPERATOR" | null;
+    const cachedEP = localStorage.getItem("operatorEmissionPoint");
+
     if (cachedImpersonating && cachedId) {
       setIsImpersonating(true);
       setActiveIssuerId(cachedId);
       setIsAdminLoggedIn(false);
+      setUserRole("ADMIN");
+      setOperatorEmissionPoint(null);
+      setSelectedEmissionPointId(null);
+      setFilterPuntoEmision("ALL");
+      setActiveTab("dashboard");
     } else {
+      if (cachedRole) {
+        setUserRole(cachedRole);
+      }
+      if (cachedEP) {
+        try {
+          const parsed = JSON.parse(cachedEP);
+          setOperatorEmissionPoint(parsed);
+          setSelectedEmissionPointId(parsed.id);
+          if (cachedRole === "OPERATOR") {
+            setActiveTab("pos");
+            setFilterPuntoEmision(parsed.puntoEmision || "001");
+          }
+        } catch (e) {}
+      }
+      
       if (cachedId) {
         setActiveIssuerId(cachedId);
       }
@@ -632,6 +756,7 @@ export default function Home() {
         fetchIssuer();
         fetchClients();
         fetchProducts();
+        fetchEmissionPoints();
         fetchInvoices();
         fetchMembershipRequests();
         fetchApiKey();
@@ -760,12 +885,40 @@ export default function Home() {
     }
   };
 
+  const fetchEmissionPoints = async () => {
+    try {
+      setLoadingEmissionPoints(true);
+      const result = await safeFetch("/api/emission-points");
+      if (result.ok && result.data.success) {
+        const fetchedPoints: EmissionPoint[] = result.data.data;
+        setEmissionPoints(fetchedPoints);
+        if (fetchedPoints.length > 0) {
+          if (userRole === "OPERATOR" && operatorEmissionPoint) {
+            const currentOpEP = fetchedPoints.find((p) => p.id === operatorEmissionPoint.id);
+            if (currentOpEP) {
+              setOperatorEmissionPoint(currentOpEP);
+              localStorage.setItem("operatorEmissionPoint", JSON.stringify(currentOpEP));
+            }
+          } else if (!selectedEmissionPointId) {
+            const defaultPt = fetchedPoints.find((p) => p.puntoEmision === "001") || fetchedPoints[0];
+            setSelectedEmissionPointId(defaultPt.id);
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingEmissionPoints(false);
+    }
+  };
+
   const fetchInvoices = async (
     page = historyPage,
     search = historySearch,
     startDate = historyStartDate,
     endDate = historyEndDate,
-    status = historyStatus
+    status = historyStatus,
+    puntoEmision = filterPuntoEmision
   ) => {
     try {
       setLoadingInvoices(true);
@@ -776,6 +929,9 @@ export default function Home() {
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
       if (status && status !== "ALL") params.set("status", status);
+      
+      const effectivePE = userRole === "OPERATOR" && operatorEmissionPoint ? operatorEmissionPoint.puntoEmision : puntoEmision;
+      if (effectivePE && effectivePE !== "ALL") params.set("puntoEmision", effectivePE);
 
       const result = await safeFetch(`/api/invoices?${params.toString()}`);
       if (result.ok) {
@@ -832,6 +988,9 @@ export default function Home() {
     if (historyStartDate) params.set("startDate", historyStartDate);
     if (historyEndDate) params.set("endDate", historyEndDate);
     if (historyStatus && historyStatus !== "ALL") params.set("status", historyStatus);
+
+    const effectivePE = userRole === "OPERATOR" && operatorEmissionPoint ? operatorEmissionPoint.puntoEmision : filterPuntoEmision;
+    if (effectivePE && effectivePE !== "ALL") params.set("puntoEmision", effectivePE);
 
     window.open(`/api/invoices/export?${params.toString()}`, "_blank");
   };
@@ -1048,6 +1207,84 @@ export default function Home() {
     }
   };
 
+  const handleOpenSecuencialModal = () => {
+    const currentSeq = activeEmissionPoint?.siguienteSecuencial || activeEmissionPoint?.secuencialInicio || issuer?.startSecuencial || "000000001";
+    setCustomSequentialInput(currentSeq);
+    setShowSecuencialModal(true);
+  };
+
+  const handleSaveSequential = async (targetValue?: string) => {
+    const valueToSave = targetValue !== undefined ? targetValue : customSequentialInput;
+    const num = parseInt(valueToSave, 10);
+    if (isNaN(num) || num < 1) {
+      alert("Por favor ingrese un número secuencial válido mayor a 0.");
+      return;
+    }
+    const formatted = String(num).padStart(9, "0");
+    try {
+      setSavingSequential(true);
+      const result = await safeFetch("/api/emission-points", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "set-sequential",
+          emissionPointId: activeEmissionPoint?.id,
+          puntoEmision: activeEmissionPoint?.puntoEmision,
+          establecimiento: activeEmissionPoint?.establecimiento,
+          nextSequential: formatted,
+        }),
+      });
+
+      if (result.ok && result.data.success) {
+        addNotification(
+          "Secuencial Actualizado",
+          `El secuencial de la caja ${activeEmissionPoint?.establecimiento || "001"}-${activeEmissionPoint?.puntoEmision || "001"} se configuró en ${formatted}.`,
+          "success"
+        );
+        setShowSecuencialModal(false);
+        fetchEmissionPoints();
+        fetchIssuer();
+      } else {
+        alert(result.error || "Fallo al guardar el secuencial.");
+      }
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    } finally {
+      setSavingSequential(false);
+    }
+  };
+
+  const handleQuickSkipSequential = async () => {
+    try {
+      setSavingSequential(true);
+      const result = await safeFetch("/api/emission-points", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "advance-sequential",
+          emissionPointId: activeEmissionPoint?.id,
+          puntoEmision: activeEmissionPoint?.puntoEmision,
+          establecimiento: activeEmissionPoint?.establecimiento,
+        }),
+      });
+
+      if (result.ok && result.data.success) {
+        addNotification(
+          "Salto de Secuencial (+1)",
+          `Se avanzó con éxito al secuencial ${result.data.newSequential} para desbloquear la facturación del SRI.`,
+          "success"
+        );
+        setShowSecuencialModal(false);
+        fetchEmissionPoints();
+        fetchIssuer();
+      } else {
+        alert(result.error || "Fallo al avanzar el secuencial.");
+      }
+    } catch (e: any) {
+      alert("Error: " + e.message);
+    } finally {
+      setSavingSequential(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginForm.ruc || !loginForm.password) {
@@ -1153,9 +1390,15 @@ export default function Home() {
     const targetId = String(comp.id);
     sessionStorage.setItem("admin_impersonating", "true");
     localStorage.setItem("activeIssuerId", targetId);
+    localStorage.setItem("userRole", "ADMIN");
+    localStorage.removeItem("operatorEmissionPoint");
     setActiveIssuerId(targetId);
     setIsImpersonating(true);
     setIsAdminLoggedIn(false);
+    setUserRole("ADMIN");
+    setOperatorEmissionPoint(null);
+    setSelectedEmissionPointId(null);
+    setFilterPuntoEmision("ALL");
     setActiveTab("dashboard");
   };
 
@@ -1163,8 +1406,14 @@ export default function Home() {
     sessionStorage.removeItem("admin_impersonating");
     setIsImpersonating(false);
     localStorage.removeItem("activeIssuerId");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("operatorEmissionPoint");
     setActiveIssuerId(null);
     setIssuer(null);
+    setUserRole("ADMIN");
+    setOperatorEmissionPoint(null);
+    setSelectedEmissionPointId(null);
+    setFilterPuntoEmision("ALL");
     setIsAdminLoggedIn(true);
     localStorage.setItem("isAdminLoggedIn", "true");
     setActiveTab("admin_companies");
@@ -2190,12 +2439,31 @@ export default function Home() {
       return;
     }
 
+    // 1. Validación de identificación ecuatoriana (Módulo 10, RUC, etc.)
+    const idVal = validateEcuadorianId(billingClient.identificacion, billingClient.tipoIdentificacion);
+    if (!idVal.valid) {
+      alert(`⚠️ Validación de Identificación:\n${idVal.message}\nPor favor corríjala para evitar que el SRI rechace o bloquee el secuencial.`);
+      return;
+    }
+
+    // 2. Validación de Correo Electrónico
+    if (billingClient.mail && billingClient.mail !== "cliente@email.com" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingClient.mail.trim())) {
+      alert("⚠️ Formato de Correo Electrónico Inválido:\nPor favor ingrese un correo válido (ej: cliente@dominio.com) para garantizar el envío del RIDE y evitar rechazos.");
+      return;
+    }
+
     if (addedItems.length === 0) {
       alert("Por favor añada al menos un producto o servicio.");
       return;
     }
 
     const totals = calculateNewInvoiceTotals();
+
+    // 3. Validación de Consumidor Final > $50 USD (Normativa SRI Art. 19)
+    if ((billingClient.tipoIdentificacion === "07" || billingClient.identificacion === "9999999999999") && totals.total > 50.00) {
+      alert("⚠️ Límite Tributario SRI Superado:\nSegún la normativa del SRI (Art. 19 Reglamento de Comprobantes de Venta), no está permitido emitir facturas a CONSUMIDOR FINAL por montos superiores a $50.00 USD.\n\nPor favor solicite e ingrese la Cédula o RUC del cliente para continuar.");
+      return;
+    }
 
     // Auto-completar el pago único si es cero para evitar fricción innecesaria
     let finalPayments = [...billingPayments];
@@ -2241,6 +2509,7 @@ export default function Home() {
         total: p.total
       })),
       observaciones: billingObservaciones,
+      emissionPointId: selectedEmissionPointId || operatorEmissionPoint?.id,
     };
 
     const result = await safeFetch("/api/invoices", {
@@ -2305,6 +2574,7 @@ export default function Home() {
     setClientSearch("");
     setProductSearch("");
     fetchInvoices();
+    fetchEmissionPoints();
     fetchIssuer(); // Recargar billetera/saldo
     fetchClients(); // Refrescar catálogo de clientes autocompletables
   };
@@ -2390,7 +2660,10 @@ export default function Home() {
 
     const result = await safeFetch("/api/invoices", {
       method: "POST",
-      body: JSON.stringify(invoiceForm),
+      body: JSON.stringify({
+        ...invoiceForm,
+        emissionPointId: selectedEmissionPointId || operatorEmissionPoint?.id,
+      }),
     });
 
     if (!result.ok) {
@@ -2425,6 +2698,7 @@ export default function Home() {
     // Limpiar formulario y refrescar datos
     setInvoiceForm({ clientId: "", formaPago: "01", items: [{ productId: "", cantidad: "1", descuento: "0" }] });
     fetchInvoices();
+    fetchEmissionPoints();
     fetchIssuer(); // Recargar billetera/saldo
   };
 
@@ -2566,6 +2840,24 @@ export default function Home() {
       return;
     }
 
+    const posTotals = calculatePOSTotals();
+    const activeClientObj = clients.find((c) => c.id === targetClientId);
+
+    if (activeClientObj) {
+      // 1. Validación de identificación ecuatoriana
+      const idVal = validateEcuadorianId(activeClientObj.identificacion, activeClientObj.tipoIdentificacion);
+      if (!idVal.valid) {
+        alert(`⚠️ Identificación del Cliente Inválida:\n${idVal.message}\nPor favor corríjala para evitar que el SRI rechace la factura.`);
+        return;
+      }
+
+      // 2. Validación de Consumidor Final > $50 USD
+      if ((activeClientObj.tipoIdentificacion === "07" || activeClientObj.identificacion === "9999999999999") && posTotals.total > 50.00) {
+        alert("⚠️ Límite Tributario SRI Superado:\nSegún la normativa del SRI (Art. 19 Reglamento de Comprobantes de Venta), no está permitido emitir facturas a CONSUMIDOR FINAL por montos superiores a $50.00 USD.\n\nPor favor seleccione o registre un cliente con Cédula o RUC para procesar esta venta.");
+        return;
+      }
+    }
+
     setSriStatusModal({ show: true, step: "sending", message: "Enviando transacción a la cola del SRI..." });
 
     // Adaptar para productos dinámicos o estáticos
@@ -2594,6 +2886,7 @@ export default function Home() {
         clientId: String(targetClientId),
         formaPago: "01",
         items: itemsPayload,
+        emissionPointId: selectedEmissionPointId || operatorEmissionPoint?.id,
       }),
     });
 
@@ -2635,6 +2928,7 @@ export default function Home() {
     setPOSCart([]);
     setPosCashReceived("");
     fetchInvoices();
+    fetchEmissionPoints();
     fetchIssuer(); // Recargar billetera/saldo
   };
 
@@ -3001,17 +3295,19 @@ export default function Home() {
           <nav className="p-4 space-y-1.5">
             {!isAdminLoggedIn ? (
               <>
-                <button
-                  onClick={() => { setActiveTab("dashboard"); setIsMobileSidebarOpen(false); }}
-                  className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
-                    activeTab === "dashboard"
-                      ? "bg-violet-600 text-white shadow-lg shadow-violet-600/10"
-                      : "text-slate-500 hover:bg-[#e8ebf7]/40 hover:text-slate-800"
-                  }`}
-                >
-                  <TrendingUp className="h-4.5 w-4.5" />
-                  <span>Dashboard</span>
-                </button>
+                {userRole === "ADMIN" && (
+                  <button
+                    onClick={() => { setActiveTab("dashboard"); setIsMobileSidebarOpen(false); }}
+                    className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
+                      activeTab === "dashboard"
+                        ? "bg-violet-600 text-white shadow-lg shadow-violet-600/10"
+                        : "text-slate-500 hover:bg-[#e8ebf7]/40 hover:text-slate-800"
+                    }`}
+                  >
+                    <TrendingUp className="h-4.5 w-4.5" />
+                    <span>Dashboard</span>
+                  </button>
+                )}
 
                 <button
                   onClick={() => { setActiveTab("pos"); setIsMobileSidebarOpen(false); }}
@@ -3038,15 +3334,15 @@ export default function Home() {
                 </button>
 
                 <button
-                  onClick={() => { setActiveTab("history"); setIsMobileSidebarOpen(false); }}
+                  onClick={() => { setActiveTab("products"); setIsMobileSidebarOpen(false); }}
                   className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
-                    activeTab === "history"
+                    activeTab === "products"
                       ? "bg-violet-600 text-white shadow-lg shadow-violet-600/10"
                       : "text-slate-500 hover:bg-[#e8ebf7]/40 hover:text-slate-800"
                   }`}
                 >
-                  <Clock className="h-4.5 w-4.5" />
-                  <span>Historial SRI</span>
+                  <Sparkles className="h-4.5 w-4.5" />
+                  <span>Productos</span>
                 </button>
 
                 <button
@@ -3062,52 +3358,68 @@ export default function Home() {
                 </button>
 
                 <button
-                  onClick={() => { setActiveTab("products"); setIsMobileSidebarOpen(false); }}
+                  onClick={() => { setActiveTab("history"); setIsMobileSidebarOpen(false); }}
                   className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
-                    activeTab === "products"
+                    activeTab === "history"
                       ? "bg-violet-600 text-white shadow-lg shadow-violet-600/10"
                       : "text-slate-500 hover:bg-[#e8ebf7]/40 hover:text-slate-800"
                   }`}
                 >
-                  <Sparkles className="h-4.5 w-4.5" />
-                  <span>Productos</span>
+                  <Clock className="h-4.5 w-4.5" />
+                  <span>Historial SRI</span>
                 </button>
 
-                <button
-                  onClick={() => { setActiveTab("settings"); setIsMobileSidebarOpen(false); }}
-                  className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
-                    activeTab === "settings"
-                      ? "bg-violet-600 text-white shadow-lg shadow-violet-600/10"
-                      : "text-slate-500 hover:bg-[#e8ebf7]/40 hover:text-slate-800"
-                  }`}
-                >
-                  <Settings className="h-4.5 w-4.5" />
-                  <span>Configuración Emisor</span>
-                </button>
+                {userRole === "ADMIN" && (
+                  <>
+                    <button
+                      onClick={() => { setActiveTab("emission_points"); setIsMobileSidebarOpen(false); fetchEmissionPoints(); }}
+                      className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
+                        activeTab === "emission_points"
+                          ? "bg-violet-600 text-white shadow-lg shadow-violet-600/10"
+                          : "text-slate-500 hover:bg-[#e8ebf7]/40 hover:text-slate-800"
+                      }`}
+                    >
+                      <Store className="h-4.5 w-4.5" />
+                      <span>Puntos de Emisión</span>
+                    </button>
 
-                <button
-                  onClick={() => { setActiveTab("api_integrations"); setIsMobileSidebarOpen(false); fetchApiKey(); }}
-                  className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
-                    activeTab === "api_integrations"
-                      ? "bg-violet-600 text-white shadow-lg shadow-violet-600/10"
-                      : "text-slate-500 hover:bg-[#e8ebf7]/40 hover:text-slate-800"
-                  }`}
-                >
-                  <Code2 className="h-4.5 w-4.5" />
-                  <span>API & Ecommerce</span>
-                </button>
+                    <button
+                      onClick={() => { setActiveTab("settings"); setIsMobileSidebarOpen(false); }}
+                      className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
+                        activeTab === "settings"
+                          ? "bg-violet-600 text-white shadow-lg shadow-violet-600/10"
+                          : "text-slate-500 hover:bg-[#e8ebf7]/40 hover:text-slate-800"
+                      }`}
+                    >
+                      <Settings className="h-4.5 w-4.5" />
+                      <span>Configuración Emisor</span>
+                    </button>
 
-                <button
-                  onClick={() => { setActiveTab("guia"); setIsMobileSidebarOpen(false); }}
-                  className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
-                    activeTab === "guia"
-                      ? "bg-violet-600 text-white shadow-lg shadow-violet-600/10"
-                      : "text-slate-500 hover:bg-[#e8ebf7]/40 hover:text-slate-800"
-                  }`}
-                >
-                  <HelpCircle className="h-4.5 w-4.5" />
-                  <span>Guía de Inicio Rápido</span>
-                </button>
+                    <button
+                      onClick={() => { setActiveTab("api_integrations"); setIsMobileSidebarOpen(false); fetchApiKey(); }}
+                      className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
+                        activeTab === "api_integrations"
+                          ? "bg-violet-600 text-white shadow-lg shadow-violet-600/10"
+                          : "text-slate-500 hover:bg-[#e8ebf7]/40 hover:text-slate-800"
+                      }`}
+                    >
+                      <Code2 className="h-4.5 w-4.5" />
+                      <span>API & Ecommerce</span>
+                    </button>
+
+                    <button
+                      onClick={() => { setActiveTab("guia"); setIsMobileSidebarOpen(false); }}
+                      className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-200 ${
+                        activeTab === "guia"
+                          ? "bg-violet-600 text-white shadow-lg shadow-violet-600/10"
+                          : "text-slate-500 hover:bg-[#e8ebf7]/40 hover:text-slate-800"
+                      }`}
+                    >
+                      <HelpCircle className="h-4.5 w-4.5" />
+                      <span>Guía de Inicio Rápido</span>
+                    </button>
+                  </>
+                )}
               </>
             ) : (
               <div className="space-y-2 mt-2 border-t border-[#e8ebf7]/60 pt-4">
@@ -3257,6 +3569,7 @@ export default function Home() {
                 {activeTab === "history" && "Historial de Facturas"}
                 {activeTab === "clients" && "Directorio de Clientes"}
                 {activeTab === "products" && "Catálogo de Productos"}
+                {activeTab === "emission_points" && "Puntos de Emisión & Cajas SRI"}
                 {activeTab === "settings" && "Configuración Emisor"}
                 {activeTab === "api_integrations" && "API REST & Integraciones E-commerce"}
                 {activeTab === "guia" && "Guía de Inicio Rápido"}
@@ -3273,6 +3586,7 @@ export default function Home() {
               {activeTab === "history" && "Descarga RIDES (PDF), XMLs autorizados y consulta estados"}
               {activeTab === "clients" && "Administra tus clientes y sus datos de facturación"}
               {activeTab === "products" && "Gestiona códigos, precios e impuestos (IVA)"}
+              {activeTab === "emission_points" && "Administra tus cajas registradoras, usuarios delegados y correlativos"}
               {activeTab === "settings" && "Gestiona tu firma .p12, datos tributarios y logo"}
               {activeTab === "api_integrations" && "Conecta WooCommerce, Shopify, Apps móviles o ERPs para facturar en automático con el SRI"}
               {activeTab === "guia" && "Aprende cómo configurar tu cuenta paso a paso"}
@@ -3288,6 +3602,15 @@ export default function Home() {
         <div className="flex items-center space-x-3 md:space-x-4 relative">
             {!isAdminLoggedIn && issuer && (
               <>
+                {/* BADGE DE CAJA ACTIVA PARA OPERADORES DELEGADOS */}
+                {userRole === "OPERATOR" && operatorEmissionPoint && (
+                  <div className="flex items-center space-x-2 px-3.5 py-1.5 bg-blue-50 border border-blue-200/90 rounded-2xl text-blue-900 shadow-2xs">
+                    <Store className="h-4 w-4 text-blue-600 shrink-0" />
+                    <span className="text-xs font-bold">
+                      Caja: <strong className="font-mono text-blue-700">{operatorEmissionPoint.establecimiento}-{operatorEmissionPoint.puntoEmision}</strong> ({operatorEmissionPoint.nombre})
+                    </span>
+                  </div>
+                )}
                 {/* WIDGET / BARRITA DE FACTURAS DISPONIBLES (SOLO PARA PAGO POR FACTURA) */}
                 {issuer.planType === "PAY_PER_INVOICE" && (
                   (() => {
@@ -3386,21 +3709,26 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* Badge de Establecimiento y Secuencial */}
-                <div className="hidden md:flex items-center gap-1.5 bg-white border border-[#e8ebf7] rounded-2xl py-1.5 px-3 shadow-2xs select-none">
+                {/* Badge de Establecimiento y Secuencial de la Caja Activa (Clic para Modificar / Salto SRI) */}
+                <div 
+                  onClick={handleOpenSecuencialModal}
+                  className="hidden md:flex items-center gap-1.5 bg-white hover:bg-violet-50/50 border border-[#e8ebf7] hover:border-violet-300 rounded-2xl py-1.5 px-3 shadow-2xs cursor-pointer transition-all active:scale-95 group select-none"
+                  title="Clic para modificar o avanzar la secuencia de esta caja (Salto de Emergencia SRI)"
+                >
                   <div className="flex items-center space-x-1 shrink-0">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Est.:</span>
-                    <span className="text-xs font-black text-slate-800">
-                      {issuer.establecimiento}-{issuer.puntoEmision}
+                    <span className="text-[9px] font-black text-slate-400 group-hover:text-violet-500 uppercase tracking-widest transition-colors">Est.:</span>
+                    <span className="text-xs font-black text-slate-800 group-hover:text-violet-900 transition-colors">
+                      {activeEmissionPoint?.establecimiento || issuer.establecimiento || "001"}-{activeEmissionPoint?.puntoEmision || issuer.puntoEmision || "001"}
                     </span>
                   </div>
                   <span className="text-slate-300 text-[10px]">|</span>
                   <div className="flex items-center space-x-1 shrink-0">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sec.:</span>
-                    <span className="text-xs font-mono font-black text-violet-750">
-                      {issuer.startSecuencial}
+                    <span className="text-[9px] font-black text-slate-400 group-hover:text-violet-500 uppercase tracking-widest transition-colors">Sec.:</span>
+                    <span className="text-xs font-mono font-black text-violet-750 group-hover:text-violet-700 transition-colors">
+                      {activeEmissionPoint?.siguienteSecuencial || activeEmissionPoint?.secuencialInicio || issuer.startSecuencial || "000000001"}
                     </span>
                   </div>
+                  <Edit2 className="h-3 w-3 text-slate-300 group-hover:text-violet-500 transition-colors ml-0.5" />
                 </div>
               </>
             )}
@@ -3830,6 +4158,37 @@ export default function Home() {
               {/* Product Shelf Grid */}
               <div className="col-span-1 lg:col-span-2 flex flex-col justify-between h-[520px] lg:h-full bg-white border border-slate-200 rounded-xl shadow-sm p-6">
                 <div className="space-y-4 flex-1 overflow-y-auto">
+                  
+                  {/* Selector / Indicador de Punto de Emisión SRI */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-slate-50 border border-slate-200/80 rounded-2xl">
+                    <div className="flex items-center space-x-2">
+                      <div className="h-7 w-7 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                        <Store className="h-4 w-4" />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Punto de Emisión SRI:</span>
+                      {userRole === "ADMIN" ? (
+                        <select
+                          value={selectedEmissionPointId || ""}
+                          onChange={(e) => setSelectedEmissionPointId(parseInt(e.target.value, 10))}
+                          className="px-2.5 py-1 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600 cursor-pointer shadow-2xs"
+                        >
+                          {emissionPoints.map((ep) => (
+                            <option key={ep.id} value={ep.id}>
+                              {ep.establecimiento}-{ep.puntoEmision} | {ep.nombre} {!ep.activo ? "(Inactivo)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className="px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-xl font-mono text-xs font-bold text-blue-800">
+                          {operatorEmissionPoint?.establecimiento || "001"}-{operatorEmissionPoint?.puntoEmision || "001"} ({operatorEmissionPoint?.nombre || "Caja Asignada"})
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      Secuencial individual por caja
+                    </span>
+                  </div>
+
                   {/* Category filters */}
                   <div className="flex space-x-2 overflow-x-auto pb-1">
                     {getProductCategories().map((cat) => (
@@ -4067,6 +4426,41 @@ export default function Home() {
                 {/* LEFT COLUMN: Main Billing Forms */}
                 <div className="lg:col-span-9 space-y-6">
                   
+                  {/* SELECTOR PUNTO DE EMISIÓN */}
+                  <div className="bg-white border border-[#e8ebf7] rounded-3xl shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-2xs shrink-0">
+                        <Store className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Punto de Emisión SRI</div>
+                        <div className="text-xs font-bold text-slate-800">
+                          {userRole === "ADMIN" ? "Seleccione la caja o punto de venta emisor" : "Caja asignada para emisión"}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      {userRole === "ADMIN" ? (
+                        <select
+                          value={selectedEmissionPointId || ""}
+                          onChange={(e) => setSelectedEmissionPointId(parseInt(e.target.value, 10))}
+                          className="w-full sm:w-auto px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600 cursor-pointer shadow-2xs"
+                        >
+                          {emissionPoints.map((ep) => (
+                            <option key={ep.id} value={ep.id}>
+                              {ep.establecimiento}-{ep.puntoEmision} | {ep.nombre} {!ep.activo ? "(Inactivo)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="px-3.5 py-2 bg-blue-50 border border-blue-200 rounded-2xl font-mono text-xs font-bold text-blue-800 flex items-center space-x-2">
+                          <span>{operatorEmissionPoint?.establecimiento || "001"}-{operatorEmissionPoint?.puntoEmision || "001"}</span>
+                          <span className="font-sans font-medium text-slate-500">({operatorEmissionPoint?.nombre || "Caja Asignada"})</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* CARD 1: DATOS DEL CLIENTE */}
                   <div className="bg-white border border-[#e8ebf7] rounded-3xl shadow-sm p-6 space-y-6">
                     
@@ -5012,24 +5406,57 @@ export default function Home() {
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-slate-400 uppercase">Estado SRI:</span>
-                    <select
-                      value={historyStatus}
-                      onChange={(e) => {
-                        setHistoryStatus(e.target.value);
-                        setHistoryPage(1);
-                        fetchInvoices(1, historySearch, historyStartDate, historyEndDate, e.target.value);
-                      }}
-                      className="px-3 py-1.5 border border-slate-200 rounded-xl text-slate-700 text-xs font-bold bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600"
-                    >
-                      <option value="ALL">Todos los Estados</option>
-                      <option value="AUTORIZADA">AUTORIZADA</option>
-                      <option value="CREADA">CREADA / PENDIENTE</option>
-                      <option value="DEVUELTA">DEVUELTA</option>
-                      <option value="RECHAZADA">RECHAZADA</option>
-                      <option value="ANULADA">ANULADA</option>
-                    </select>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {userRole === "OPERATOR" ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase">Punto de Emisión:</span>
+                        <div className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-xl font-mono text-xs font-bold text-blue-800 flex items-center space-x-1.5 shadow-2xs">
+                          <span>{operatorEmissionPoint?.establecimiento || "001"}-{operatorEmissionPoint?.puntoEmision || "001"}</span>
+                          <span className="font-sans font-medium text-slate-500">({operatorEmissionPoint?.nombre || "Caja Asignada"})</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase">Punto de Emisión:</span>
+                        <select
+                          value={filterPuntoEmision}
+                          onChange={(e) => {
+                            const newPE = e.target.value;
+                            setFilterPuntoEmision(newPE);
+                            setHistoryPage(1);
+                            fetchInvoices(1, historySearch, historyStartDate, historyEndDate, historyStatus, newPE);
+                          }}
+                          className="px-3 py-1.5 border border-slate-200 rounded-xl text-slate-700 text-xs font-bold bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 shadow-2xs"
+                        >
+                          <option value="ALL">🏢 Todos los Puntos (Cajas)</option>
+                          {emissionPoints.map((ep) => (
+                            <option key={ep.id} value={ep.puntoEmision}>
+                              {ep.establecimiento}-{ep.puntoEmision} | {ep.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-slate-400 uppercase">Estado SRI:</span>
+                      <select
+                        value={historyStatus}
+                        onChange={(e) => {
+                          setHistoryStatus(e.target.value);
+                          setHistoryPage(1);
+                          fetchInvoices(1, historySearch, historyStartDate, historyEndDate, e.target.value, filterPuntoEmision);
+                        }}
+                        className="px-3 py-1.5 border border-slate-200 rounded-xl text-slate-700 text-xs font-bold bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600"
+                      >
+                        <option value="ALL">Todos los Estados</option>
+                        <option value="AUTORIZADA">AUTORIZADA</option>
+                        <option value="CREADA">CREADA / PENDIENTE</option>
+                        <option value="DEVUELTA">DEVUELTA</option>
+                        <option value="RECHAZADA">RECHAZADA</option>
+                        <option value="ANULADA">ANULADA</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
@@ -5049,7 +5476,7 @@ export default function Home() {
                   <table className="w-full text-left text-xs font-sans">
                     <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       <tr>
-                        <th className="px-6 py-3">Secuencial</th>
+                        <th className="px-6 py-3">Secuencial SRI</th>
                         <th className="px-6 py-3">Fecha Emisión</th>
                         <th className="px-6 py-3">Identificación Cliente</th>
                         <th className="px-6 py-3">Cliente Receptor</th>
@@ -5061,8 +5488,17 @@ export default function Home() {
                     <tbody className="divide-y divide-slate-100">
                       {invoices.map((inv) => (
                         <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-6 py-4 font-mono font-bold text-slate-700">
-                            {(inv as any).issuer?.establecimiento || issuer?.establecimiento || "001"}-{(inv as any).issuer?.puntoEmision || issuer?.puntoEmision || "001"}-{inv.secuencial}
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="font-mono font-bold text-slate-800 text-xs">
+                                {(inv as any).establecimiento || (inv as any).issuer?.establecimiento || "001"}-{(inv as any).puntoEmision || (inv as any).issuer?.puntoEmision || "001"}-{inv.secuencial}
+                              </span>
+                              {(inv as any).emissionPoint?.nombre && (
+                                <span className="text-[9px] text-blue-600 font-bold uppercase tracking-tight">
+                                  {(inv as any).emissionPoint.nombre}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-slate-500">
                             {(() => {
@@ -5726,6 +6162,17 @@ export default function Home() {
               </div>
 
             </form>
+          )}
+
+          {/* TAB: PUNTOS DE EMISIÓN & CAJAS SRI */}
+          {activeTab === "emission_points" && !isAdminLoggedIn && issuer && (
+            <EmissionPointsTab
+              issuer={issuer}
+              emissionPoints={emissionPoints}
+              loading={loadingEmissionPoints}
+              onRefresh={fetchEmissionPoints}
+              safeFetch={safeFetch}
+            />
           )}
 
           {/* TAB: GUÍA DE INICIO (GUIDE) */}
@@ -9042,17 +9489,166 @@ def emitir_factura_sri(cliente: dict, items: list, observaciones: str = "Venta o
                   </div>
                 )}
 
+                {/* TARJETA DE DESBLOQUEO DE EMERGENCIA SRI */}
+                <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center space-x-2 text-amber-900 font-bold text-xs">
+                    <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0" />
+                    <span>¿Bloqueo temporal de secuencial en el SRI (24 Horas)?</span>
+                  </div>
+                  <p className="text-[11px] text-amber-800 leading-relaxed">
+                    Si el SRI devolvió un error de clave ya registrada o rechazó dos veces la misma factura, este número quedará <strong>bloqueado por hasta 24 horas</strong>. Puedes avanzar al siguiente número para continuar facturando de inmediato.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={savingSequential}
+                    onClick={async () => {
+                      await handleQuickSkipSequential();
+                      setSriStatusModal({ show: false, step: "init", message: "" });
+                    }}
+                    className="w-full bg-amber-600 hover:bg-amber-700 active:scale-[0.99] text-white font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-xs transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                  >
+                    <FastForward className="h-4 w-4" />
+                    <span>{savingSequential ? "Avanzando..." : "⏩ Avanzar al Siguiente Secuencial (+1) y Continuar"}</span>
+                  </button>
+                </div>
+
                 <div className="text-center pt-2">
                   <button
                     type="button"
                     onClick={() => setSriStatusModal({ show: false, step: "init", message: "" })}
-                    className="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs py-2 px-6 rounded-lg shadow-sm transition-colors"
+                    className="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs py-2 px-6 rounded-lg shadow-sm transition-colors cursor-pointer"
                   >
-                    Regresar
+                    Cerrar y Revisar Formulario
                   </button>
                 </div>
               </div>
             )}
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE AJUSTE Y SALTO DE SECUENCIAL SRI */}
+      {showSecuencialModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 backdrop-blur-xs font-sans animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-100 space-y-5 animate-scale-up">
+            
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-600 shadow-2xs">
+                  <Hash className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-tight">Secuencial de Caja SRI</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    {activeEmissionPoint?.establecimiento || "001"}-{activeEmissionPoint?.puntoEmision || "001"} ({activeEmissionPoint?.nombre || "Caja Asignada"})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSecuencialModal(false)}
+                className="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="bg-amber-50/80 border border-amber-200/70 rounded-2xl p-4 space-y-2">
+              <div className="flex items-center space-x-2 text-amber-900 font-bold text-xs">
+                <Info className="h-4 w-4 text-amber-600 shrink-0" />
+                <span>¿Cuándo ajustar o avanzar la secuencia?</span>
+              </div>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                Si una factura fue rechazada por el SRI y la <strong>clave de acceso quedó bloqueada por 24 horas</strong>, usa el botón <strong>+1 Salto de Emergencia</strong> para pasar de inmediato al siguiente número y continuar facturando sin interrupciones.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                  Número Secuencial Activo (9 dígitos)
+                </label>
+                <div className="flex items-center space-x-2">
+                  <span className="px-3 py-3 bg-slate-100 border border-slate-200 rounded-2xl text-xs font-mono font-black text-slate-600">
+                    {activeEmissionPoint?.establecimiento || "001"}-{activeEmissionPoint?.puntoEmision || "001"}
+                  </span>
+                  <input
+                    type="text"
+                    maxLength={9}
+                    value={customSequentialInput}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      setCustomSequentialInput(val);
+                    }}
+                    onBlur={() => {
+                      const parsed = parseInt(customSequentialInput || "1", 10);
+                      setCustomSequentialInput(String(parsed).padStart(9, "0"));
+                    }}
+                    placeholder="000000001"
+                    className="flex-1 px-4 py-3 border border-slate-200 rounded-2xl text-base font-mono font-black text-violet-700 bg-slate-50 focus:bg-white focus:outline-none focus:border-violet-600 shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              {/* Botones de acción rápida */}
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = parseInt(customSequentialInput || "1", 10);
+                    if (current > 1) {
+                      setCustomSequentialInput(String(current - 1).padStart(9, "0"));
+                    }
+                  }}
+                  className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                  <span>-1 Retroceder</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = parseInt(customSequentialInput || "1", 10);
+                    setCustomSequentialInput(String(current + 1).padStart(9, "0"));
+                  }}
+                  className="px-3 py-2.5 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-2xl text-xs font-bold text-violet-700 transition-colors flex items-center justify-center space-x-1.5 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>+1 Avanzar</span>
+                </button>
+              </div>
+
+              {/* Botón Salto de Emergencia SRI */}
+              <button
+                type="button"
+                disabled={savingSequential}
+                onClick={handleQuickSkipSequential}
+                className="w-full bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-white font-extrabold text-xs py-3 px-4 rounded-2xl shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer"
+              >
+                <FastForward className="h-4 w-4" />
+                <span>⚡ +1 Salto de Emergencia SRI (Desbloqueo Inmediato)</span>
+              </button>
+            </div>
+
+            <div className="flex items-center space-x-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowSecuencialModal(false)}
+                className="flex-1 py-3 px-4 rounded-2xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={savingSequential}
+                onClick={() => handleSaveSequential()}
+                className="flex-1 py-3 px-4 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold shadow-md shadow-violet-600/20 transition-all cursor-pointer"
+              >
+                {savingSequential ? "Guardando..." : "Guardar Secuencial"}
+              </button>
+            </div>
 
           </div>
         </div>
@@ -9520,7 +10116,9 @@ def emitir_factura_sri(cliente: dict, items: list, observaciones: str = "Venta o
                     <div className="space-y-1">
                       <p className="text-[12px] font-black text-slate-800 uppercase tracking-wide">R.U.C.: {issuer?.ruc}</p>
                       <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">FACTURA</h3>
-                      <p className="text-slate-500 font-mono text-xs">No. {issuer?.establecimiento || "001"}-{issuer?.puntoEmision || "001"}-{String(parseInt(issuer?.startSecuencial || "1", 10)).padStart(9, "0")}</p>
+                      <p className="text-slate-500 font-mono text-xs">
+                        No. {activeEmissionPoint?.establecimiento || issuer?.establecimiento || "001"}-{activeEmissionPoint?.puntoEmision || issuer?.puntoEmision || "001"}-{activeEmissionPoint?.siguienteSecuencial || activeEmissionPoint?.secuencialInicio || String(parseInt(issuer?.startSecuencial || "1", 10)).padStart(9, "0")}
+                      </p>
                     </div>
                     
                     <div className="bg-blue-50/30 border border-blue-100 rounded-lg py-1 px-3 text-center">

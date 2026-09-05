@@ -14,7 +14,11 @@ export async function GET(request: Request) {
     const startDate = searchParams.get("startDate") || "";
     const endDate = searchParams.get("endDate") || "";
     const status = searchParams.get("status") || "";
+    const puntoEmisionParam = searchParams.get("puntoEmision") || "";
     const issuerIdHeader = request.headers.get("x-issuer-id");
+    const userRoleHeader = request.headers.get("x-user-role");
+    const headerEmissionPointId = request.headers.get("x-emission-point-id");
+    const headerPuntoEmision = request.headers.get("x-punto-emision");
 
     const where: any = {};
 
@@ -24,6 +28,20 @@ export async function GET(request: Request) {
 
     if (status && status !== "ALL") {
       where.estado = status;
+    }
+
+    if (userRoleHeader === "OPERATOR") {
+      if (headerEmissionPointId && headerEmissionPointId !== "undefined" && headerEmissionPointId !== "null") {
+        where.emissionPointId = parseInt(headerEmissionPointId, 10);
+      } else if (headerPuntoEmision && headerPuntoEmision !== "ALL") {
+        where.puntoEmision = headerPuntoEmision;
+      } else if (puntoEmisionParam && puntoEmisionParam !== "ALL") {
+        where.puntoEmision = puntoEmisionParam;
+      }
+    } else {
+      if (puntoEmisionParam && puntoEmisionParam !== "ALL") {
+        where.puntoEmision = puntoEmisionParam;
+      }
     }
 
     if (startDate || endDate) {
@@ -52,6 +70,7 @@ export async function GET(request: Request) {
       include: {
         client: true,
         issuer: true,
+        emissionPoint: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -81,7 +100,9 @@ export async function GET(request: Request) {
       const rows = invoices.map((inv) => {
         const d = new Date(inv.fechaEmision);
         const fechaStr = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-        const secStr = `${inv.issuer?.establecimiento || "001"}-${inv.issuer?.puntoEmision || "001"}-${inv.secuencial}`;
+        const est = inv.establecimiento || inv.emissionPoint?.establecimiento || inv.issuer?.establecimiento || "001";
+        const pe = inv.puntoEmision || inv.emissionPoint?.puntoEmision || inv.issuer?.puntoEmision || "001";
+        const secStr = `${est}-${pe}-${inv.secuencial}`;
         const tipoIdMap: { [key: string]: string } = { "04": "RUC", "05": "CEDULA", "06": "PASAPORTE", "07": "CONSUMIDOR FINAL" };
         const tipoIdStr = tipoIdMap[inv.client?.tipoIdentificacion] || inv.client?.tipoIdentificacion || "CÉDULA/RUC";
 
@@ -200,7 +221,9 @@ export async function GET(request: Request) {
 
         const d = new Date(inv.fechaEmision);
         const fechaStr = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-        const secStr = `${inv.issuer?.establecimiento || "001"}-${inv.issuer?.puntoEmision || "001"}-${inv.secuencial}`;
+        const est = inv.establecimiento || inv.emissionPoint?.establecimiento || inv.issuer?.establecimiento || "001";
+        const pe = inv.puntoEmision || inv.emissionPoint?.puntoEmision || inv.issuer?.puntoEmision || "001";
+        const secStr = `${est}-${pe}-${inv.secuencial}`;
 
         doc.fillColor("#0f172a");
         doc.text(secStr, 35, y + 5, { width: 90 });

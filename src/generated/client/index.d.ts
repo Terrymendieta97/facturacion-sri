@@ -49,6 +49,11 @@ export type Product = $Result.DefaultSelection<Prisma.$ProductPayload>
  */
 export type Invoice = $Result.DefaultSelection<Prisma.$InvoicePayload>
 /**
+ * Model EmissionPoint
+ * 
+ */
+export type EmissionPoint = $Result.DefaultSelection<Prisma.$EmissionPointPayload>
+/**
  * Model InvoiceItem
  * 
  */
@@ -246,6 +251,16 @@ export class PrismaClient<
     * ```
     */
   get invoice(): Prisma.InvoiceDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.emissionPoint`: Exposes CRUD operations for the **EmissionPoint** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more EmissionPoints
+    * const emissionPoints = await prisma.emissionPoint.findMany()
+    * ```
+    */
+  get emissionPoint(): Prisma.EmissionPointDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.invoiceItem`: Exposes CRUD operations for the **InvoiceItem** model.
@@ -714,6 +729,7 @@ export namespace Prisma {
     IssuerClient: 'IssuerClient',
     Product: 'Product',
     Invoice: 'Invoice',
+    EmissionPoint: 'EmissionPoint',
     InvoiceItem: 'InvoiceItem',
     PaymentRequest: 'PaymentRequest'
   };
@@ -734,7 +750,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "issuer" | "systemConfig" | "bankAccount" | "client" | "issuerClient" | "product" | "invoice" | "invoiceItem" | "paymentRequest"
+      modelProps: "issuer" | "systemConfig" | "bankAccount" | "client" | "issuerClient" | "product" | "invoice" | "emissionPoint" | "invoiceItem" | "paymentRequest"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1256,6 +1272,80 @@ export namespace Prisma {
           }
         }
       }
+      EmissionPoint: {
+        payload: Prisma.$EmissionPointPayload<ExtArgs>
+        fields: Prisma.EmissionPointFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EmissionPointFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmissionPointPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EmissionPointFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmissionPointPayload>
+          }
+          findFirst: {
+            args: Prisma.EmissionPointFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmissionPointPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EmissionPointFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmissionPointPayload>
+          }
+          findMany: {
+            args: Prisma.EmissionPointFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmissionPointPayload>[]
+          }
+          create: {
+            args: Prisma.EmissionPointCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmissionPointPayload>
+          }
+          createMany: {
+            args: Prisma.EmissionPointCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EmissionPointCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmissionPointPayload>[]
+          }
+          delete: {
+            args: Prisma.EmissionPointDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmissionPointPayload>
+          }
+          update: {
+            args: Prisma.EmissionPointUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmissionPointPayload>
+          }
+          deleteMany: {
+            args: Prisma.EmissionPointDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EmissionPointUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.EmissionPointUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmissionPointPayload>[]
+          }
+          upsert: {
+            args: Prisma.EmissionPointUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EmissionPointPayload>
+          }
+          aggregate: {
+            args: Prisma.EmissionPointAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEmissionPoint>
+          }
+          groupBy: {
+            args: Prisma.EmissionPointGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EmissionPointGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EmissionPointCountArgs<ExtArgs>
+            result: $Utils.Optional<EmissionPointCountAggregateOutputType> | number
+          }
+        }
+      }
       InvoiceItem: {
         payload: Prisma.$InvoiceItemPayload<ExtArgs>
         fields: Prisma.InvoiceItemFieldRefs
@@ -1507,6 +1597,7 @@ export namespace Prisma {
     issuerClient?: IssuerClientOmit
     product?: ProductOmit
     invoice?: InvoiceOmit
+    emissionPoint?: EmissionPointOmit
     invoiceItem?: InvoiceItemOmit
     paymentRequest?: PaymentRequestOmit
   }
@@ -1592,12 +1683,14 @@ export namespace Prisma {
     invoices: number
     clients: number
     paymentRequests: number
+    emissionPoints: number
   }
 
   export type IssuerCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     invoices?: boolean | IssuerCountOutputTypeCountInvoicesArgs
     clients?: boolean | IssuerCountOutputTypeCountClientsArgs
     paymentRequests?: boolean | IssuerCountOutputTypeCountPaymentRequestsArgs
+    emissionPoints?: boolean | IssuerCountOutputTypeCountEmissionPointsArgs
   }
 
   // Custom InputTypes
@@ -1630,6 +1723,13 @@ export namespace Prisma {
    */
   export type IssuerCountOutputTypeCountPaymentRequestsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PaymentRequestWhereInput
+  }
+
+  /**
+   * IssuerCountOutputType without action
+   */
+  export type IssuerCountOutputTypeCountEmissionPointsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EmissionPointWhereInput
   }
 
 
@@ -1732,6 +1832,37 @@ export namespace Prisma {
    */
   export type InvoiceCountOutputTypeCountItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: InvoiceItemWhereInput
+  }
+
+
+  /**
+   * Count Type EmissionPointCountOutputType
+   */
+
+  export type EmissionPointCountOutputType = {
+    invoices: number
+  }
+
+  export type EmissionPointCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    invoices?: boolean | EmissionPointCountOutputTypeCountInvoicesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * EmissionPointCountOutputType without action
+   */
+  export type EmissionPointCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPointCountOutputType
+     */
+    select?: EmissionPointCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * EmissionPointCountOutputType without action
+   */
+  export type EmissionPointCountOutputTypeCountInvoicesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: InvoiceWhereInput
   }
 
 
@@ -2136,6 +2267,7 @@ export namespace Prisma {
     invoices?: boolean | Issuer$invoicesArgs<ExtArgs>
     clients?: boolean | Issuer$clientsArgs<ExtArgs>
     paymentRequests?: boolean | Issuer$paymentRequestsArgs<ExtArgs>
+    emissionPoints?: boolean | Issuer$emissionPointsArgs<ExtArgs>
     _count?: boolean | IssuerCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["issuer"]>
 
@@ -2237,6 +2369,7 @@ export namespace Prisma {
     invoices?: boolean | Issuer$invoicesArgs<ExtArgs>
     clients?: boolean | Issuer$clientsArgs<ExtArgs>
     paymentRequests?: boolean | Issuer$paymentRequestsArgs<ExtArgs>
+    emissionPoints?: boolean | Issuer$emissionPointsArgs<ExtArgs>
     _count?: boolean | IssuerCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type IssuerIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -2248,6 +2381,7 @@ export namespace Prisma {
       invoices: Prisma.$InvoicePayload<ExtArgs>[]
       clients: Prisma.$IssuerClientPayload<ExtArgs>[]
       paymentRequests: Prisma.$PaymentRequestPayload<ExtArgs>[]
+      emissionPoints: Prisma.$EmissionPointPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -2675,6 +2809,7 @@ export namespace Prisma {
     invoices<T extends Issuer$invoicesArgs<ExtArgs> = {}>(args?: Subset<T, Issuer$invoicesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InvoicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     clients<T extends Issuer$clientsArgs<ExtArgs> = {}>(args?: Subset<T, Issuer$clientsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IssuerClientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     paymentRequests<T extends Issuer$paymentRequestsArgs<ExtArgs> = {}>(args?: Subset<T, Issuer$paymentRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PaymentRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    emissionPoints<T extends Issuer$emissionPointsArgs<ExtArgs> = {}>(args?: Subset<T, Issuer$emissionPointsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3187,6 +3322,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: PaymentRequestScalarFieldEnum | PaymentRequestScalarFieldEnum[]
+  }
+
+  /**
+   * Issuer.emissionPoints
+   */
+  export type Issuer$emissionPointsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointInclude<ExtArgs> | null
+    where?: EmissionPointWhereInput
+    orderBy?: EmissionPointOrderByWithRelationInput | EmissionPointOrderByWithRelationInput[]
+    cursor?: EmissionPointWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: EmissionPointScalarFieldEnum | EmissionPointScalarFieldEnum[]
   }
 
   /**
@@ -8966,6 +9125,7 @@ export namespace Prisma {
     total: number | null
     clientId: number | null
     issuerId: number | null
+    emissionPointId: number | null
   }
 
   export type InvoiceSumAggregateOutputType = {
@@ -8977,11 +9137,14 @@ export namespace Prisma {
     total: number | null
     clientId: number | null
     issuerId: number | null
+    emissionPointId: number | null
   }
 
   export type InvoiceMinAggregateOutputType = {
     id: number | null
     secuencial: string | null
+    establecimiento: string | null
+    puntoEmision: string | null
     claveAcceso: string | null
     xmlNoFirmado: string | null
     xmlAutorizado: string | null
@@ -8999,11 +9162,14 @@ export namespace Prisma {
     updatedAt: Date | null
     clientId: number | null
     issuerId: number | null
+    emissionPointId: number | null
   }
 
   export type InvoiceMaxAggregateOutputType = {
     id: number | null
     secuencial: string | null
+    establecimiento: string | null
+    puntoEmision: string | null
     claveAcceso: string | null
     xmlNoFirmado: string | null
     xmlAutorizado: string | null
@@ -9021,11 +9187,14 @@ export namespace Prisma {
     updatedAt: Date | null
     clientId: number | null
     issuerId: number | null
+    emissionPointId: number | null
   }
 
   export type InvoiceCountAggregateOutputType = {
     id: number
     secuencial: number
+    establecimiento: number
+    puntoEmision: number
     claveAcceso: number
     xmlNoFirmado: number
     xmlAutorizado: number
@@ -9043,6 +9212,7 @@ export namespace Prisma {
     updatedAt: number
     clientId: number
     issuerId: number
+    emissionPointId: number
     _all: number
   }
 
@@ -9056,6 +9226,7 @@ export namespace Prisma {
     total?: true
     clientId?: true
     issuerId?: true
+    emissionPointId?: true
   }
 
   export type InvoiceSumAggregateInputType = {
@@ -9067,11 +9238,14 @@ export namespace Prisma {
     total?: true
     clientId?: true
     issuerId?: true
+    emissionPointId?: true
   }
 
   export type InvoiceMinAggregateInputType = {
     id?: true
     secuencial?: true
+    establecimiento?: true
+    puntoEmision?: true
     claveAcceso?: true
     xmlNoFirmado?: true
     xmlAutorizado?: true
@@ -9089,11 +9263,14 @@ export namespace Prisma {
     updatedAt?: true
     clientId?: true
     issuerId?: true
+    emissionPointId?: true
   }
 
   export type InvoiceMaxAggregateInputType = {
     id?: true
     secuencial?: true
+    establecimiento?: true
+    puntoEmision?: true
     claveAcceso?: true
     xmlNoFirmado?: true
     xmlAutorizado?: true
@@ -9111,11 +9288,14 @@ export namespace Prisma {
     updatedAt?: true
     clientId?: true
     issuerId?: true
+    emissionPointId?: true
   }
 
   export type InvoiceCountAggregateInputType = {
     id?: true
     secuencial?: true
+    establecimiento?: true
+    puntoEmision?: true
     claveAcceso?: true
     xmlNoFirmado?: true
     xmlAutorizado?: true
@@ -9133,6 +9313,7 @@ export namespace Prisma {
     updatedAt?: true
     clientId?: true
     issuerId?: true
+    emissionPointId?: true
     _all?: true
   }
 
@@ -9225,6 +9406,8 @@ export namespace Prisma {
   export type InvoiceGroupByOutputType = {
     id: number
     secuencial: string
+    establecimiento: string
+    puntoEmision: string
     claveAcceso: string | null
     xmlNoFirmado: string | null
     xmlAutorizado: string | null
@@ -9242,6 +9425,7 @@ export namespace Prisma {
     updatedAt: Date
     clientId: number
     issuerId: number
+    emissionPointId: number | null
     _count: InvoiceCountAggregateOutputType | null
     _avg: InvoiceAvgAggregateOutputType | null
     _sum: InvoiceSumAggregateOutputType | null
@@ -9266,6 +9450,8 @@ export namespace Prisma {
   export type InvoiceSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     secuencial?: boolean
+    establecimiento?: boolean
+    puntoEmision?: boolean
     claveAcceso?: boolean
     xmlNoFirmado?: boolean
     xmlAutorizado?: boolean
@@ -9283,8 +9469,10 @@ export namespace Prisma {
     updatedAt?: boolean
     clientId?: boolean
     issuerId?: boolean
+    emissionPointId?: boolean
     client?: boolean | ClientDefaultArgs<ExtArgs>
     issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    emissionPoint?: boolean | Invoice$emissionPointArgs<ExtArgs>
     items?: boolean | Invoice$itemsArgs<ExtArgs>
     _count?: boolean | InvoiceCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["invoice"]>
@@ -9292,6 +9480,8 @@ export namespace Prisma {
   export type InvoiceSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     secuencial?: boolean
+    establecimiento?: boolean
+    puntoEmision?: boolean
     claveAcceso?: boolean
     xmlNoFirmado?: boolean
     xmlAutorizado?: boolean
@@ -9309,13 +9499,17 @@ export namespace Prisma {
     updatedAt?: boolean
     clientId?: boolean
     issuerId?: boolean
+    emissionPointId?: boolean
     client?: boolean | ClientDefaultArgs<ExtArgs>
     issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    emissionPoint?: boolean | Invoice$emissionPointArgs<ExtArgs>
   }, ExtArgs["result"]["invoice"]>
 
   export type InvoiceSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     secuencial?: boolean
+    establecimiento?: boolean
+    puntoEmision?: boolean
     claveAcceso?: boolean
     xmlNoFirmado?: boolean
     xmlAutorizado?: boolean
@@ -9333,13 +9527,17 @@ export namespace Prisma {
     updatedAt?: boolean
     clientId?: boolean
     issuerId?: boolean
+    emissionPointId?: boolean
     client?: boolean | ClientDefaultArgs<ExtArgs>
     issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    emissionPoint?: boolean | Invoice$emissionPointArgs<ExtArgs>
   }, ExtArgs["result"]["invoice"]>
 
   export type InvoiceSelectScalar = {
     id?: boolean
     secuencial?: boolean
+    establecimiento?: boolean
+    puntoEmision?: boolean
     claveAcceso?: boolean
     xmlNoFirmado?: boolean
     xmlAutorizado?: boolean
@@ -9357,22 +9555,26 @@ export namespace Prisma {
     updatedAt?: boolean
     clientId?: boolean
     issuerId?: boolean
+    emissionPointId?: boolean
   }
 
-  export type InvoiceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "secuencial" | "claveAcceso" | "xmlNoFirmado" | "xmlAutorizado" | "pdfRIDE" | "estado" | "fechaEmision" | "tipoAmbiente" | "subtotal0" | "subtotalIva" | "valorIva" | "total" | "formaPago" | "observaciones" | "createdAt" | "updatedAt" | "clientId" | "issuerId", ExtArgs["result"]["invoice"]>
+  export type InvoiceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "secuencial" | "establecimiento" | "puntoEmision" | "claveAcceso" | "xmlNoFirmado" | "xmlAutorizado" | "pdfRIDE" | "estado" | "fechaEmision" | "tipoAmbiente" | "subtotal0" | "subtotalIva" | "valorIva" | "total" | "formaPago" | "observaciones" | "createdAt" | "updatedAt" | "clientId" | "issuerId" | "emissionPointId", ExtArgs["result"]["invoice"]>
   export type InvoiceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | ClientDefaultArgs<ExtArgs>
     issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    emissionPoint?: boolean | Invoice$emissionPointArgs<ExtArgs>
     items?: boolean | Invoice$itemsArgs<ExtArgs>
     _count?: boolean | InvoiceCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type InvoiceIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | ClientDefaultArgs<ExtArgs>
     issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    emissionPoint?: boolean | Invoice$emissionPointArgs<ExtArgs>
   }
   export type InvoiceIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     client?: boolean | ClientDefaultArgs<ExtArgs>
     issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    emissionPoint?: boolean | Invoice$emissionPointArgs<ExtArgs>
   }
 
   export type $InvoicePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9380,11 +9582,14 @@ export namespace Prisma {
     objects: {
       client: Prisma.$ClientPayload<ExtArgs>
       issuer: Prisma.$IssuerPayload<ExtArgs>
+      emissionPoint: Prisma.$EmissionPointPayload<ExtArgs> | null
       items: Prisma.$InvoiceItemPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
       secuencial: string
+      establecimiento: string
+      puntoEmision: string
       claveAcceso: string | null
       xmlNoFirmado: string | null
       xmlAutorizado: string | null
@@ -9402,6 +9607,7 @@ export namespace Prisma {
       updatedAt: Date
       clientId: number
       issuerId: number
+      emissionPointId: number | null
     }, ExtArgs["result"]["invoice"]>
     composites: {}
   }
@@ -9798,6 +10004,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     client<T extends ClientDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ClientDefaultArgs<ExtArgs>>): Prisma__ClientClient<$Result.GetResult<Prisma.$ClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     issuer<T extends IssuerDefaultArgs<ExtArgs> = {}>(args?: Subset<T, IssuerDefaultArgs<ExtArgs>>): Prisma__IssuerClient<$Result.GetResult<Prisma.$IssuerPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    emissionPoint<T extends Invoice$emissionPointArgs<ExtArgs> = {}>(args?: Subset<T, Invoice$emissionPointArgs<ExtArgs>>): Prisma__EmissionPointClient<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     items<T extends Invoice$itemsArgs<ExtArgs> = {}>(args?: Subset<T, Invoice$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InvoiceItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -9830,6 +10037,8 @@ export namespace Prisma {
   interface InvoiceFieldRefs {
     readonly id: FieldRef<"Invoice", 'Int'>
     readonly secuencial: FieldRef<"Invoice", 'String'>
+    readonly establecimiento: FieldRef<"Invoice", 'String'>
+    readonly puntoEmision: FieldRef<"Invoice", 'String'>
     readonly claveAcceso: FieldRef<"Invoice", 'String'>
     readonly xmlNoFirmado: FieldRef<"Invoice", 'String'>
     readonly xmlAutorizado: FieldRef<"Invoice", 'String'>
@@ -9847,6 +10056,7 @@ export namespace Prisma {
     readonly updatedAt: FieldRef<"Invoice", 'DateTime'>
     readonly clientId: FieldRef<"Invoice", 'Int'>
     readonly issuerId: FieldRef<"Invoice", 'Int'>
+    readonly emissionPointId: FieldRef<"Invoice", 'Int'>
   }
     
 
@@ -10241,6 +10451,25 @@ export namespace Prisma {
   }
 
   /**
+   * Invoice.emissionPoint
+   */
+  export type Invoice$emissionPointArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointInclude<ExtArgs> | null
+    where?: EmissionPointWhereInput
+  }
+
+  /**
    * Invoice.items
    */
   export type Invoice$itemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -10280,6 +10509,1208 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: InvoiceInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model EmissionPoint
+   */
+
+  export type AggregateEmissionPoint = {
+    _count: EmissionPointCountAggregateOutputType | null
+    _avg: EmissionPointAvgAggregateOutputType | null
+    _sum: EmissionPointSumAggregateOutputType | null
+    _min: EmissionPointMinAggregateOutputType | null
+    _max: EmissionPointMaxAggregateOutputType | null
+  }
+
+  export type EmissionPointAvgAggregateOutputType = {
+    id: number | null
+    issuerId: number | null
+  }
+
+  export type EmissionPointSumAggregateOutputType = {
+    id: number | null
+    issuerId: number | null
+  }
+
+  export type EmissionPointMinAggregateOutputType = {
+    id: number | null
+    establecimiento: string | null
+    puntoEmision: string | null
+    nombre: string | null
+    username: string | null
+    password: string | null
+    secuencialInicio: string | null
+    activo: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    issuerId: number | null
+  }
+
+  export type EmissionPointMaxAggregateOutputType = {
+    id: number | null
+    establecimiento: string | null
+    puntoEmision: string | null
+    nombre: string | null
+    username: string | null
+    password: string | null
+    secuencialInicio: string | null
+    activo: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    issuerId: number | null
+  }
+
+  export type EmissionPointCountAggregateOutputType = {
+    id: number
+    establecimiento: number
+    puntoEmision: number
+    nombre: number
+    username: number
+    password: number
+    secuencialInicio: number
+    activo: number
+    createdAt: number
+    updatedAt: number
+    issuerId: number
+    _all: number
+  }
+
+
+  export type EmissionPointAvgAggregateInputType = {
+    id?: true
+    issuerId?: true
+  }
+
+  export type EmissionPointSumAggregateInputType = {
+    id?: true
+    issuerId?: true
+  }
+
+  export type EmissionPointMinAggregateInputType = {
+    id?: true
+    establecimiento?: true
+    puntoEmision?: true
+    nombre?: true
+    username?: true
+    password?: true
+    secuencialInicio?: true
+    activo?: true
+    createdAt?: true
+    updatedAt?: true
+    issuerId?: true
+  }
+
+  export type EmissionPointMaxAggregateInputType = {
+    id?: true
+    establecimiento?: true
+    puntoEmision?: true
+    nombre?: true
+    username?: true
+    password?: true
+    secuencialInicio?: true
+    activo?: true
+    createdAt?: true
+    updatedAt?: true
+    issuerId?: true
+  }
+
+  export type EmissionPointCountAggregateInputType = {
+    id?: true
+    establecimiento?: true
+    puntoEmision?: true
+    nombre?: true
+    username?: true
+    password?: true
+    secuencialInicio?: true
+    activo?: true
+    createdAt?: true
+    updatedAt?: true
+    issuerId?: true
+    _all?: true
+  }
+
+  export type EmissionPointAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EmissionPoint to aggregate.
+     */
+    where?: EmissionPointWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EmissionPoints to fetch.
+     */
+    orderBy?: EmissionPointOrderByWithRelationInput | EmissionPointOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EmissionPointWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EmissionPoints from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EmissionPoints.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned EmissionPoints
+    **/
+    _count?: true | EmissionPointCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: EmissionPointAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: EmissionPointSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EmissionPointMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EmissionPointMaxAggregateInputType
+  }
+
+  export type GetEmissionPointAggregateType<T extends EmissionPointAggregateArgs> = {
+        [P in keyof T & keyof AggregateEmissionPoint]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEmissionPoint[P]>
+      : GetScalarType<T[P], AggregateEmissionPoint[P]>
+  }
+
+
+
+
+  export type EmissionPointGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EmissionPointWhereInput
+    orderBy?: EmissionPointOrderByWithAggregationInput | EmissionPointOrderByWithAggregationInput[]
+    by: EmissionPointScalarFieldEnum[] | EmissionPointScalarFieldEnum
+    having?: EmissionPointScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EmissionPointCountAggregateInputType | true
+    _avg?: EmissionPointAvgAggregateInputType
+    _sum?: EmissionPointSumAggregateInputType
+    _min?: EmissionPointMinAggregateInputType
+    _max?: EmissionPointMaxAggregateInputType
+  }
+
+  export type EmissionPointGroupByOutputType = {
+    id: number
+    establecimiento: string
+    puntoEmision: string
+    nombre: string
+    username: string | null
+    password: string | null
+    secuencialInicio: string
+    activo: boolean
+    createdAt: Date
+    updatedAt: Date
+    issuerId: number
+    _count: EmissionPointCountAggregateOutputType | null
+    _avg: EmissionPointAvgAggregateOutputType | null
+    _sum: EmissionPointSumAggregateOutputType | null
+    _min: EmissionPointMinAggregateOutputType | null
+    _max: EmissionPointMaxAggregateOutputType | null
+  }
+
+  type GetEmissionPointGroupByPayload<T extends EmissionPointGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EmissionPointGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EmissionPointGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EmissionPointGroupByOutputType[P]>
+            : GetScalarType<T[P], EmissionPointGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EmissionPointSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    establecimiento?: boolean
+    puntoEmision?: boolean
+    nombre?: boolean
+    username?: boolean
+    password?: boolean
+    secuencialInicio?: boolean
+    activo?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    issuerId?: boolean
+    issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    invoices?: boolean | EmissionPoint$invoicesArgs<ExtArgs>
+    _count?: boolean | EmissionPointCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["emissionPoint"]>
+
+  export type EmissionPointSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    establecimiento?: boolean
+    puntoEmision?: boolean
+    nombre?: boolean
+    username?: boolean
+    password?: boolean
+    secuencialInicio?: boolean
+    activo?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    issuerId?: boolean
+    issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["emissionPoint"]>
+
+  export type EmissionPointSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    establecimiento?: boolean
+    puntoEmision?: boolean
+    nombre?: boolean
+    username?: boolean
+    password?: boolean
+    secuencialInicio?: boolean
+    activo?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    issuerId?: boolean
+    issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["emissionPoint"]>
+
+  export type EmissionPointSelectScalar = {
+    id?: boolean
+    establecimiento?: boolean
+    puntoEmision?: boolean
+    nombre?: boolean
+    username?: boolean
+    password?: boolean
+    secuencialInicio?: boolean
+    activo?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    issuerId?: boolean
+  }
+
+  export type EmissionPointOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "establecimiento" | "puntoEmision" | "nombre" | "username" | "password" | "secuencialInicio" | "activo" | "createdAt" | "updatedAt" | "issuerId", ExtArgs["result"]["emissionPoint"]>
+  export type EmissionPointInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+    invoices?: boolean | EmissionPoint$invoicesArgs<ExtArgs>
+    _count?: boolean | EmissionPointCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type EmissionPointIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+  }
+  export type EmissionPointIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    issuer?: boolean | IssuerDefaultArgs<ExtArgs>
+  }
+
+  export type $EmissionPointPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "EmissionPoint"
+    objects: {
+      issuer: Prisma.$IssuerPayload<ExtArgs>
+      invoices: Prisma.$InvoicePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      establecimiento: string
+      puntoEmision: string
+      nombre: string
+      username: string | null
+      password: string | null
+      secuencialInicio: string
+      activo: boolean
+      createdAt: Date
+      updatedAt: Date
+      issuerId: number
+    }, ExtArgs["result"]["emissionPoint"]>
+    composites: {}
+  }
+
+  type EmissionPointGetPayload<S extends boolean | null | undefined | EmissionPointDefaultArgs> = $Result.GetResult<Prisma.$EmissionPointPayload, S>
+
+  type EmissionPointCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<EmissionPointFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: EmissionPointCountAggregateInputType | true
+    }
+
+  export interface EmissionPointDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['EmissionPoint'], meta: { name: 'EmissionPoint' } }
+    /**
+     * Find zero or one EmissionPoint that matches the filter.
+     * @param {EmissionPointFindUniqueArgs} args - Arguments to find a EmissionPoint
+     * @example
+     * // Get one EmissionPoint
+     * const emissionPoint = await prisma.emissionPoint.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EmissionPointFindUniqueArgs>(args: SelectSubset<T, EmissionPointFindUniqueArgs<ExtArgs>>): Prisma__EmissionPointClient<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one EmissionPoint that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {EmissionPointFindUniqueOrThrowArgs} args - Arguments to find a EmissionPoint
+     * @example
+     * // Get one EmissionPoint
+     * const emissionPoint = await prisma.emissionPoint.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EmissionPointFindUniqueOrThrowArgs>(args: SelectSubset<T, EmissionPointFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EmissionPointClient<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EmissionPoint that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmissionPointFindFirstArgs} args - Arguments to find a EmissionPoint
+     * @example
+     * // Get one EmissionPoint
+     * const emissionPoint = await prisma.emissionPoint.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EmissionPointFindFirstArgs>(args?: SelectSubset<T, EmissionPointFindFirstArgs<ExtArgs>>): Prisma__EmissionPointClient<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EmissionPoint that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmissionPointFindFirstOrThrowArgs} args - Arguments to find a EmissionPoint
+     * @example
+     * // Get one EmissionPoint
+     * const emissionPoint = await prisma.emissionPoint.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EmissionPointFindFirstOrThrowArgs>(args?: SelectSubset<T, EmissionPointFindFirstOrThrowArgs<ExtArgs>>): Prisma__EmissionPointClient<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more EmissionPoints that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmissionPointFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all EmissionPoints
+     * const emissionPoints = await prisma.emissionPoint.findMany()
+     * 
+     * // Get first 10 EmissionPoints
+     * const emissionPoints = await prisma.emissionPoint.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const emissionPointWithIdOnly = await prisma.emissionPoint.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends EmissionPointFindManyArgs>(args?: SelectSubset<T, EmissionPointFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a EmissionPoint.
+     * @param {EmissionPointCreateArgs} args - Arguments to create a EmissionPoint.
+     * @example
+     * // Create one EmissionPoint
+     * const EmissionPoint = await prisma.emissionPoint.create({
+     *   data: {
+     *     // ... data to create a EmissionPoint
+     *   }
+     * })
+     * 
+     */
+    create<T extends EmissionPointCreateArgs>(args: SelectSubset<T, EmissionPointCreateArgs<ExtArgs>>): Prisma__EmissionPointClient<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many EmissionPoints.
+     * @param {EmissionPointCreateManyArgs} args - Arguments to create many EmissionPoints.
+     * @example
+     * // Create many EmissionPoints
+     * const emissionPoint = await prisma.emissionPoint.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EmissionPointCreateManyArgs>(args?: SelectSubset<T, EmissionPointCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many EmissionPoints and returns the data saved in the database.
+     * @param {EmissionPointCreateManyAndReturnArgs} args - Arguments to create many EmissionPoints.
+     * @example
+     * // Create many EmissionPoints
+     * const emissionPoint = await prisma.emissionPoint.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many EmissionPoints and only return the `id`
+     * const emissionPointWithIdOnly = await prisma.emissionPoint.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EmissionPointCreateManyAndReturnArgs>(args?: SelectSubset<T, EmissionPointCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a EmissionPoint.
+     * @param {EmissionPointDeleteArgs} args - Arguments to delete one EmissionPoint.
+     * @example
+     * // Delete one EmissionPoint
+     * const EmissionPoint = await prisma.emissionPoint.delete({
+     *   where: {
+     *     // ... filter to delete one EmissionPoint
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EmissionPointDeleteArgs>(args: SelectSubset<T, EmissionPointDeleteArgs<ExtArgs>>): Prisma__EmissionPointClient<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one EmissionPoint.
+     * @param {EmissionPointUpdateArgs} args - Arguments to update one EmissionPoint.
+     * @example
+     * // Update one EmissionPoint
+     * const emissionPoint = await prisma.emissionPoint.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EmissionPointUpdateArgs>(args: SelectSubset<T, EmissionPointUpdateArgs<ExtArgs>>): Prisma__EmissionPointClient<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more EmissionPoints.
+     * @param {EmissionPointDeleteManyArgs} args - Arguments to filter EmissionPoints to delete.
+     * @example
+     * // Delete a few EmissionPoints
+     * const { count } = await prisma.emissionPoint.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EmissionPointDeleteManyArgs>(args?: SelectSubset<T, EmissionPointDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EmissionPoints.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmissionPointUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many EmissionPoints
+     * const emissionPoint = await prisma.emissionPoint.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EmissionPointUpdateManyArgs>(args: SelectSubset<T, EmissionPointUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EmissionPoints and returns the data updated in the database.
+     * @param {EmissionPointUpdateManyAndReturnArgs} args - Arguments to update many EmissionPoints.
+     * @example
+     * // Update many EmissionPoints
+     * const emissionPoint = await prisma.emissionPoint.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more EmissionPoints and only return the `id`
+     * const emissionPointWithIdOnly = await prisma.emissionPoint.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends EmissionPointUpdateManyAndReturnArgs>(args: SelectSubset<T, EmissionPointUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one EmissionPoint.
+     * @param {EmissionPointUpsertArgs} args - Arguments to update or create a EmissionPoint.
+     * @example
+     * // Update or create a EmissionPoint
+     * const emissionPoint = await prisma.emissionPoint.upsert({
+     *   create: {
+     *     // ... data to create a EmissionPoint
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the EmissionPoint we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EmissionPointUpsertArgs>(args: SelectSubset<T, EmissionPointUpsertArgs<ExtArgs>>): Prisma__EmissionPointClient<$Result.GetResult<Prisma.$EmissionPointPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of EmissionPoints.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmissionPointCountArgs} args - Arguments to filter EmissionPoints to count.
+     * @example
+     * // Count the number of EmissionPoints
+     * const count = await prisma.emissionPoint.count({
+     *   where: {
+     *     // ... the filter for the EmissionPoints we want to count
+     *   }
+     * })
+    **/
+    count<T extends EmissionPointCountArgs>(
+      args?: Subset<T, EmissionPointCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EmissionPointCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a EmissionPoint.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmissionPointAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EmissionPointAggregateArgs>(args: Subset<T, EmissionPointAggregateArgs>): Prisma.PrismaPromise<GetEmissionPointAggregateType<T>>
+
+    /**
+     * Group by EmissionPoint.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EmissionPointGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EmissionPointGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EmissionPointGroupByArgs['orderBy'] }
+        : { orderBy?: EmissionPointGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EmissionPointGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEmissionPointGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the EmissionPoint model
+   */
+  readonly fields: EmissionPointFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for EmissionPoint.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EmissionPointClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    issuer<T extends IssuerDefaultArgs<ExtArgs> = {}>(args?: Subset<T, IssuerDefaultArgs<ExtArgs>>): Prisma__IssuerClient<$Result.GetResult<Prisma.$IssuerPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    invoices<T extends EmissionPoint$invoicesArgs<ExtArgs> = {}>(args?: Subset<T, EmissionPoint$invoicesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$InvoicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the EmissionPoint model
+   */
+  interface EmissionPointFieldRefs {
+    readonly id: FieldRef<"EmissionPoint", 'Int'>
+    readonly establecimiento: FieldRef<"EmissionPoint", 'String'>
+    readonly puntoEmision: FieldRef<"EmissionPoint", 'String'>
+    readonly nombre: FieldRef<"EmissionPoint", 'String'>
+    readonly username: FieldRef<"EmissionPoint", 'String'>
+    readonly password: FieldRef<"EmissionPoint", 'String'>
+    readonly secuencialInicio: FieldRef<"EmissionPoint", 'String'>
+    readonly activo: FieldRef<"EmissionPoint", 'Boolean'>
+    readonly createdAt: FieldRef<"EmissionPoint", 'DateTime'>
+    readonly updatedAt: FieldRef<"EmissionPoint", 'DateTime'>
+    readonly issuerId: FieldRef<"EmissionPoint", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * EmissionPoint findUnique
+   */
+  export type EmissionPointFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointInclude<ExtArgs> | null
+    /**
+     * Filter, which EmissionPoint to fetch.
+     */
+    where: EmissionPointWhereUniqueInput
+  }
+
+  /**
+   * EmissionPoint findUniqueOrThrow
+   */
+  export type EmissionPointFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointInclude<ExtArgs> | null
+    /**
+     * Filter, which EmissionPoint to fetch.
+     */
+    where: EmissionPointWhereUniqueInput
+  }
+
+  /**
+   * EmissionPoint findFirst
+   */
+  export type EmissionPointFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointInclude<ExtArgs> | null
+    /**
+     * Filter, which EmissionPoint to fetch.
+     */
+    where?: EmissionPointWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EmissionPoints to fetch.
+     */
+    orderBy?: EmissionPointOrderByWithRelationInput | EmissionPointOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EmissionPoints.
+     */
+    cursor?: EmissionPointWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EmissionPoints from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EmissionPoints.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EmissionPoints.
+     */
+    distinct?: EmissionPointScalarFieldEnum | EmissionPointScalarFieldEnum[]
+  }
+
+  /**
+   * EmissionPoint findFirstOrThrow
+   */
+  export type EmissionPointFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointInclude<ExtArgs> | null
+    /**
+     * Filter, which EmissionPoint to fetch.
+     */
+    where?: EmissionPointWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EmissionPoints to fetch.
+     */
+    orderBy?: EmissionPointOrderByWithRelationInput | EmissionPointOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EmissionPoints.
+     */
+    cursor?: EmissionPointWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EmissionPoints from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EmissionPoints.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EmissionPoints.
+     */
+    distinct?: EmissionPointScalarFieldEnum | EmissionPointScalarFieldEnum[]
+  }
+
+  /**
+   * EmissionPoint findMany
+   */
+  export type EmissionPointFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointInclude<ExtArgs> | null
+    /**
+     * Filter, which EmissionPoints to fetch.
+     */
+    where?: EmissionPointWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EmissionPoints to fetch.
+     */
+    orderBy?: EmissionPointOrderByWithRelationInput | EmissionPointOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing EmissionPoints.
+     */
+    cursor?: EmissionPointWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EmissionPoints from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EmissionPoints.
+     */
+    skip?: number
+    distinct?: EmissionPointScalarFieldEnum | EmissionPointScalarFieldEnum[]
+  }
+
+  /**
+   * EmissionPoint create
+   */
+  export type EmissionPointCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointInclude<ExtArgs> | null
+    /**
+     * The data needed to create a EmissionPoint.
+     */
+    data: XOR<EmissionPointCreateInput, EmissionPointUncheckedCreateInput>
+  }
+
+  /**
+   * EmissionPoint createMany
+   */
+  export type EmissionPointCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many EmissionPoints.
+     */
+    data: EmissionPointCreateManyInput | EmissionPointCreateManyInput[]
+  }
+
+  /**
+   * EmissionPoint createManyAndReturn
+   */
+  export type EmissionPointCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * The data used to create many EmissionPoints.
+     */
+    data: EmissionPointCreateManyInput | EmissionPointCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * EmissionPoint update
+   */
+  export type EmissionPointUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointInclude<ExtArgs> | null
+    /**
+     * The data needed to update a EmissionPoint.
+     */
+    data: XOR<EmissionPointUpdateInput, EmissionPointUncheckedUpdateInput>
+    /**
+     * Choose, which EmissionPoint to update.
+     */
+    where: EmissionPointWhereUniqueInput
+  }
+
+  /**
+   * EmissionPoint updateMany
+   */
+  export type EmissionPointUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update EmissionPoints.
+     */
+    data: XOR<EmissionPointUpdateManyMutationInput, EmissionPointUncheckedUpdateManyInput>
+    /**
+     * Filter which EmissionPoints to update
+     */
+    where?: EmissionPointWhereInput
+    /**
+     * Limit how many EmissionPoints to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EmissionPoint updateManyAndReturn
+   */
+  export type EmissionPointUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * The data used to update EmissionPoints.
+     */
+    data: XOR<EmissionPointUpdateManyMutationInput, EmissionPointUncheckedUpdateManyInput>
+    /**
+     * Filter which EmissionPoints to update
+     */
+    where?: EmissionPointWhereInput
+    /**
+     * Limit how many EmissionPoints to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * EmissionPoint upsert
+   */
+  export type EmissionPointUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointInclude<ExtArgs> | null
+    /**
+     * The filter to search for the EmissionPoint to update in case it exists.
+     */
+    where: EmissionPointWhereUniqueInput
+    /**
+     * In case the EmissionPoint found by the `where` argument doesn't exist, create a new EmissionPoint with this data.
+     */
+    create: XOR<EmissionPointCreateInput, EmissionPointUncheckedCreateInput>
+    /**
+     * In case the EmissionPoint was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EmissionPointUpdateInput, EmissionPointUncheckedUpdateInput>
+  }
+
+  /**
+   * EmissionPoint delete
+   */
+  export type EmissionPointDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointInclude<ExtArgs> | null
+    /**
+     * Filter which EmissionPoint to delete.
+     */
+    where: EmissionPointWhereUniqueInput
+  }
+
+  /**
+   * EmissionPoint deleteMany
+   */
+  export type EmissionPointDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EmissionPoints to delete
+     */
+    where?: EmissionPointWhereInput
+    /**
+     * Limit how many EmissionPoints to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * EmissionPoint.invoices
+   */
+  export type EmissionPoint$invoicesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Invoice
+     */
+    select?: InvoiceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Invoice
+     */
+    omit?: InvoiceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: InvoiceInclude<ExtArgs> | null
+    where?: InvoiceWhereInput
+    orderBy?: InvoiceOrderByWithRelationInput | InvoiceOrderByWithRelationInput[]
+    cursor?: InvoiceWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: InvoiceScalarFieldEnum | InvoiceScalarFieldEnum[]
+  }
+
+  /**
+   * EmissionPoint without action
+   */
+  export type EmissionPointDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EmissionPoint
+     */
+    select?: EmissionPointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EmissionPoint
+     */
+    omit?: EmissionPointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EmissionPointInclude<ExtArgs> | null
   }
 
 
@@ -12787,6 +14218,8 @@ export namespace Prisma {
   export const InvoiceScalarFieldEnum: {
     id: 'id',
     secuencial: 'secuencial',
+    establecimiento: 'establecimiento',
+    puntoEmision: 'puntoEmision',
     claveAcceso: 'claveAcceso',
     xmlNoFirmado: 'xmlNoFirmado',
     xmlAutorizado: 'xmlAutorizado',
@@ -12803,10 +14236,28 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     clientId: 'clientId',
-    issuerId: 'issuerId'
+    issuerId: 'issuerId',
+    emissionPointId: 'emissionPointId'
   };
 
   export type InvoiceScalarFieldEnum = (typeof InvoiceScalarFieldEnum)[keyof typeof InvoiceScalarFieldEnum]
+
+
+  export const EmissionPointScalarFieldEnum: {
+    id: 'id',
+    establecimiento: 'establecimiento',
+    puntoEmision: 'puntoEmision',
+    nombre: 'nombre',
+    username: 'username',
+    password: 'password',
+    secuencialInicio: 'secuencialInicio',
+    activo: 'activo',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    issuerId: 'issuerId'
+  };
+
+  export type EmissionPointScalarFieldEnum = (typeof EmissionPointScalarFieldEnum)[keyof typeof EmissionPointScalarFieldEnum]
 
 
   export const InvoiceItemScalarFieldEnum: {
@@ -12937,6 +14388,7 @@ export namespace Prisma {
     invoices?: InvoiceListRelationFilter
     clients?: IssuerClientListRelationFilter
     paymentRequests?: PaymentRequestListRelationFilter
+    emissionPoints?: EmissionPointListRelationFilter
   }
 
   export type IssuerOrderByWithRelationInput = {
@@ -12971,6 +14423,7 @@ export namespace Prisma {
     invoices?: InvoiceOrderByRelationAggregateInput
     clients?: IssuerClientOrderByRelationAggregateInput
     paymentRequests?: PaymentRequestOrderByRelationAggregateInput
+    emissionPoints?: EmissionPointOrderByRelationAggregateInput
   }
 
   export type IssuerWhereUniqueInput = Prisma.AtLeast<{
@@ -13008,6 +14461,7 @@ export namespace Prisma {
     invoices?: InvoiceListRelationFilter
     clients?: IssuerClientListRelationFilter
     paymentRequests?: PaymentRequestListRelationFilter
+    emissionPoints?: EmissionPointListRelationFilter
   }, "id" | "ruc" | "apiKey">
 
   export type IssuerOrderByWithAggregationInput = {
@@ -13497,6 +14951,8 @@ export namespace Prisma {
     NOT?: InvoiceWhereInput | InvoiceWhereInput[]
     id?: IntFilter<"Invoice"> | number
     secuencial?: StringFilter<"Invoice"> | string
+    establecimiento?: StringFilter<"Invoice"> | string
+    puntoEmision?: StringFilter<"Invoice"> | string
     claveAcceso?: StringNullableFilter<"Invoice"> | string | null
     xmlNoFirmado?: StringNullableFilter<"Invoice"> | string | null
     xmlAutorizado?: StringNullableFilter<"Invoice"> | string | null
@@ -13514,14 +14970,18 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Invoice"> | Date | string
     clientId?: IntFilter<"Invoice"> | number
     issuerId?: IntFilter<"Invoice"> | number
+    emissionPointId?: IntNullableFilter<"Invoice"> | number | null
     client?: XOR<ClientScalarRelationFilter, ClientWhereInput>
     issuer?: XOR<IssuerScalarRelationFilter, IssuerWhereInput>
+    emissionPoint?: XOR<EmissionPointNullableScalarRelationFilter, EmissionPointWhereInput> | null
     items?: InvoiceItemListRelationFilter
   }
 
   export type InvoiceOrderByWithRelationInput = {
     id?: SortOrder
     secuencial?: SortOrder
+    establecimiento?: SortOrder
+    puntoEmision?: SortOrder
     claveAcceso?: SortOrderInput | SortOrder
     xmlNoFirmado?: SortOrderInput | SortOrder
     xmlAutorizado?: SortOrderInput | SortOrder
@@ -13539,8 +14999,10 @@ export namespace Prisma {
     updatedAt?: SortOrder
     clientId?: SortOrder
     issuerId?: SortOrder
+    emissionPointId?: SortOrderInput | SortOrder
     client?: ClientOrderByWithRelationInput
     issuer?: IssuerOrderByWithRelationInput
+    emissionPoint?: EmissionPointOrderByWithRelationInput
     items?: InvoiceItemOrderByRelationAggregateInput
   }
 
@@ -13551,6 +15013,8 @@ export namespace Prisma {
     OR?: InvoiceWhereInput[]
     NOT?: InvoiceWhereInput | InvoiceWhereInput[]
     secuencial?: StringFilter<"Invoice"> | string
+    establecimiento?: StringFilter<"Invoice"> | string
+    puntoEmision?: StringFilter<"Invoice"> | string
     xmlNoFirmado?: StringNullableFilter<"Invoice"> | string | null
     xmlAutorizado?: StringNullableFilter<"Invoice"> | string | null
     pdfRIDE?: StringNullableFilter<"Invoice"> | string | null
@@ -13567,14 +15031,18 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Invoice"> | Date | string
     clientId?: IntFilter<"Invoice"> | number
     issuerId?: IntFilter<"Invoice"> | number
+    emissionPointId?: IntNullableFilter<"Invoice"> | number | null
     client?: XOR<ClientScalarRelationFilter, ClientWhereInput>
     issuer?: XOR<IssuerScalarRelationFilter, IssuerWhereInput>
+    emissionPoint?: XOR<EmissionPointNullableScalarRelationFilter, EmissionPointWhereInput> | null
     items?: InvoiceItemListRelationFilter
   }, "id" | "claveAcceso">
 
   export type InvoiceOrderByWithAggregationInput = {
     id?: SortOrder
     secuencial?: SortOrder
+    establecimiento?: SortOrder
+    puntoEmision?: SortOrder
     claveAcceso?: SortOrderInput | SortOrder
     xmlNoFirmado?: SortOrderInput | SortOrder
     xmlAutorizado?: SortOrderInput | SortOrder
@@ -13592,6 +15060,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     clientId?: SortOrder
     issuerId?: SortOrder
+    emissionPointId?: SortOrderInput | SortOrder
     _count?: InvoiceCountOrderByAggregateInput
     _avg?: InvoiceAvgOrderByAggregateInput
     _max?: InvoiceMaxOrderByAggregateInput
@@ -13605,6 +15074,8 @@ export namespace Prisma {
     NOT?: InvoiceScalarWhereWithAggregatesInput | InvoiceScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Invoice"> | number
     secuencial?: StringWithAggregatesFilter<"Invoice"> | string
+    establecimiento?: StringWithAggregatesFilter<"Invoice"> | string
+    puntoEmision?: StringWithAggregatesFilter<"Invoice"> | string
     claveAcceso?: StringNullableWithAggregatesFilter<"Invoice"> | string | null
     xmlNoFirmado?: StringNullableWithAggregatesFilter<"Invoice"> | string | null
     xmlAutorizado?: StringNullableWithAggregatesFilter<"Invoice"> | string | null
@@ -13622,6 +15093,98 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"Invoice"> | Date | string
     clientId?: IntWithAggregatesFilter<"Invoice"> | number
     issuerId?: IntWithAggregatesFilter<"Invoice"> | number
+    emissionPointId?: IntNullableWithAggregatesFilter<"Invoice"> | number | null
+  }
+
+  export type EmissionPointWhereInput = {
+    AND?: EmissionPointWhereInput | EmissionPointWhereInput[]
+    OR?: EmissionPointWhereInput[]
+    NOT?: EmissionPointWhereInput | EmissionPointWhereInput[]
+    id?: IntFilter<"EmissionPoint"> | number
+    establecimiento?: StringFilter<"EmissionPoint"> | string
+    puntoEmision?: StringFilter<"EmissionPoint"> | string
+    nombre?: StringFilter<"EmissionPoint"> | string
+    username?: StringNullableFilter<"EmissionPoint"> | string | null
+    password?: StringNullableFilter<"EmissionPoint"> | string | null
+    secuencialInicio?: StringFilter<"EmissionPoint"> | string
+    activo?: BoolFilter<"EmissionPoint"> | boolean
+    createdAt?: DateTimeFilter<"EmissionPoint"> | Date | string
+    updatedAt?: DateTimeFilter<"EmissionPoint"> | Date | string
+    issuerId?: IntFilter<"EmissionPoint"> | number
+    issuer?: XOR<IssuerScalarRelationFilter, IssuerWhereInput>
+    invoices?: InvoiceListRelationFilter
+  }
+
+  export type EmissionPointOrderByWithRelationInput = {
+    id?: SortOrder
+    establecimiento?: SortOrder
+    puntoEmision?: SortOrder
+    nombre?: SortOrder
+    username?: SortOrderInput | SortOrder
+    password?: SortOrderInput | SortOrder
+    secuencialInicio?: SortOrder
+    activo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    issuerId?: SortOrder
+    issuer?: IssuerOrderByWithRelationInput
+    invoices?: InvoiceOrderByRelationAggregateInput
+  }
+
+  export type EmissionPointWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    username?: string
+    issuerId_establecimiento_puntoEmision?: EmissionPointIssuerIdEstablecimientoPuntoEmisionCompoundUniqueInput
+    AND?: EmissionPointWhereInput | EmissionPointWhereInput[]
+    OR?: EmissionPointWhereInput[]
+    NOT?: EmissionPointWhereInput | EmissionPointWhereInput[]
+    establecimiento?: StringFilter<"EmissionPoint"> | string
+    puntoEmision?: StringFilter<"EmissionPoint"> | string
+    nombre?: StringFilter<"EmissionPoint"> | string
+    password?: StringNullableFilter<"EmissionPoint"> | string | null
+    secuencialInicio?: StringFilter<"EmissionPoint"> | string
+    activo?: BoolFilter<"EmissionPoint"> | boolean
+    createdAt?: DateTimeFilter<"EmissionPoint"> | Date | string
+    updatedAt?: DateTimeFilter<"EmissionPoint"> | Date | string
+    issuerId?: IntFilter<"EmissionPoint"> | number
+    issuer?: XOR<IssuerScalarRelationFilter, IssuerWhereInput>
+    invoices?: InvoiceListRelationFilter
+  }, "id" | "username" | "issuerId_establecimiento_puntoEmision">
+
+  export type EmissionPointOrderByWithAggregationInput = {
+    id?: SortOrder
+    establecimiento?: SortOrder
+    puntoEmision?: SortOrder
+    nombre?: SortOrder
+    username?: SortOrderInput | SortOrder
+    password?: SortOrderInput | SortOrder
+    secuencialInicio?: SortOrder
+    activo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    issuerId?: SortOrder
+    _count?: EmissionPointCountOrderByAggregateInput
+    _avg?: EmissionPointAvgOrderByAggregateInput
+    _max?: EmissionPointMaxOrderByAggregateInput
+    _min?: EmissionPointMinOrderByAggregateInput
+    _sum?: EmissionPointSumOrderByAggregateInput
+  }
+
+  export type EmissionPointScalarWhereWithAggregatesInput = {
+    AND?: EmissionPointScalarWhereWithAggregatesInput | EmissionPointScalarWhereWithAggregatesInput[]
+    OR?: EmissionPointScalarWhereWithAggregatesInput[]
+    NOT?: EmissionPointScalarWhereWithAggregatesInput | EmissionPointScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"EmissionPoint"> | number
+    establecimiento?: StringWithAggregatesFilter<"EmissionPoint"> | string
+    puntoEmision?: StringWithAggregatesFilter<"EmissionPoint"> | string
+    nombre?: StringWithAggregatesFilter<"EmissionPoint"> | string
+    username?: StringNullableWithAggregatesFilter<"EmissionPoint"> | string | null
+    password?: StringNullableWithAggregatesFilter<"EmissionPoint"> | string | null
+    secuencialInicio?: StringWithAggregatesFilter<"EmissionPoint"> | string
+    activo?: BoolWithAggregatesFilter<"EmissionPoint"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"EmissionPoint"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"EmissionPoint"> | Date | string
+    issuerId?: IntWithAggregatesFilter<"EmissionPoint"> | number
   }
 
   export type InvoiceItemWhereInput = {
@@ -13832,6 +15395,7 @@ export namespace Prisma {
     invoices?: InvoiceCreateNestedManyWithoutIssuerInput
     clients?: IssuerClientCreateNestedManyWithoutIssuerInput
     paymentRequests?: PaymentRequestCreateNestedManyWithoutIssuerInput
+    emissionPoints?: EmissionPointCreateNestedManyWithoutIssuerInput
   }
 
   export type IssuerUncheckedCreateInput = {
@@ -13866,6 +15430,7 @@ export namespace Prisma {
     invoices?: InvoiceUncheckedCreateNestedManyWithoutIssuerInput
     clients?: IssuerClientUncheckedCreateNestedManyWithoutIssuerInput
     paymentRequests?: PaymentRequestUncheckedCreateNestedManyWithoutIssuerInput
+    emissionPoints?: EmissionPointUncheckedCreateNestedManyWithoutIssuerInput
   }
 
   export type IssuerUpdateInput = {
@@ -13899,6 +15464,7 @@ export namespace Prisma {
     invoices?: InvoiceUpdateManyWithoutIssuerNestedInput
     clients?: IssuerClientUpdateManyWithoutIssuerNestedInput
     paymentRequests?: PaymentRequestUpdateManyWithoutIssuerNestedInput
+    emissionPoints?: EmissionPointUpdateManyWithoutIssuerNestedInput
   }
 
   export type IssuerUncheckedUpdateInput = {
@@ -13933,6 +15499,7 @@ export namespace Prisma {
     invoices?: InvoiceUncheckedUpdateManyWithoutIssuerNestedInput
     clients?: IssuerClientUncheckedUpdateManyWithoutIssuerNestedInput
     paymentRequests?: PaymentRequestUncheckedUpdateManyWithoutIssuerNestedInput
+    emissionPoints?: EmissionPointUncheckedUpdateManyWithoutIssuerNestedInput
   }
 
   export type IssuerCreateManyInput = {
@@ -14482,6 +16049,8 @@ export namespace Prisma {
 
   export type InvoiceCreateInput = {
     secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
     claveAcceso?: string | null
     xmlNoFirmado?: string | null
     xmlAutorizado?: string | null
@@ -14499,12 +16068,15 @@ export namespace Prisma {
     updatedAt?: Date | string
     client: ClientCreateNestedOneWithoutInvoicesInput
     issuer: IssuerCreateNestedOneWithoutInvoicesInput
+    emissionPoint?: EmissionPointCreateNestedOneWithoutInvoicesInput
     items?: InvoiceItemCreateNestedManyWithoutInvoiceInput
   }
 
   export type InvoiceUncheckedCreateInput = {
     id?: number
     secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
     claveAcceso?: string | null
     xmlNoFirmado?: string | null
     xmlAutorizado?: string | null
@@ -14522,11 +16094,14 @@ export namespace Prisma {
     updatedAt?: Date | string
     clientId: number
     issuerId: number
+    emissionPointId?: number | null
     items?: InvoiceItemUncheckedCreateNestedManyWithoutInvoiceInput
   }
 
   export type InvoiceUpdateInput = {
     secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
     claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
     xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
     xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14544,12 +16119,15 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: ClientUpdateOneRequiredWithoutInvoicesNestedInput
     issuer?: IssuerUpdateOneRequiredWithoutInvoicesNestedInput
+    emissionPoint?: EmissionPointUpdateOneWithoutInvoicesNestedInput
     items?: InvoiceItemUpdateManyWithoutInvoiceNestedInput
   }
 
   export type InvoiceUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
     claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
     xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
     xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14567,12 +16145,15 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clientId?: IntFieldUpdateOperationsInput | number
     issuerId?: IntFieldUpdateOperationsInput | number
+    emissionPointId?: NullableIntFieldUpdateOperationsInput | number | null
     items?: InvoiceItemUncheckedUpdateManyWithoutInvoiceNestedInput
   }
 
   export type InvoiceCreateManyInput = {
     id?: number
     secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
     claveAcceso?: string | null
     xmlNoFirmado?: string | null
     xmlAutorizado?: string | null
@@ -14590,10 +16171,13 @@ export namespace Prisma {
     updatedAt?: Date | string
     clientId: number
     issuerId: number
+    emissionPointId?: number | null
   }
 
   export type InvoiceUpdateManyMutationInput = {
     secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
     claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
     xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
     xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14614,6 +16198,8 @@ export namespace Prisma {
   export type InvoiceUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
     claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
     xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
     xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14630,6 +16216,105 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clientId?: IntFieldUpdateOperationsInput | number
+    issuerId?: IntFieldUpdateOperationsInput | number
+    emissionPointId?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
+  export type EmissionPointCreateInput = {
+    establecimiento?: string
+    puntoEmision?: string
+    nombre: string
+    username?: string | null
+    password?: string | null
+    secuencialInicio?: string
+    activo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    issuer: IssuerCreateNestedOneWithoutEmissionPointsInput
+    invoices?: InvoiceCreateNestedManyWithoutEmissionPointInput
+  }
+
+  export type EmissionPointUncheckedCreateInput = {
+    id?: number
+    establecimiento?: string
+    puntoEmision?: string
+    nombre: string
+    username?: string | null
+    password?: string | null
+    secuencialInicio?: string
+    activo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    issuerId: number
+    invoices?: InvoiceUncheckedCreateNestedManyWithoutEmissionPointInput
+  }
+
+  export type EmissionPointUpdateInput = {
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    secuencialInicio?: StringFieldUpdateOperationsInput | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuer?: IssuerUpdateOneRequiredWithoutEmissionPointsNestedInput
+    invoices?: InvoiceUpdateManyWithoutEmissionPointNestedInput
+  }
+
+  export type EmissionPointUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    secuencialInicio?: StringFieldUpdateOperationsInput | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuerId?: IntFieldUpdateOperationsInput | number
+    invoices?: InvoiceUncheckedUpdateManyWithoutEmissionPointNestedInput
+  }
+
+  export type EmissionPointCreateManyInput = {
+    id?: number
+    establecimiento?: string
+    puntoEmision?: string
+    nombre: string
+    username?: string | null
+    password?: string | null
+    secuencialInicio?: string
+    activo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    issuerId: number
+  }
+
+  export type EmissionPointUpdateManyMutationInput = {
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    secuencialInicio?: StringFieldUpdateOperationsInput | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EmissionPointUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    secuencialInicio?: StringFieldUpdateOperationsInput | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     issuerId?: IntFieldUpdateOperationsInput | number
   }
 
@@ -14915,6 +16600,12 @@ export namespace Prisma {
     none?: PaymentRequestWhereInput
   }
 
+  export type EmissionPointListRelationFilter = {
+    every?: EmissionPointWhereInput
+    some?: EmissionPointWhereInput
+    none?: EmissionPointWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -14929,6 +16620,10 @@ export namespace Prisma {
   }
 
   export type PaymentRequestOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type EmissionPointOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -15415,9 +17110,27 @@ export namespace Prisma {
     iva?: SortOrder
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type EmissionPointNullableScalarRelationFilter = {
+    is?: EmissionPointWhereInput | null
+    isNot?: EmissionPointWhereInput | null
+  }
+
   export type InvoiceCountOrderByAggregateInput = {
     id?: SortOrder
     secuencial?: SortOrder
+    establecimiento?: SortOrder
+    puntoEmision?: SortOrder
     claveAcceso?: SortOrder
     xmlNoFirmado?: SortOrder
     xmlAutorizado?: SortOrder
@@ -15435,6 +17148,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     clientId?: SortOrder
     issuerId?: SortOrder
+    emissionPointId?: SortOrder
   }
 
   export type InvoiceAvgOrderByAggregateInput = {
@@ -15446,11 +17160,14 @@ export namespace Prisma {
     total?: SortOrder
     clientId?: SortOrder
     issuerId?: SortOrder
+    emissionPointId?: SortOrder
   }
 
   export type InvoiceMaxOrderByAggregateInput = {
     id?: SortOrder
     secuencial?: SortOrder
+    establecimiento?: SortOrder
+    puntoEmision?: SortOrder
     claveAcceso?: SortOrder
     xmlNoFirmado?: SortOrder
     xmlAutorizado?: SortOrder
@@ -15468,11 +17185,14 @@ export namespace Prisma {
     updatedAt?: SortOrder
     clientId?: SortOrder
     issuerId?: SortOrder
+    emissionPointId?: SortOrder
   }
 
   export type InvoiceMinOrderByAggregateInput = {
     id?: SortOrder
     secuencial?: SortOrder
+    establecimiento?: SortOrder
+    puntoEmision?: SortOrder
     claveAcceso?: SortOrder
     xmlNoFirmado?: SortOrder
     xmlAutorizado?: SortOrder
@@ -15490,6 +17210,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     clientId?: SortOrder
     issuerId?: SortOrder
+    emissionPointId?: SortOrder
   }
 
   export type InvoiceSumOrderByAggregateInput = {
@@ -15500,6 +17221,81 @@ export namespace Prisma {
     valorIva?: SortOrder
     total?: SortOrder
     clientId?: SortOrder
+    issuerId?: SortOrder
+    emissionPointId?: SortOrder
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type EmissionPointIssuerIdEstablecimientoPuntoEmisionCompoundUniqueInput = {
+    issuerId: number
+    establecimiento: string
+    puntoEmision: string
+  }
+
+  export type EmissionPointCountOrderByAggregateInput = {
+    id?: SortOrder
+    establecimiento?: SortOrder
+    puntoEmision?: SortOrder
+    nombre?: SortOrder
+    username?: SortOrder
+    password?: SortOrder
+    secuencialInicio?: SortOrder
+    activo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    issuerId?: SortOrder
+  }
+
+  export type EmissionPointAvgOrderByAggregateInput = {
+    id?: SortOrder
+    issuerId?: SortOrder
+  }
+
+  export type EmissionPointMaxOrderByAggregateInput = {
+    id?: SortOrder
+    establecimiento?: SortOrder
+    puntoEmision?: SortOrder
+    nombre?: SortOrder
+    username?: SortOrder
+    password?: SortOrder
+    secuencialInicio?: SortOrder
+    activo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    issuerId?: SortOrder
+  }
+
+  export type EmissionPointMinOrderByAggregateInput = {
+    id?: SortOrder
+    establecimiento?: SortOrder
+    puntoEmision?: SortOrder
+    nombre?: SortOrder
+    username?: SortOrder
+    password?: SortOrder
+    secuencialInicio?: SortOrder
+    activo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    issuerId?: SortOrder
+  }
+
+  export type EmissionPointSumOrderByAggregateInput = {
+    id?: SortOrder
     issuerId?: SortOrder
   }
 
@@ -15650,6 +17446,13 @@ export namespace Prisma {
     connect?: PaymentRequestWhereUniqueInput | PaymentRequestWhereUniqueInput[]
   }
 
+  export type EmissionPointCreateNestedManyWithoutIssuerInput = {
+    create?: XOR<EmissionPointCreateWithoutIssuerInput, EmissionPointUncheckedCreateWithoutIssuerInput> | EmissionPointCreateWithoutIssuerInput[] | EmissionPointUncheckedCreateWithoutIssuerInput[]
+    connectOrCreate?: EmissionPointCreateOrConnectWithoutIssuerInput | EmissionPointCreateOrConnectWithoutIssuerInput[]
+    createMany?: EmissionPointCreateManyIssuerInputEnvelope
+    connect?: EmissionPointWhereUniqueInput | EmissionPointWhereUniqueInput[]
+  }
+
   export type InvoiceUncheckedCreateNestedManyWithoutIssuerInput = {
     create?: XOR<InvoiceCreateWithoutIssuerInput, InvoiceUncheckedCreateWithoutIssuerInput> | InvoiceCreateWithoutIssuerInput[] | InvoiceUncheckedCreateWithoutIssuerInput[]
     connectOrCreate?: InvoiceCreateOrConnectWithoutIssuerInput | InvoiceCreateOrConnectWithoutIssuerInput[]
@@ -15669,6 +17472,13 @@ export namespace Prisma {
     connectOrCreate?: PaymentRequestCreateOrConnectWithoutIssuerInput | PaymentRequestCreateOrConnectWithoutIssuerInput[]
     createMany?: PaymentRequestCreateManyIssuerInputEnvelope
     connect?: PaymentRequestWhereUniqueInput | PaymentRequestWhereUniqueInput[]
+  }
+
+  export type EmissionPointUncheckedCreateNestedManyWithoutIssuerInput = {
+    create?: XOR<EmissionPointCreateWithoutIssuerInput, EmissionPointUncheckedCreateWithoutIssuerInput> | EmissionPointCreateWithoutIssuerInput[] | EmissionPointUncheckedCreateWithoutIssuerInput[]
+    connectOrCreate?: EmissionPointCreateOrConnectWithoutIssuerInput | EmissionPointCreateOrConnectWithoutIssuerInput[]
+    createMany?: EmissionPointCreateManyIssuerInputEnvelope
+    connect?: EmissionPointWhereUniqueInput | EmissionPointWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -15749,6 +17559,20 @@ export namespace Prisma {
     deleteMany?: PaymentRequestScalarWhereInput | PaymentRequestScalarWhereInput[]
   }
 
+  export type EmissionPointUpdateManyWithoutIssuerNestedInput = {
+    create?: XOR<EmissionPointCreateWithoutIssuerInput, EmissionPointUncheckedCreateWithoutIssuerInput> | EmissionPointCreateWithoutIssuerInput[] | EmissionPointUncheckedCreateWithoutIssuerInput[]
+    connectOrCreate?: EmissionPointCreateOrConnectWithoutIssuerInput | EmissionPointCreateOrConnectWithoutIssuerInput[]
+    upsert?: EmissionPointUpsertWithWhereUniqueWithoutIssuerInput | EmissionPointUpsertWithWhereUniqueWithoutIssuerInput[]
+    createMany?: EmissionPointCreateManyIssuerInputEnvelope
+    set?: EmissionPointWhereUniqueInput | EmissionPointWhereUniqueInput[]
+    disconnect?: EmissionPointWhereUniqueInput | EmissionPointWhereUniqueInput[]
+    delete?: EmissionPointWhereUniqueInput | EmissionPointWhereUniqueInput[]
+    connect?: EmissionPointWhereUniqueInput | EmissionPointWhereUniqueInput[]
+    update?: EmissionPointUpdateWithWhereUniqueWithoutIssuerInput | EmissionPointUpdateWithWhereUniqueWithoutIssuerInput[]
+    updateMany?: EmissionPointUpdateManyWithWhereWithoutIssuerInput | EmissionPointUpdateManyWithWhereWithoutIssuerInput[]
+    deleteMany?: EmissionPointScalarWhereInput | EmissionPointScalarWhereInput[]
+  }
+
   export type InvoiceUncheckedUpdateManyWithoutIssuerNestedInput = {
     create?: XOR<InvoiceCreateWithoutIssuerInput, InvoiceUncheckedCreateWithoutIssuerInput> | InvoiceCreateWithoutIssuerInput[] | InvoiceUncheckedCreateWithoutIssuerInput[]
     connectOrCreate?: InvoiceCreateOrConnectWithoutIssuerInput | InvoiceCreateOrConnectWithoutIssuerInput[]
@@ -15789,6 +17613,20 @@ export namespace Prisma {
     update?: PaymentRequestUpdateWithWhereUniqueWithoutIssuerInput | PaymentRequestUpdateWithWhereUniqueWithoutIssuerInput[]
     updateMany?: PaymentRequestUpdateManyWithWhereWithoutIssuerInput | PaymentRequestUpdateManyWithWhereWithoutIssuerInput[]
     deleteMany?: PaymentRequestScalarWhereInput | PaymentRequestScalarWhereInput[]
+  }
+
+  export type EmissionPointUncheckedUpdateManyWithoutIssuerNestedInput = {
+    create?: XOR<EmissionPointCreateWithoutIssuerInput, EmissionPointUncheckedCreateWithoutIssuerInput> | EmissionPointCreateWithoutIssuerInput[] | EmissionPointUncheckedCreateWithoutIssuerInput[]
+    connectOrCreate?: EmissionPointCreateOrConnectWithoutIssuerInput | EmissionPointCreateOrConnectWithoutIssuerInput[]
+    upsert?: EmissionPointUpsertWithWhereUniqueWithoutIssuerInput | EmissionPointUpsertWithWhereUniqueWithoutIssuerInput[]
+    createMany?: EmissionPointCreateManyIssuerInputEnvelope
+    set?: EmissionPointWhereUniqueInput | EmissionPointWhereUniqueInput[]
+    disconnect?: EmissionPointWhereUniqueInput | EmissionPointWhereUniqueInput[]
+    delete?: EmissionPointWhereUniqueInput | EmissionPointWhereUniqueInput[]
+    connect?: EmissionPointWhereUniqueInput | EmissionPointWhereUniqueInput[]
+    update?: EmissionPointUpdateWithWhereUniqueWithoutIssuerInput | EmissionPointUpdateWithWhereUniqueWithoutIssuerInput[]
+    updateMany?: EmissionPointUpdateManyWithWhereWithoutIssuerInput | EmissionPointUpdateManyWithWhereWithoutIssuerInput[]
+    deleteMany?: EmissionPointScalarWhereInput | EmissionPointScalarWhereInput[]
   }
 
   export type InvoiceCreateNestedManyWithoutClientInput = {
@@ -15957,6 +17795,12 @@ export namespace Prisma {
     connect?: IssuerWhereUniqueInput
   }
 
+  export type EmissionPointCreateNestedOneWithoutInvoicesInput = {
+    create?: XOR<EmissionPointCreateWithoutInvoicesInput, EmissionPointUncheckedCreateWithoutInvoicesInput>
+    connectOrCreate?: EmissionPointCreateOrConnectWithoutInvoicesInput
+    connect?: EmissionPointWhereUniqueInput
+  }
+
   export type InvoiceItemCreateNestedManyWithoutInvoiceInput = {
     create?: XOR<InvoiceItemCreateWithoutInvoiceInput, InvoiceItemUncheckedCreateWithoutInvoiceInput> | InvoiceItemCreateWithoutInvoiceInput[] | InvoiceItemUncheckedCreateWithoutInvoiceInput[]
     connectOrCreate?: InvoiceItemCreateOrConnectWithoutInvoiceInput | InvoiceItemCreateOrConnectWithoutInvoiceInput[]
@@ -15987,6 +17831,16 @@ export namespace Prisma {
     update?: XOR<XOR<IssuerUpdateToOneWithWhereWithoutInvoicesInput, IssuerUpdateWithoutInvoicesInput>, IssuerUncheckedUpdateWithoutInvoicesInput>
   }
 
+  export type EmissionPointUpdateOneWithoutInvoicesNestedInput = {
+    create?: XOR<EmissionPointCreateWithoutInvoicesInput, EmissionPointUncheckedCreateWithoutInvoicesInput>
+    connectOrCreate?: EmissionPointCreateOrConnectWithoutInvoicesInput
+    upsert?: EmissionPointUpsertWithoutInvoicesInput
+    disconnect?: EmissionPointWhereInput | boolean
+    delete?: EmissionPointWhereInput | boolean
+    connect?: EmissionPointWhereUniqueInput
+    update?: XOR<XOR<EmissionPointUpdateToOneWithWhereWithoutInvoicesInput, EmissionPointUpdateWithoutInvoicesInput>, EmissionPointUncheckedUpdateWithoutInvoicesInput>
+  }
+
   export type InvoiceItemUpdateManyWithoutInvoiceNestedInput = {
     create?: XOR<InvoiceItemCreateWithoutInvoiceInput, InvoiceItemUncheckedCreateWithoutInvoiceInput> | InvoiceItemCreateWithoutInvoiceInput[] | InvoiceItemUncheckedCreateWithoutInvoiceInput[]
     connectOrCreate?: InvoiceItemCreateOrConnectWithoutInvoiceInput | InvoiceItemCreateOrConnectWithoutInvoiceInput[]
@@ -16001,6 +17855,14 @@ export namespace Prisma {
     deleteMany?: InvoiceItemScalarWhereInput | InvoiceItemScalarWhereInput[]
   }
 
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type InvoiceItemUncheckedUpdateManyWithoutInvoiceNestedInput = {
     create?: XOR<InvoiceItemCreateWithoutInvoiceInput, InvoiceItemUncheckedCreateWithoutInvoiceInput> | InvoiceItemCreateWithoutInvoiceInput[] | InvoiceItemUncheckedCreateWithoutInvoiceInput[]
     connectOrCreate?: InvoiceItemCreateOrConnectWithoutInvoiceInput | InvoiceItemCreateOrConnectWithoutInvoiceInput[]
@@ -16013,6 +17875,62 @@ export namespace Prisma {
     update?: InvoiceItemUpdateWithWhereUniqueWithoutInvoiceInput | InvoiceItemUpdateWithWhereUniqueWithoutInvoiceInput[]
     updateMany?: InvoiceItemUpdateManyWithWhereWithoutInvoiceInput | InvoiceItemUpdateManyWithWhereWithoutInvoiceInput[]
     deleteMany?: InvoiceItemScalarWhereInput | InvoiceItemScalarWhereInput[]
+  }
+
+  export type IssuerCreateNestedOneWithoutEmissionPointsInput = {
+    create?: XOR<IssuerCreateWithoutEmissionPointsInput, IssuerUncheckedCreateWithoutEmissionPointsInput>
+    connectOrCreate?: IssuerCreateOrConnectWithoutEmissionPointsInput
+    connect?: IssuerWhereUniqueInput
+  }
+
+  export type InvoiceCreateNestedManyWithoutEmissionPointInput = {
+    create?: XOR<InvoiceCreateWithoutEmissionPointInput, InvoiceUncheckedCreateWithoutEmissionPointInput> | InvoiceCreateWithoutEmissionPointInput[] | InvoiceUncheckedCreateWithoutEmissionPointInput[]
+    connectOrCreate?: InvoiceCreateOrConnectWithoutEmissionPointInput | InvoiceCreateOrConnectWithoutEmissionPointInput[]
+    createMany?: InvoiceCreateManyEmissionPointInputEnvelope
+    connect?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
+  }
+
+  export type InvoiceUncheckedCreateNestedManyWithoutEmissionPointInput = {
+    create?: XOR<InvoiceCreateWithoutEmissionPointInput, InvoiceUncheckedCreateWithoutEmissionPointInput> | InvoiceCreateWithoutEmissionPointInput[] | InvoiceUncheckedCreateWithoutEmissionPointInput[]
+    connectOrCreate?: InvoiceCreateOrConnectWithoutEmissionPointInput | InvoiceCreateOrConnectWithoutEmissionPointInput[]
+    createMany?: InvoiceCreateManyEmissionPointInputEnvelope
+    connect?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
+  }
+
+  export type IssuerUpdateOneRequiredWithoutEmissionPointsNestedInput = {
+    create?: XOR<IssuerCreateWithoutEmissionPointsInput, IssuerUncheckedCreateWithoutEmissionPointsInput>
+    connectOrCreate?: IssuerCreateOrConnectWithoutEmissionPointsInput
+    upsert?: IssuerUpsertWithoutEmissionPointsInput
+    connect?: IssuerWhereUniqueInput
+    update?: XOR<XOR<IssuerUpdateToOneWithWhereWithoutEmissionPointsInput, IssuerUpdateWithoutEmissionPointsInput>, IssuerUncheckedUpdateWithoutEmissionPointsInput>
+  }
+
+  export type InvoiceUpdateManyWithoutEmissionPointNestedInput = {
+    create?: XOR<InvoiceCreateWithoutEmissionPointInput, InvoiceUncheckedCreateWithoutEmissionPointInput> | InvoiceCreateWithoutEmissionPointInput[] | InvoiceUncheckedCreateWithoutEmissionPointInput[]
+    connectOrCreate?: InvoiceCreateOrConnectWithoutEmissionPointInput | InvoiceCreateOrConnectWithoutEmissionPointInput[]
+    upsert?: InvoiceUpsertWithWhereUniqueWithoutEmissionPointInput | InvoiceUpsertWithWhereUniqueWithoutEmissionPointInput[]
+    createMany?: InvoiceCreateManyEmissionPointInputEnvelope
+    set?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
+    disconnect?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
+    delete?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
+    connect?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
+    update?: InvoiceUpdateWithWhereUniqueWithoutEmissionPointInput | InvoiceUpdateWithWhereUniqueWithoutEmissionPointInput[]
+    updateMany?: InvoiceUpdateManyWithWhereWithoutEmissionPointInput | InvoiceUpdateManyWithWhereWithoutEmissionPointInput[]
+    deleteMany?: InvoiceScalarWhereInput | InvoiceScalarWhereInput[]
+  }
+
+  export type InvoiceUncheckedUpdateManyWithoutEmissionPointNestedInput = {
+    create?: XOR<InvoiceCreateWithoutEmissionPointInput, InvoiceUncheckedCreateWithoutEmissionPointInput> | InvoiceCreateWithoutEmissionPointInput[] | InvoiceUncheckedCreateWithoutEmissionPointInput[]
+    connectOrCreate?: InvoiceCreateOrConnectWithoutEmissionPointInput | InvoiceCreateOrConnectWithoutEmissionPointInput[]
+    upsert?: InvoiceUpsertWithWhereUniqueWithoutEmissionPointInput | InvoiceUpsertWithWhereUniqueWithoutEmissionPointInput[]
+    createMany?: InvoiceCreateManyEmissionPointInputEnvelope
+    set?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
+    disconnect?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
+    delete?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
+    connect?: InvoiceWhereUniqueInput | InvoiceWhereUniqueInput[]
+    update?: InvoiceUpdateWithWhereUniqueWithoutEmissionPointInput | InvoiceUpdateWithWhereUniqueWithoutEmissionPointInput[]
+    updateMany?: InvoiceUpdateManyWithWhereWithoutEmissionPointInput | InvoiceUpdateManyWithWhereWithoutEmissionPointInput[]
+    deleteMany?: InvoiceScalarWhereInput | InvoiceScalarWhereInput[]
   }
 
   export type InvoiceCreateNestedOneWithoutItemsInput = {
@@ -16247,8 +18165,37 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
   export type InvoiceCreateWithoutIssuerInput = {
     secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
     claveAcceso?: string | null
     xmlNoFirmado?: string | null
     xmlAutorizado?: string | null
@@ -16265,12 +18212,15 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     client: ClientCreateNestedOneWithoutInvoicesInput
+    emissionPoint?: EmissionPointCreateNestedOneWithoutInvoicesInput
     items?: InvoiceItemCreateNestedManyWithoutInvoiceInput
   }
 
   export type InvoiceUncheckedCreateWithoutIssuerInput = {
     id?: number
     secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
     claveAcceso?: string | null
     xmlNoFirmado?: string | null
     xmlAutorizado?: string | null
@@ -16287,6 +18237,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     clientId: number
+    emissionPointId?: number | null
     items?: InvoiceItemUncheckedCreateNestedManyWithoutInvoiceInput
   }
 
@@ -16353,6 +18304,42 @@ export namespace Prisma {
     data: PaymentRequestCreateManyIssuerInput | PaymentRequestCreateManyIssuerInput[]
   }
 
+  export type EmissionPointCreateWithoutIssuerInput = {
+    establecimiento?: string
+    puntoEmision?: string
+    nombre: string
+    username?: string | null
+    password?: string | null
+    secuencialInicio?: string
+    activo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    invoices?: InvoiceCreateNestedManyWithoutEmissionPointInput
+  }
+
+  export type EmissionPointUncheckedCreateWithoutIssuerInput = {
+    id?: number
+    establecimiento?: string
+    puntoEmision?: string
+    nombre: string
+    username?: string | null
+    password?: string | null
+    secuencialInicio?: string
+    activo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    invoices?: InvoiceUncheckedCreateNestedManyWithoutEmissionPointInput
+  }
+
+  export type EmissionPointCreateOrConnectWithoutIssuerInput = {
+    where: EmissionPointWhereUniqueInput
+    create: XOR<EmissionPointCreateWithoutIssuerInput, EmissionPointUncheckedCreateWithoutIssuerInput>
+  }
+
+  export type EmissionPointCreateManyIssuerInputEnvelope = {
+    data: EmissionPointCreateManyIssuerInput | EmissionPointCreateManyIssuerInput[]
+  }
+
   export type InvoiceUpsertWithWhereUniqueWithoutIssuerInput = {
     where: InvoiceWhereUniqueInput
     update: XOR<InvoiceUpdateWithoutIssuerInput, InvoiceUncheckedUpdateWithoutIssuerInput>
@@ -16375,6 +18362,8 @@ export namespace Prisma {
     NOT?: InvoiceScalarWhereInput | InvoiceScalarWhereInput[]
     id?: IntFilter<"Invoice"> | number
     secuencial?: StringFilter<"Invoice"> | string
+    establecimiento?: StringFilter<"Invoice"> | string
+    puntoEmision?: StringFilter<"Invoice"> | string
     claveAcceso?: StringNullableFilter<"Invoice"> | string | null
     xmlNoFirmado?: StringNullableFilter<"Invoice"> | string | null
     xmlAutorizado?: StringNullableFilter<"Invoice"> | string | null
@@ -16392,6 +18381,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Invoice"> | Date | string
     clientId?: IntFilter<"Invoice"> | number
     issuerId?: IntFilter<"Invoice"> | number
+    emissionPointId?: IntNullableFilter<"Invoice"> | number | null
   }
 
   export type IssuerClientUpsertWithWhereUniqueWithoutIssuerInput = {
@@ -16453,8 +18443,43 @@ export namespace Prisma {
     issuerId?: IntFilter<"PaymentRequest"> | number
   }
 
+  export type EmissionPointUpsertWithWhereUniqueWithoutIssuerInput = {
+    where: EmissionPointWhereUniqueInput
+    update: XOR<EmissionPointUpdateWithoutIssuerInput, EmissionPointUncheckedUpdateWithoutIssuerInput>
+    create: XOR<EmissionPointCreateWithoutIssuerInput, EmissionPointUncheckedCreateWithoutIssuerInput>
+  }
+
+  export type EmissionPointUpdateWithWhereUniqueWithoutIssuerInput = {
+    where: EmissionPointWhereUniqueInput
+    data: XOR<EmissionPointUpdateWithoutIssuerInput, EmissionPointUncheckedUpdateWithoutIssuerInput>
+  }
+
+  export type EmissionPointUpdateManyWithWhereWithoutIssuerInput = {
+    where: EmissionPointScalarWhereInput
+    data: XOR<EmissionPointUpdateManyMutationInput, EmissionPointUncheckedUpdateManyWithoutIssuerInput>
+  }
+
+  export type EmissionPointScalarWhereInput = {
+    AND?: EmissionPointScalarWhereInput | EmissionPointScalarWhereInput[]
+    OR?: EmissionPointScalarWhereInput[]
+    NOT?: EmissionPointScalarWhereInput | EmissionPointScalarWhereInput[]
+    id?: IntFilter<"EmissionPoint"> | number
+    establecimiento?: StringFilter<"EmissionPoint"> | string
+    puntoEmision?: StringFilter<"EmissionPoint"> | string
+    nombre?: StringFilter<"EmissionPoint"> | string
+    username?: StringNullableFilter<"EmissionPoint"> | string | null
+    password?: StringNullableFilter<"EmissionPoint"> | string | null
+    secuencialInicio?: StringFilter<"EmissionPoint"> | string
+    activo?: BoolFilter<"EmissionPoint"> | boolean
+    createdAt?: DateTimeFilter<"EmissionPoint"> | Date | string
+    updatedAt?: DateTimeFilter<"EmissionPoint"> | Date | string
+    issuerId?: IntFilter<"EmissionPoint"> | number
+  }
+
   export type InvoiceCreateWithoutClientInput = {
     secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
     claveAcceso?: string | null
     xmlNoFirmado?: string | null
     xmlAutorizado?: string | null
@@ -16471,12 +18496,15 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     issuer: IssuerCreateNestedOneWithoutInvoicesInput
+    emissionPoint?: EmissionPointCreateNestedOneWithoutInvoicesInput
     items?: InvoiceItemCreateNestedManyWithoutInvoiceInput
   }
 
   export type InvoiceUncheckedCreateWithoutClientInput = {
     id?: number
     secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
     claveAcceso?: string | null
     xmlNoFirmado?: string | null
     xmlAutorizado?: string | null
@@ -16493,6 +18521,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     issuerId: number
+    emissionPointId?: number | null
     items?: InvoiceItemUncheckedCreateNestedManyWithoutInvoiceInput
   }
 
@@ -16587,6 +18616,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoices?: InvoiceCreateNestedManyWithoutIssuerInput
     paymentRequests?: PaymentRequestCreateNestedManyWithoutIssuerInput
+    emissionPoints?: EmissionPointCreateNestedManyWithoutIssuerInput
   }
 
   export type IssuerUncheckedCreateWithoutClientsInput = {
@@ -16620,6 +18650,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoices?: InvoiceUncheckedCreateNestedManyWithoutIssuerInput
     paymentRequests?: PaymentRequestUncheckedCreateNestedManyWithoutIssuerInput
+    emissionPoints?: EmissionPointUncheckedCreateNestedManyWithoutIssuerInput
   }
 
   export type IssuerCreateOrConnectWithoutClientsInput = {
@@ -16700,6 +18731,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUpdateManyWithoutIssuerNestedInput
     paymentRequests?: PaymentRequestUpdateManyWithoutIssuerNestedInput
+    emissionPoints?: EmissionPointUpdateManyWithoutIssuerNestedInput
   }
 
   export type IssuerUncheckedUpdateWithoutClientsInput = {
@@ -16733,6 +18765,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUncheckedUpdateManyWithoutIssuerNestedInput
     paymentRequests?: PaymentRequestUncheckedUpdateManyWithoutIssuerNestedInput
+    emissionPoints?: EmissionPointUncheckedUpdateManyWithoutIssuerNestedInput
   }
 
   export type ClientUpsertWithoutIssuersInput = {
@@ -16902,6 +18935,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     clients?: IssuerClientCreateNestedManyWithoutIssuerInput
     paymentRequests?: PaymentRequestCreateNestedManyWithoutIssuerInput
+    emissionPoints?: EmissionPointCreateNestedManyWithoutIssuerInput
   }
 
   export type IssuerUncheckedCreateWithoutInvoicesInput = {
@@ -16935,11 +18969,44 @@ export namespace Prisma {
     updatedAt?: Date | string
     clients?: IssuerClientUncheckedCreateNestedManyWithoutIssuerInput
     paymentRequests?: PaymentRequestUncheckedCreateNestedManyWithoutIssuerInput
+    emissionPoints?: EmissionPointUncheckedCreateNestedManyWithoutIssuerInput
   }
 
   export type IssuerCreateOrConnectWithoutInvoicesInput = {
     where: IssuerWhereUniqueInput
     create: XOR<IssuerCreateWithoutInvoicesInput, IssuerUncheckedCreateWithoutInvoicesInput>
+  }
+
+  export type EmissionPointCreateWithoutInvoicesInput = {
+    establecimiento?: string
+    puntoEmision?: string
+    nombre: string
+    username?: string | null
+    password?: string | null
+    secuencialInicio?: string
+    activo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    issuer: IssuerCreateNestedOneWithoutEmissionPointsInput
+  }
+
+  export type EmissionPointUncheckedCreateWithoutInvoicesInput = {
+    id?: number
+    establecimiento?: string
+    puntoEmision?: string
+    nombre: string
+    username?: string | null
+    password?: string | null
+    secuencialInicio?: string
+    activo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    issuerId: number
+  }
+
+  export type EmissionPointCreateOrConnectWithoutInvoicesInput = {
+    where: EmissionPointWhereUniqueInput
+    create: XOR<EmissionPointCreateWithoutInvoicesInput, EmissionPointUncheckedCreateWithoutInvoicesInput>
   }
 
   export type InvoiceItemCreateWithoutInvoiceInput = {
@@ -17055,6 +19122,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clients?: IssuerClientUpdateManyWithoutIssuerNestedInput
     paymentRequests?: PaymentRequestUpdateManyWithoutIssuerNestedInput
+    emissionPoints?: EmissionPointUpdateManyWithoutIssuerNestedInput
   }
 
   export type IssuerUncheckedUpdateWithoutInvoicesInput = {
@@ -17088,6 +19156,45 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clients?: IssuerClientUncheckedUpdateManyWithoutIssuerNestedInput
     paymentRequests?: PaymentRequestUncheckedUpdateManyWithoutIssuerNestedInput
+    emissionPoints?: EmissionPointUncheckedUpdateManyWithoutIssuerNestedInput
+  }
+
+  export type EmissionPointUpsertWithoutInvoicesInput = {
+    update: XOR<EmissionPointUpdateWithoutInvoicesInput, EmissionPointUncheckedUpdateWithoutInvoicesInput>
+    create: XOR<EmissionPointCreateWithoutInvoicesInput, EmissionPointUncheckedCreateWithoutInvoicesInput>
+    where?: EmissionPointWhereInput
+  }
+
+  export type EmissionPointUpdateToOneWithWhereWithoutInvoicesInput = {
+    where?: EmissionPointWhereInput
+    data: XOR<EmissionPointUpdateWithoutInvoicesInput, EmissionPointUncheckedUpdateWithoutInvoicesInput>
+  }
+
+  export type EmissionPointUpdateWithoutInvoicesInput = {
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    secuencialInicio?: StringFieldUpdateOperationsInput | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuer?: IssuerUpdateOneRequiredWithoutEmissionPointsNestedInput
+  }
+
+  export type EmissionPointUncheckedUpdateWithoutInvoicesInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    secuencialInicio?: StringFieldUpdateOperationsInput | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuerId?: IntFieldUpdateOperationsInput | number
   }
 
   export type InvoiceItemUpsertWithWhereUniqueWithoutInvoiceInput = {
@@ -17106,8 +19213,82 @@ export namespace Prisma {
     data: XOR<InvoiceItemUpdateManyMutationInput, InvoiceItemUncheckedUpdateManyWithoutInvoiceInput>
   }
 
-  export type InvoiceCreateWithoutItemsInput = {
+  export type IssuerCreateWithoutEmissionPointsInput = {
+    ruc: string
+    nombres: string
+    apellidos: string
+    nombreEmpresa: string
+    razonSocial: string
+    direccion: string
+    email: string
+    celular: string
+    establecimiento?: string
+    puntoEmision?: string
+    obligadoContabilidad?: boolean
+    regimen?: string
+    ambiente?: number
+    firmaElectronica?: string | null
+    codigoSri?: string | null
+    startSecuencial?: string
+    password?: string
+    status?: string
+    planType?: string
+    monthlyFee?: number
+    balance?: number
+    subscriptionEnds?: Date | string
+    logo?: string | null
+    apiKey?: string | null
+    apiKeyCreatedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    invoices?: InvoiceCreateNestedManyWithoutIssuerInput
+    clients?: IssuerClientCreateNestedManyWithoutIssuerInput
+    paymentRequests?: PaymentRequestCreateNestedManyWithoutIssuerInput
+  }
+
+  export type IssuerUncheckedCreateWithoutEmissionPointsInput = {
+    id?: number
+    ruc: string
+    nombres: string
+    apellidos: string
+    nombreEmpresa: string
+    razonSocial: string
+    direccion: string
+    email: string
+    celular: string
+    establecimiento?: string
+    puntoEmision?: string
+    obligadoContabilidad?: boolean
+    regimen?: string
+    ambiente?: number
+    firmaElectronica?: string | null
+    codigoSri?: string | null
+    startSecuencial?: string
+    password?: string
+    status?: string
+    planType?: string
+    monthlyFee?: number
+    balance?: number
+    subscriptionEnds?: Date | string
+    logo?: string | null
+    apiKey?: string | null
+    apiKeyCreatedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    invoices?: InvoiceUncheckedCreateNestedManyWithoutIssuerInput
+    clients?: IssuerClientUncheckedCreateNestedManyWithoutIssuerInput
+    paymentRequests?: PaymentRequestUncheckedCreateNestedManyWithoutIssuerInput
+  }
+
+  export type IssuerCreateOrConnectWithoutEmissionPointsInput = {
+    where: IssuerWhereUniqueInput
+    create: XOR<IssuerCreateWithoutEmissionPointsInput, IssuerUncheckedCreateWithoutEmissionPointsInput>
+  }
+
+  export type InvoiceCreateWithoutEmissionPointInput = {
     secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
     claveAcceso?: string | null
     xmlNoFirmado?: string | null
     xmlAutorizado?: string | null
@@ -17125,11 +19306,14 @@ export namespace Prisma {
     updatedAt?: Date | string
     client: ClientCreateNestedOneWithoutInvoicesInput
     issuer: IssuerCreateNestedOneWithoutInvoicesInput
+    items?: InvoiceItemCreateNestedManyWithoutInvoiceInput
   }
 
-  export type InvoiceUncheckedCreateWithoutItemsInput = {
+  export type InvoiceUncheckedCreateWithoutEmissionPointInput = {
     id?: number
     secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
     claveAcceso?: string | null
     xmlNoFirmado?: string | null
     xmlAutorizado?: string | null
@@ -17147,6 +19331,159 @@ export namespace Prisma {
     updatedAt?: Date | string
     clientId: number
     issuerId: number
+    items?: InvoiceItemUncheckedCreateNestedManyWithoutInvoiceInput
+  }
+
+  export type InvoiceCreateOrConnectWithoutEmissionPointInput = {
+    where: InvoiceWhereUniqueInput
+    create: XOR<InvoiceCreateWithoutEmissionPointInput, InvoiceUncheckedCreateWithoutEmissionPointInput>
+  }
+
+  export type InvoiceCreateManyEmissionPointInputEnvelope = {
+    data: InvoiceCreateManyEmissionPointInput | InvoiceCreateManyEmissionPointInput[]
+  }
+
+  export type IssuerUpsertWithoutEmissionPointsInput = {
+    update: XOR<IssuerUpdateWithoutEmissionPointsInput, IssuerUncheckedUpdateWithoutEmissionPointsInput>
+    create: XOR<IssuerCreateWithoutEmissionPointsInput, IssuerUncheckedCreateWithoutEmissionPointsInput>
+    where?: IssuerWhereInput
+  }
+
+  export type IssuerUpdateToOneWithWhereWithoutEmissionPointsInput = {
+    where?: IssuerWhereInput
+    data: XOR<IssuerUpdateWithoutEmissionPointsInput, IssuerUncheckedUpdateWithoutEmissionPointsInput>
+  }
+
+  export type IssuerUpdateWithoutEmissionPointsInput = {
+    ruc?: StringFieldUpdateOperationsInput | string
+    nombres?: StringFieldUpdateOperationsInput | string
+    apellidos?: StringFieldUpdateOperationsInput | string
+    nombreEmpresa?: StringFieldUpdateOperationsInput | string
+    razonSocial?: StringFieldUpdateOperationsInput | string
+    direccion?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    celular?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    obligadoContabilidad?: BoolFieldUpdateOperationsInput | boolean
+    regimen?: StringFieldUpdateOperationsInput | string
+    ambiente?: IntFieldUpdateOperationsInput | number
+    firmaElectronica?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoSri?: NullableStringFieldUpdateOperationsInput | string | null
+    startSecuencial?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    planType?: StringFieldUpdateOperationsInput | string
+    monthlyFee?: FloatFieldUpdateOperationsInput | number
+    balance?: FloatFieldUpdateOperationsInput | number
+    subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKeyCreatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    invoices?: InvoiceUpdateManyWithoutIssuerNestedInput
+    clients?: IssuerClientUpdateManyWithoutIssuerNestedInput
+    paymentRequests?: PaymentRequestUpdateManyWithoutIssuerNestedInput
+  }
+
+  export type IssuerUncheckedUpdateWithoutEmissionPointsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    ruc?: StringFieldUpdateOperationsInput | string
+    nombres?: StringFieldUpdateOperationsInput | string
+    apellidos?: StringFieldUpdateOperationsInput | string
+    nombreEmpresa?: StringFieldUpdateOperationsInput | string
+    razonSocial?: StringFieldUpdateOperationsInput | string
+    direccion?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    celular?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    obligadoContabilidad?: BoolFieldUpdateOperationsInput | boolean
+    regimen?: StringFieldUpdateOperationsInput | string
+    ambiente?: IntFieldUpdateOperationsInput | number
+    firmaElectronica?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoSri?: NullableStringFieldUpdateOperationsInput | string | null
+    startSecuencial?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    planType?: StringFieldUpdateOperationsInput | string
+    monthlyFee?: FloatFieldUpdateOperationsInput | number
+    balance?: FloatFieldUpdateOperationsInput | number
+    subscriptionEnds?: DateTimeFieldUpdateOperationsInput | Date | string
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKeyCreatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    invoices?: InvoiceUncheckedUpdateManyWithoutIssuerNestedInput
+    clients?: IssuerClientUncheckedUpdateManyWithoutIssuerNestedInput
+    paymentRequests?: PaymentRequestUncheckedUpdateManyWithoutIssuerNestedInput
+  }
+
+  export type InvoiceUpsertWithWhereUniqueWithoutEmissionPointInput = {
+    where: InvoiceWhereUniqueInput
+    update: XOR<InvoiceUpdateWithoutEmissionPointInput, InvoiceUncheckedUpdateWithoutEmissionPointInput>
+    create: XOR<InvoiceCreateWithoutEmissionPointInput, InvoiceUncheckedCreateWithoutEmissionPointInput>
+  }
+
+  export type InvoiceUpdateWithWhereUniqueWithoutEmissionPointInput = {
+    where: InvoiceWhereUniqueInput
+    data: XOR<InvoiceUpdateWithoutEmissionPointInput, InvoiceUncheckedUpdateWithoutEmissionPointInput>
+  }
+
+  export type InvoiceUpdateManyWithWhereWithoutEmissionPointInput = {
+    where: InvoiceScalarWhereInput
+    data: XOR<InvoiceUpdateManyMutationInput, InvoiceUncheckedUpdateManyWithoutEmissionPointInput>
+  }
+
+  export type InvoiceCreateWithoutItemsInput = {
+    secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
+    claveAcceso?: string | null
+    xmlNoFirmado?: string | null
+    xmlAutorizado?: string | null
+    pdfRIDE?: string | null
+    estado?: string
+    fechaEmision: Date | string
+    tipoAmbiente?: number
+    subtotal0?: number
+    subtotalIva?: number
+    valorIva?: number
+    total: number
+    formaPago?: string
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    client: ClientCreateNestedOneWithoutInvoicesInput
+    issuer: IssuerCreateNestedOneWithoutInvoicesInput
+    emissionPoint?: EmissionPointCreateNestedOneWithoutInvoicesInput
+  }
+
+  export type InvoiceUncheckedCreateWithoutItemsInput = {
+    id?: number
+    secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
+    claveAcceso?: string | null
+    xmlNoFirmado?: string | null
+    xmlAutorizado?: string | null
+    pdfRIDE?: string | null
+    estado?: string
+    fechaEmision: Date | string
+    tipoAmbiente?: number
+    subtotal0?: number
+    subtotalIva?: number
+    valorIva?: number
+    total: number
+    formaPago?: string
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    clientId: number
+    issuerId: number
+    emissionPointId?: number | null
   }
 
   export type InvoiceCreateOrConnectWithoutItemsInput = {
@@ -17195,6 +19532,8 @@ export namespace Prisma {
 
   export type InvoiceUpdateWithoutItemsInput = {
     secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
     claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
     xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
     xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17212,11 +19551,14 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: ClientUpdateOneRequiredWithoutInvoicesNestedInput
     issuer?: IssuerUpdateOneRequiredWithoutInvoicesNestedInput
+    emissionPoint?: EmissionPointUpdateOneWithoutInvoicesNestedInput
   }
 
   export type InvoiceUncheckedUpdateWithoutItemsInput = {
     id?: IntFieldUpdateOperationsInput | number
     secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
     claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
     xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
     xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17234,6 +19576,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clientId?: IntFieldUpdateOperationsInput | number
     issuerId?: IntFieldUpdateOperationsInput | number
+    emissionPointId?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type ProductUpsertWithoutInvoiceItemsInput = {
@@ -17300,6 +19643,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoices?: InvoiceCreateNestedManyWithoutIssuerInput
     clients?: IssuerClientCreateNestedManyWithoutIssuerInput
+    emissionPoints?: EmissionPointCreateNestedManyWithoutIssuerInput
   }
 
   export type IssuerUncheckedCreateWithoutPaymentRequestsInput = {
@@ -17333,6 +19677,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     invoices?: InvoiceUncheckedCreateNestedManyWithoutIssuerInput
     clients?: IssuerClientUncheckedCreateNestedManyWithoutIssuerInput
+    emissionPoints?: EmissionPointUncheckedCreateNestedManyWithoutIssuerInput
   }
 
   export type IssuerCreateOrConnectWithoutPaymentRequestsInput = {
@@ -17381,6 +19726,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUpdateManyWithoutIssuerNestedInput
     clients?: IssuerClientUpdateManyWithoutIssuerNestedInput
+    emissionPoints?: EmissionPointUpdateManyWithoutIssuerNestedInput
   }
 
   export type IssuerUncheckedUpdateWithoutPaymentRequestsInput = {
@@ -17414,11 +19760,14 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     invoices?: InvoiceUncheckedUpdateManyWithoutIssuerNestedInput
     clients?: IssuerClientUncheckedUpdateManyWithoutIssuerNestedInput
+    emissionPoints?: EmissionPointUncheckedUpdateManyWithoutIssuerNestedInput
   }
 
   export type InvoiceCreateManyIssuerInput = {
     id?: number
     secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
     claveAcceso?: string | null
     xmlNoFirmado?: string | null
     xmlAutorizado?: string | null
@@ -17435,6 +19784,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     clientId: number
+    emissionPointId?: number | null
   }
 
   export type IssuerClientCreateManyIssuerInput = {
@@ -17456,8 +19806,23 @@ export namespace Prisma {
     fechaProcesado?: Date | string | null
   }
 
+  export type EmissionPointCreateManyIssuerInput = {
+    id?: number
+    establecimiento?: string
+    puntoEmision?: string
+    nombre: string
+    username?: string | null
+    password?: string | null
+    secuencialInicio?: string
+    activo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type InvoiceUpdateWithoutIssuerInput = {
     secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
     claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
     xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
     xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17474,12 +19839,15 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     client?: ClientUpdateOneRequiredWithoutInvoicesNestedInput
+    emissionPoint?: EmissionPointUpdateOneWithoutInvoicesNestedInput
     items?: InvoiceItemUpdateManyWithoutInvoiceNestedInput
   }
 
   export type InvoiceUncheckedUpdateWithoutIssuerInput = {
     id?: IntFieldUpdateOperationsInput | number
     secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
     claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
     xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
     xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17496,12 +19864,15 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clientId?: IntFieldUpdateOperationsInput | number
+    emissionPointId?: NullableIntFieldUpdateOperationsInput | number | null
     items?: InvoiceItemUncheckedUpdateManyWithoutInvoiceNestedInput
   }
 
   export type InvoiceUncheckedUpdateManyWithoutIssuerInput = {
     id?: IntFieldUpdateOperationsInput | number
     secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
     claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
     xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
     xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17518,6 +19889,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     clientId?: IntFieldUpdateOperationsInput | number
+    emissionPointId?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type IssuerClientUpdateWithoutIssuerInput = {
@@ -17575,9 +19947,51 @@ export namespace Prisma {
     fechaProcesado?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
+  export type EmissionPointUpdateWithoutIssuerInput = {
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    secuencialInicio?: StringFieldUpdateOperationsInput | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    invoices?: InvoiceUpdateManyWithoutEmissionPointNestedInput
+  }
+
+  export type EmissionPointUncheckedUpdateWithoutIssuerInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    secuencialInicio?: StringFieldUpdateOperationsInput | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    invoices?: InvoiceUncheckedUpdateManyWithoutEmissionPointNestedInput
+  }
+
+  export type EmissionPointUncheckedUpdateManyWithoutIssuerInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    username?: NullableStringFieldUpdateOperationsInput | string | null
+    password?: NullableStringFieldUpdateOperationsInput | string | null
+    secuencialInicio?: StringFieldUpdateOperationsInput | string
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type InvoiceCreateManyClientInput = {
     id?: number
     secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
     claveAcceso?: string | null
     xmlNoFirmado?: string | null
     xmlAutorizado?: string | null
@@ -17594,6 +20008,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     issuerId: number
+    emissionPointId?: number | null
   }
 
   export type IssuerClientCreateManyClientInput = {
@@ -17604,6 +20019,8 @@ export namespace Prisma {
 
   export type InvoiceUpdateWithoutClientInput = {
     secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
     claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
     xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
     xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17620,12 +20037,15 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     issuer?: IssuerUpdateOneRequiredWithoutInvoicesNestedInput
+    emissionPoint?: EmissionPointUpdateOneWithoutInvoicesNestedInput
     items?: InvoiceItemUpdateManyWithoutInvoiceNestedInput
   }
 
   export type InvoiceUncheckedUpdateWithoutClientInput = {
     id?: IntFieldUpdateOperationsInput | number
     secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
     claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
     xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
     xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17642,12 +20062,15 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     issuerId?: IntFieldUpdateOperationsInput | number
+    emissionPointId?: NullableIntFieldUpdateOperationsInput | number | null
     items?: InvoiceItemUncheckedUpdateManyWithoutInvoiceNestedInput
   }
 
   export type InvoiceUncheckedUpdateManyWithoutClientInput = {
     id?: IntFieldUpdateOperationsInput | number
     secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
     claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
     xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
     xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17664,6 +20087,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     issuerId?: IntFieldUpdateOperationsInput | number
+    emissionPointId?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
   export type IssuerClientUpdateWithoutClientInput = {
@@ -17783,6 +20207,103 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     productId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type InvoiceCreateManyEmissionPointInput = {
+    id?: number
+    secuencial: string
+    establecimiento?: string
+    puntoEmision?: string
+    claveAcceso?: string | null
+    xmlNoFirmado?: string | null
+    xmlAutorizado?: string | null
+    pdfRIDE?: string | null
+    estado?: string
+    fechaEmision: Date | string
+    tipoAmbiente?: number
+    subtotal0?: number
+    subtotalIva?: number
+    valorIva?: number
+    total: number
+    formaPago?: string
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    clientId: number
+    issuerId: number
+  }
+
+  export type InvoiceUpdateWithoutEmissionPointInput = {
+    secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
+    xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
+    xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfRIDE?: NullableStringFieldUpdateOperationsInput | string | null
+    estado?: StringFieldUpdateOperationsInput | string
+    fechaEmision?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoAmbiente?: IntFieldUpdateOperationsInput | number
+    subtotal0?: FloatFieldUpdateOperationsInput | number
+    subtotalIva?: FloatFieldUpdateOperationsInput | number
+    valorIva?: FloatFieldUpdateOperationsInput | number
+    total?: FloatFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    client?: ClientUpdateOneRequiredWithoutInvoicesNestedInput
+    issuer?: IssuerUpdateOneRequiredWithoutInvoicesNestedInput
+    items?: InvoiceItemUpdateManyWithoutInvoiceNestedInput
+  }
+
+  export type InvoiceUncheckedUpdateWithoutEmissionPointInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
+    xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
+    xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfRIDE?: NullableStringFieldUpdateOperationsInput | string | null
+    estado?: StringFieldUpdateOperationsInput | string
+    fechaEmision?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoAmbiente?: IntFieldUpdateOperationsInput | number
+    subtotal0?: FloatFieldUpdateOperationsInput | number
+    subtotalIva?: FloatFieldUpdateOperationsInput | number
+    valorIva?: FloatFieldUpdateOperationsInput | number
+    total?: FloatFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientId?: IntFieldUpdateOperationsInput | number
+    issuerId?: IntFieldUpdateOperationsInput | number
+    items?: InvoiceItemUncheckedUpdateManyWithoutInvoiceNestedInput
+  }
+
+  export type InvoiceUncheckedUpdateManyWithoutEmissionPointInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    secuencial?: StringFieldUpdateOperationsInput | string
+    establecimiento?: StringFieldUpdateOperationsInput | string
+    puntoEmision?: StringFieldUpdateOperationsInput | string
+    claveAcceso?: NullableStringFieldUpdateOperationsInput | string | null
+    xmlNoFirmado?: NullableStringFieldUpdateOperationsInput | string | null
+    xmlAutorizado?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfRIDE?: NullableStringFieldUpdateOperationsInput | string | null
+    estado?: StringFieldUpdateOperationsInput | string
+    fechaEmision?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipoAmbiente?: IntFieldUpdateOperationsInput | number
+    subtotal0?: FloatFieldUpdateOperationsInput | number
+    subtotalIva?: FloatFieldUpdateOperationsInput | number
+    valorIva?: FloatFieldUpdateOperationsInput | number
+    total?: FloatFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientId?: IntFieldUpdateOperationsInput | number
+    issuerId?: IntFieldUpdateOperationsInput | number
   }
 
 

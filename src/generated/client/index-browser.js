@@ -217,6 +217,8 @@ exports.Prisma.ProductScalarFieldEnum = {
 exports.Prisma.InvoiceScalarFieldEnum = {
   id: 'id',
   secuencial: 'secuencial',
+  establecimiento: 'establecimiento',
+  puntoEmision: 'puntoEmision',
   claveAcceso: 'claveAcceso',
   xmlNoFirmado: 'xmlNoFirmado',
   xmlAutorizado: 'xmlAutorizado',
@@ -233,6 +235,21 @@ exports.Prisma.InvoiceScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   clientId: 'clientId',
+  issuerId: 'issuerId',
+  emissionPointId: 'emissionPointId'
+};
+
+exports.Prisma.EmissionPointScalarFieldEnum = {
+  id: 'id',
+  establecimiento: 'establecimiento',
+  puntoEmision: 'puntoEmision',
+  nombre: 'nombre',
+  username: 'username',
+  password: 'password',
+  secuencialInicio: 'secuencialInicio',
+  activo: 'activo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
   issuerId: 'issuerId'
 };
 
@@ -283,6 +300,7 @@ exports.Prisma.ModelName = {
   IssuerClient: 'IssuerClient',
   Product: 'Product',
   Invoice: 'Invoice',
+  EmissionPoint: 'EmissionPoint',
   InvoiceItem: 'InvoiceItem',
   PaymentRequest: 'PaymentRequest'
 };

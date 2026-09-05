@@ -154,6 +154,18 @@ export async function POST(request: Request) {
         },
       });
 
+      // Crear automáticamente el Punto de Emisión 001-001 por defecto
+      await db.emissionPoint.create({
+        data: {
+          issuerId: newIssuer.id,
+          establecimiento: "001",
+          puntoEmision: "001",
+          nombre: "Punto de Venta Principal",
+          secuencialInicio: "000000001",
+          activo: true,
+        }
+      });
+
       const safeIssuer = {
         ...newIssuer,
         password: "****",
@@ -162,16 +174,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, issuer: safeIssuer });
     }
 
-    // --- ACCIÓN: INICIO DE SESIÓN DE EMISOR (ACEPTA RUC O CORREO) ---
+    // --- ACCIÓN: INICIO DE SESIÓN DE EMISOR O CAJERO DELEGADO ---
     if (action === "login") {
       const { ruc, email, identifier, password } = body;
       const input = (identifier || ruc || email || "").trim();
 
       if (!input || !password) {
-        return NextResponse.json({ error: "Ingrese su RUC o Correo Electrónico y su contraseña." }, { status: 400 });
+        return NextResponse.json({ error: "Ingrese su RUC, Correo Electrónico o Usuario de Caja y su contraseña." }, { status: 400 });
       }
 
-      // Buscar por RUC o por Correo Electrónico en la base de datos
+      // 1. Intentar buscar como Dueño de Empresa (por RUC o por Correo Electrónico)
       const issuer = await db.issuer.findFirst({
         where: {
           OR: [
@@ -181,18 +193,62 @@ export async function POST(request: Request) {
         },
       });
 
-      if (!issuer || issuer.password !== password) {
-        return NextResponse.json({ error: "RUC / Correo Electrónico o contraseña incorrectos." }, { status: 400 });
+      if (issuer && issuer.password === password) {
+        const safeIssuer = {
+          ...issuer,
+          codigoSri: issuer.codigoSri ? "****" : null,
+          firmaElectronica: issuer.firmaElectronica ? "CARGADA" : null,
+          password: "****",
+        };
+
+        return NextResponse.json({
+          success: true,
+          role: "ADMIN",
+          issuer: safeIssuer,
+        });
       }
 
-      const safeIssuer = {
-        ...issuer,
-        codigoSri: issuer.codigoSri ? "****" : null,
-        firmaElectronica: issuer.firmaElectronica ? "CARGADA" : null,
-        password: "****",
-      };
+      // 2. Si no es el dueño, verificar si es un Punto de Emisión (Cajero Delegado)
+      const emissionPoint = await db.emissionPoint.findFirst({
+        where: {
+          username: input.toLowerCase(),
+        },
+        include: {
+          issuer: true,
+        }
+      });
 
-      return NextResponse.json({ success: true, issuer: safeIssuer });
+      if (emissionPoint) {
+        if (!emissionPoint.activo) {
+          return NextResponse.json({ error: "Este punto de emisión se encuentra inactivo o deshabilitado." }, { status: 403 });
+        }
+        if (emissionPoint.password !== password) {
+          return NextResponse.json({ error: "Contraseña incorrecta para este punto de emisión." }, { status: 400 });
+        }
+
+        const safeIssuer = {
+          ...emissionPoint.issuer,
+          codigoSri: emissionPoint.issuer.codigoSri ? "****" : null,
+          firmaElectronica: emissionPoint.issuer.firmaElectronica ? "CARGADA" : null,
+          password: "****",
+        };
+
+        return NextResponse.json({
+          success: true,
+          role: "OPERATOR",
+          issuer: safeIssuer,
+          emissionPoint: {
+            id: emissionPoint.id,
+            nombre: emissionPoint.nombre,
+            establecimiento: emissionPoint.establecimiento,
+            puntoEmision: emissionPoint.puntoEmision,
+            username: emissionPoint.username,
+            secuencialInicio: emissionPoint.secuencialInicio,
+          }
+        });
+      }
+
+      return NextResponse.json({ error: "RUC, Correo, Usuario de Caja o contraseña incorrectos." }, { status: 400 });
     }
 
     // --- ACCIÓN: LOGIN DE ADMINISTRADOR GENERAL ---

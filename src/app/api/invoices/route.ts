@@ -16,6 +16,10 @@ const sriClient = new SriClient();
 export async function GET(request: Request) {
   try {
     const issuerIdHeader = request.headers.get("x-issuer-id");
+    const userRoleHeader = request.headers.get("x-user-role");
+    const headerEmissionPointId = request.headers.get("x-emission-point-id");
+    const headerPuntoEmision = request.headers.get("x-punto-emision");
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const startDate = searchParams.get("startDate") || "";
@@ -33,6 +37,31 @@ export async function GET(request: Request) {
 
     if (status && status !== "ALL") {
       where.estado = status;
+    }
+
+    // Aislamiento estricto para cajeros / operadores
+    if (userRoleHeader === "OPERATOR") {
+      if (headerEmissionPointId && headerEmissionPointId !== "undefined" && headerEmissionPointId !== "null") {
+        where.emissionPointId = parseInt(headerEmissionPointId, 10);
+      } else if (headerPuntoEmision && headerPuntoEmision !== "ALL") {
+        where.puntoEmision = headerPuntoEmision;
+      } else {
+        const puntoEmisionParam = searchParams.get("puntoEmision");
+        if (puntoEmisionParam && puntoEmisionParam !== "ALL") {
+          where.puntoEmision = puntoEmisionParam;
+        }
+      }
+    } else {
+      // Rol Administrador / Empresa (Acceso a todas las cajas o filtro voluntario)
+      const puntoEmisionParam = searchParams.get("puntoEmision");
+      if (puntoEmisionParam && puntoEmisionParam !== "ALL") {
+        where.puntoEmision = puntoEmisionParam;
+      }
+    }
+
+    const establecimientoParam = searchParams.get("establecimiento");
+    if (establecimientoParam && establecimientoParam !== "ALL") {
+      where.establecimiento = establecimientoParam;
     }
 
     if (startDate || endDate) {
@@ -66,6 +95,7 @@ export async function GET(request: Request) {
       include: {
         client: true,
         issuer: true,
+        emissionPoint: true,
         items: {
           include: {
             product: true,
@@ -100,7 +130,16 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { clientId, client, items, pagos, observaciones } = body;
+    const {
+      clientId,
+      client,
+      items,
+      pagos,
+      observaciones,
+      establecimiento: reqEstablecimiento,
+      puntoEmision: reqPuntoEmision,
+      emissionPointId: reqEmissionPointId,
+    } = body;
 
     if (!clientId && !client) {
       return NextResponse.json({ error: "Parámetros inválidos. Se requiere clientId o los datos del client." }, { status: 400 });
@@ -257,24 +296,51 @@ export async function POST(request: Request) {
       }
     }
 
-    // 4. Generar el Secuencial de la Factura (Autoincrementado por empresa)
-    // El serial solo puede avanzar con facturas que fueron recibidas o autorizadas satisfactoriamente
+    // 4. Determinar Punto de Emisión y Establecimiento
+    let activeEstablecimiento = String(reqEstablecimiento || issuer.establecimiento || "001").padStart(3, "0");
+    let activePuntoEmision = String(reqPuntoEmision || issuer.puntoEmision || "001").padStart(3, "0");
+    let activeEmissionPointId: number | null = null;
+    let startSec = issuer.startSecuencial || "1";
+
+    if (reqEmissionPointId) {
+      const foundEP = await db.emissionPoint.findFirst({
+        where: { id: parseInt(reqEmissionPointId, 10), issuerId: issuer.id, activo: true }
+      });
+      if (foundEP) {
+        activeEstablecimiento = foundEP.establecimiento;
+        activePuntoEmision = foundEP.puntoEmision;
+        activeEmissionPointId = foundEP.id;
+        startSec = foundEP.secuencialInicio || "1";
+      }
+    } else {
+      const foundEP = await db.emissionPoint.findFirst({
+        where: { issuerId: issuer.id, establecimiento: activeEstablecimiento, puntoEmision: activePuntoEmision, activo: true }
+      });
+      if (foundEP) {
+        activeEmissionPointId = foundEP.id;
+        startSec = foundEP.secuencialInicio || "1";
+      }
+    }
+
+    // 5. Generar el Secuencial de la Factura (Autoincrementado por punto de emisión)
     const lastInvoice = await db.invoice.findFirst({
       where: { 
         issuerId: issuer.id,
+        establecimiento: activeEstablecimiento,
+        puntoEmision: activePuntoEmision,
         estado: { in: ["AUTORIZADA", "RECIBIDA"] }
       },
       orderBy: { secuencial: "desc" },
     });
     
-    let nextSecNum = parseInt(issuer.startSecuencial || "1", 10);
+    let nextSecNum = parseInt(startSec || "1", 10);
     if (lastInvoice) {
       const lastSecNum = parseInt(lastInvoice.secuencial, 10);
       nextSecNum = Math.max(lastSecNum + 1, nextSecNum);
     }
     const secuencial = String(nextSecNum).padStart(9, "0");
 
-    // 5. Cargar productos procesados, calcular subtotales y totales
+    // 6. Cargar productos procesados, calcular subtotales y totales
     const productIds = processedItems.map((i) => i.productId);
     const dbProducts = await db.product.findMany({
       where: { id: { in: productIds } },
@@ -337,10 +403,13 @@ export async function POST(request: Request) {
     const total = subtotal0 + subtotalIva + valorIva;
     const cleanFormaPago = pagos && pagos.length > 0 ? pagos[0].formaPago : (body.formaPago || "01");
 
-    // 6. Guardar Factura en DB con estado CREADA
+    // 7. Guardar Factura en DB con estado CREADA
     let invoice = await db.invoice.create({
       data: {
         secuencial,
+        establecimiento: activeEstablecimiento,
+        puntoEmision: activePuntoEmision,
+        emissionPointId: activeEmissionPointId,
         fechaEmision: new Date(),
         tipoAmbiente: issuer.ambiente,
         subtotal0,
@@ -358,12 +427,12 @@ export async function POST(request: Request) {
       },
     });
 
-    // 7. Generar el XML de la factura y su Clave de Acceso
+    // 8. Generar el XML de la factura y su Clave de Acceso
     const xmlGenResult = generateInvoiceXml({
       secuencial,
       ambiente: issuer.ambiente,
-      establecimiento: issuer.establecimiento,
-      puntoEmision: issuer.puntoEmision,
+      establecimiento: activeEstablecimiento,
+      puntoEmision: activePuntoEmision,
       fechaEmision: invoice.fechaEmision,
       formaPago: cleanFormaPago,
       pagos: pagos || undefined,
@@ -530,8 +599,8 @@ export async function POST(request: Request) {
     // Generar Buffer del PDF
     const pdfBuffer = await generateRidePdf({
       secuencial,
-      establecimiento: issuer.establecimiento,
-      puntoEmision: issuer.puntoEmision,
+      establecimiento: activeEstablecimiento,
+      puntoEmision: activePuntoEmision,
       claveAcceso,
       numeroAutorizacion: autorizacionResponse.numeroAutorizacion,
       fechaAutorizacion: autorizacionResponse.fechaAutorizacion,
@@ -575,14 +644,23 @@ export async function POST(request: Request) {
       },
     });
 
-    // --- ACTUALIZAR EL SECUENCIAL DE INICIO DEL EMISOR EN LA DB ---
+    // --- ACTUALIZAR EL SECUENCIAL DE INICIO DEL PUNTO DE EMISIÓN EN LA DB ---
     const nextStartSecuencial = String(nextSecNum + 1).padStart(9, "0");
-    await db.issuer.update({
-      where: { id: issuer.id },
-      data: {
-        startSecuencial: nextStartSecuencial,
-      },
-    });
+    if (activeEmissionPointId) {
+      await db.emissionPoint.update({
+        where: { id: activeEmissionPointId },
+        data: { secuencialInicio: nextStartSecuencial },
+      });
+    }
+
+    if (activePuntoEmision === (issuer.puntoEmision || "001") && activeEstablecimiento === (issuer.establecimiento || "001")) {
+      await db.issuer.update({
+        where: { id: issuer.id },
+        data: {
+          startSecuencial: nextStartSecuencial,
+        },
+      });
+    }
 
     // --- COBRO SAAS: DEDUCIR TARIFA CONFIGURADA EN CASO DE PLAN POR FACTURA ---
     if (issuer.planType === "PAY_PER_INVOICE") {
@@ -603,7 +681,7 @@ export async function POST(request: Request) {
         issuerEmail: issuer.email,
         ruc: issuer.ruc,
         claveAcceso: claveAcceso,
-        invoiceNumber: `${issuer.establecimiento}-${issuer.puntoEmision}-${secuencial}`,
+        invoiceNumber: `${activeEstablecimiento}-${activePuntoEmision}-${secuencial}`,
         xmlContent: xmlAutorizadoStr,
         pdfBuffer: pdfBuffer,
         businessName: issuer.nombreEmpresa || issuer.razonSocial,
