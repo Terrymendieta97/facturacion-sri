@@ -23,22 +23,9 @@ const DEFAULT_GOOGLE_USER_EMAIL = "lojafacec@gmail.com";
  * Obtiene un Access Token fresco desde Google OAuth2 usando el Refresh Token.
  */
 export async function getGoogleAccessToken(): Promise<string | null> {
-  let clientId = process.env.GOOGLE_CLIENT_ID;
-  let clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  let refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
-
-  if (!clientId || !clientSecret || !refreshToken) {
-    try {
-      const config: any = await db.systemConfig.findFirst();
-      clientId = clientId || config?.googleClientId || DEFAULT_GOOGLE_CLIENT_ID;
-      clientSecret = clientSecret || config?.googleClientSecret || DEFAULT_GOOGLE_CLIENT_SECRET;
-      refreshToken = refreshToken || config?.googleRefreshToken || DEFAULT_GOOGLE_REFRESH_TOKEN;
-    } catch {
-      clientId = clientId || DEFAULT_GOOGLE_CLIENT_ID;
-      clientSecret = clientSecret || DEFAULT_GOOGLE_CLIENT_SECRET;
-      refreshToken = refreshToken || DEFAULT_GOOGLE_REFRESH_TOKEN;
-    }
-  }
+  const clientId = process.env.GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || DEFAULT_GOOGLE_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN || DEFAULT_GOOGLE_REFRESH_TOKEN;
 
   if (!clientId || !clientSecret || !refreshToken) {
     return null;
@@ -133,16 +120,8 @@ export async function sendEmailViaGmailApi(mailOptions: any): Promise<{ success:
  * Utiliza Google Gmail API (HTTPS 443) si está configurado, o SMTP tradicional como alternativa.
  */
 export async function sendInvoiceEmail(params: SendInvoiceEmailParams): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  let user = process.env.GOOGLE_USER_EMAIL || process.env.SMTP_USER;
-  let fromName = process.env.SMTP_FROM_NAME || params.businessName;
-
-  try {
-    const config: any = await db.systemConfig.findFirst();
-    user = user || config?.googleUserEmail || config?.smtpUser || DEFAULT_GOOGLE_USER_EMAIL;
-    fromName = fromName || config?.smtpFromName || params.businessName;
-  } catch {
-    user = user || DEFAULT_GOOGLE_USER_EMAIL;
-  }
+  const user = process.env.GOOGLE_USER_EMAIL || process.env.SMTP_USER || DEFAULT_GOOGLE_USER_EMAIL;
+  const fromName = process.env.SMTP_FROM_NAME || params.businessName;
 
   const ccList: string[] = [];
   if (params.issuerEmail && params.issuerEmail.trim() && params.issuerEmail.trim().toLowerCase() !== params.to.trim().toLowerCase()) {

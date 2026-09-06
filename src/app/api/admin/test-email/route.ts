@@ -17,18 +17,8 @@ export async function POST(request: Request) {
       );
     }
 
-    let config: any = null;
-    try {
-      config = await db.systemConfig.findFirst();
-    } catch (e) {
-      console.warn("Could not read SystemConfig from db:", e);
-    }
-
-    let user = process.env.GOOGLE_USER_EMAIL || process.env.SMTP_USER;
-    let fromName = process.env.SMTP_FROM_NAME;
-
-    user = user || config?.googleUserEmail || config?.smtpUser || DEFAULT_GOOGLE_USER_EMAIL;
-    fromName = fromName || config?.smtpFromName || "Lojafac Administración";
+    const user = process.env.GOOGLE_USER_EMAIL || process.env.SMTP_USER || DEFAULT_GOOGLE_USER_EMAIL;
+    const fromName = process.env.SMTP_FROM_NAME || "Lojafac Administración";
 
     const mailOptions = {
       from: `"${fromName}" <${user}>`,
@@ -85,10 +75,10 @@ export async function POST(request: Request) {
     }
 
     // 2. Fallback a SMTP
-    const host = process.env.SMTP_HOST || config?.smtpHost || "smtp.gmail.com";
-    const port = parseInt(process.env.SMTP_PORT || String(config?.smtpPort || "465"), 10);
+    const host = process.env.SMTP_HOST || "smtp.gmail.com";
+    const port = parseInt(process.env.SMTP_PORT || "465", 10);
     const secure = process.env.SMTP_SECURE !== "false";
-    const pass = (process.env.SMTP_PASS || config?.smtpPass || "aboexutuolxlxnmb").replace(/\s+/g, "");
+    const pass = (process.env.SMTP_PASS || "aboexutuolxlxnmb").replace(/\s+/g, "");
 
     const transporter = nodemailer.createTransport({
       host,
