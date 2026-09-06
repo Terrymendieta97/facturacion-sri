@@ -78,6 +78,7 @@ export class SriClient {
           "Content-Type": "text/xml;charset=utf-8",
         },
         body: soapEnvelope,
+        signal: AbortSignal.timeout(12000), // 12s timeout para proteger memoria y workers
       });
 
       if (!response.ok) {
@@ -91,7 +92,7 @@ export class SriClient {
         estado: "ERROR",
         mensajes: [{
           identificador: "ERR_SOAP_CLIENT",
-          mensaje: `Error de conexión con el servicio de Recepción del SRI: ${error.message || error}`,
+          mensaje: `Error de conexión con el servicio de Recepción del SRI: ${error.name === "TimeoutError" ? "Tiempo de espera agotado (12s). El servidor del SRI está demorado." : error.message || error}`,
           tipo: "ERROR",
         }],
       };
@@ -120,6 +121,7 @@ export class SriClient {
           "Content-Type": "text/xml;charset=utf-8",
         },
         body: soapEnvelope,
+        signal: AbortSignal.timeout(12000), // 12s timeout para proteger memoria y workers
       });
 
       if (!response.ok) {
@@ -133,7 +135,7 @@ export class SriClient {
         estado: "ERROR",
         mensajes: [{
           identificador: "ERR_SOAP_CLIENT",
-          mensaje: `Error de conexión con el servicio de Autorización del SRI: ${error.message || error}`,
+          mensaje: `Error de conexión con el servicio de Autorización del SRI: ${error.name === "TimeoutError" ? "Tiempo de espera agotado (12s). El servidor del SRI está demorado." : error.message || error}`,
           tipo: "ERROR",
         }],
       };

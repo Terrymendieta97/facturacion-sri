@@ -19,10 +19,19 @@ const DEFAULT_GOOGLE_CLIENT_SECRET = "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";
 const DEFAULT_GOOGLE_REFRESH_TOKEN = "1//04-Z9wm4KZwO1CgYIARAAGAQSNwF-L9Irouz3WxyRghM_X1BboPYGSl4Xl-GFItx6pFgg4FEe1u6nImudkqdgZKvmYe7XZ_xcHBw";
 const DEFAULT_GOOGLE_USER_EMAIL = "lojafacec@gmail.com";
 
+// Caché en memoria para evitar peticiones repetitivas a oauth2.googleapis.com
+let cachedAccessToken: string | null = null;
+let tokenExpiresAt = 0;
+
 /**
- * Obtiene un Access Token fresco desde Google OAuth2 usando el Refresh Token.
+ * Obtiene un Access Token fresco o reutiliza el token en caché desde Google OAuth2.
  */
 export async function getGoogleAccessToken(): Promise<string | null> {
+  // Reutilizar token si aún no ha expirado (con 5 min de margen)
+  if (cachedAccessToken && Date.now() < tokenExpiresAt) {
+    return cachedAccessToken;
+  }
+
   const clientId = process.env.GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET || DEFAULT_GOOGLE_CLIENT_SECRET;
   const refreshToken = process.env.GOOGLE_REFRESH_TOKEN || DEFAULT_GOOGLE_REFRESH_TOKEN;
@@ -43,6 +52,7 @@ export async function getGoogleAccessToken(): Promise<string | null> {
         refresh_token: refreshToken,
         grant_type: "refresh_token",
       }),
+      signal: AbortSignal.timeout(10000), // 10s timeout
     });
 
     const data = await response.json();
@@ -51,7 +61,12 @@ export async function getGoogleAccessToken(): Promise<string | null> {
       return null;
     }
 
-    return data.access_token;
+    cachedAccessToken = data.access_token;
+    // Expira en expiresIn segundos (por defecto 3600s), dejamos 300s de margen
+    const expiresInSec = data.expires_in || 3600;
+    tokenExpiresAt = Date.now() + (expiresInSec - 300) * 1000;
+
+    return cachedAccessToken;
   } catch (error) {
     console.error("Excepción al obtener Google Access Token:", error);
     return null;
@@ -93,6 +108,7 @@ export async function sendEmailViaGmailApi(mailOptions: any): Promise<{ success:
       body: JSON.stringify({
         raw: base64EncodedEmail,
       }),
+      signal: AbortSignal.timeout(15000), // 15s timeout
     });
 
     const sendData = await sendRes.json();

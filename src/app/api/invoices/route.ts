@@ -92,13 +92,81 @@ export async function GET(request: Request) {
 
     const invoices = await db.invoice.findMany({
       where,
-      include: {
-        client: true,
-        issuer: true,
-        emissionPoint: true,
+      select: {
+        id: true,
+        secuencial: true,
+        establecimiento: true,
+        puntoEmision: true,
+        claveAcceso: true,
+        estado: true,
+        fechaEmision: true,
+        tipoAmbiente: true,
+        subtotal0: true,
+        subtotalIva: true,
+        valorIva: true,
+        total: true,
+        formaPago: true,
+        observaciones: true,
+        createdAt: true,
+        updatedAt: true,
+        clientId: true,
+        issuerId: true,
+        emissionPointId: true,
+        client: {
+          select: {
+            id: true,
+            nombres: true,
+            tipoIdentificacion: true,
+            identificacion: true,
+            direccion: true,
+            mail: true,
+            celular: true,
+            telefono: true,
+          },
+        },
+        issuer: {
+          select: {
+            id: true,
+            ruc: true,
+            razonSocial: true,
+            nombreEmpresa: true,
+            establecimiento: true,
+            puntoEmision: true,
+            email: true,
+            celular: true,
+            direccion: true,
+            logo: true,
+          },
+        },
+        emissionPoint: {
+          select: {
+            id: true,
+            establecimiento: true,
+            puntoEmision: true,
+            nombre: true,
+            username: true,
+            activo: true,
+          },
+        },
         items: {
-          include: {
-            product: true,
+          select: {
+            id: true,
+            cantidad: true,
+            precioUnitario: true,
+            descuento: true,
+            total: true,
+            notaExtra1: true,
+            notaExtra2: true,
+            productId: true,
+            product: {
+              select: {
+                id: true,
+                nombre: true,
+                codigoPrincipal: true,
+                precio: true,
+                iva: true,
+              },
+            },
           },
         },
       },
@@ -675,22 +743,20 @@ export async function POST(request: Request) {
       });
     }
 
-    // 12. Enviar Factura por Correo Electrónico
-    try {
-      await sendInvoiceEmail({
-        to: clientObj.mail,
-        issuerEmail: issuer.email,
-        ruc: issuer.ruc,
-        claveAcceso: claveAcceso,
-        invoiceNumber: `${activeEstablecimiento}-${activePuntoEmision}-${secuencial}`,
-        xmlContent: xmlAutorizadoStr,
-        pdfBuffer: pdfBuffer,
-        businessName: issuer.nombreEmpresa || issuer.razonSocial,
-        customerName: clientObj.nombres,
-      });
-    } catch (emailErr) {
-      console.warn("Fallo al enviar correo de la factura:", emailErr);
-    }
+    // 12. Enviar Factura por Correo Electrónico (Segundo plano no bloqueante para respuesta instantánea en POS)
+    sendInvoiceEmail({
+      to: clientObj.mail,
+      issuerEmail: issuer.email,
+      ruc: issuer.ruc,
+      claveAcceso: claveAcceso,
+      invoiceNumber: `${activeEstablecimiento}-${activePuntoEmision}-${secuencial}`,
+      xmlContent: xmlAutorizadoStr,
+      pdfBuffer: pdfBuffer,
+      businessName: issuer.nombreEmpresa || issuer.razonSocial,
+      customerName: clientObj.nombres,
+    }).catch((emailErr) => {
+      console.warn("Fallo al enviar correo de la factura en segundo plano:", emailErr);
+    });
 
     return NextResponse.json({
       success: true,

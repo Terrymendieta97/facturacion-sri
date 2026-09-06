@@ -566,23 +566,21 @@ export async function POST(request: Request) {
       },
     });
 
-    // 14. Enviar Correo Electrónico al Cliente
+    // 14. Enviar Correo Electrónico al Cliente (En segundo plano no bloqueante para respuesta ultrarrápida en API e-commerce)
     if (pdfBuffer && clientObj.mail) {
-      try {
-        await sendInvoiceEmail({
-          to: clientObj.mail,
-          issuerEmail: issuer.email,
-          ruc: issuer.ruc,
-          claveAcceso,
-          invoiceNumber: `${establecimiento}-${puntoEmision}-${secuencial}`,
-          xmlContent: xmlFinalAutorizado,
-          pdfBuffer,
-          businessName: issuer.razonSocial || issuer.nombreEmpresa,
-          customerName: clientObj.nombres,
-        });
-      } catch (mailErr) {
-        console.error("Error al enviar email:", mailErr);
-      }
+      sendInvoiceEmail({
+        to: clientObj.mail,
+        issuerEmail: issuer.email,
+        ruc: issuer.ruc,
+        claveAcceso,
+        invoiceNumber: `${establecimiento}-${puntoEmision}-${secuencial}`,
+        xmlContent: xmlFinalAutorizado,
+        pdfBuffer,
+        businessName: issuer.razonSocial || issuer.nombreEmpresa,
+        customerName: clientObj.nombres,
+      }).catch((mailErr) => {
+        console.error("Error al enviar email en segundo plano:", mailErr);
+      });
     }
 
     // 15. Construir URLs públicas de descarga
