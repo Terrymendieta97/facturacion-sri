@@ -211,7 +211,8 @@ exports.Prisma.ProductScalarFieldEnum = {
   iva: 'iva',
   imagen: 'imagen',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  issuerId: 'issuerId'
 };
 
 exports.Prisma.InvoiceScalarFieldEnum = {

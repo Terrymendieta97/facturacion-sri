@@ -3,8 +3,8 @@ import { db } from "@/lib/db";
 import PDFDocument from "pdfkit";
 
 /**
- * GET /api/invoices/export?format=pdf|xlsx&search=...&startDate=...&endDate=...&status=...
- * Genera reportes contables oficiales en formato PDF o Excel (.xlsx/.csv)
+ * GET /api/invoices/export?format=pdf|xlsx&issuerId=...&search=...&startDate=...&endDate=...&status=...&puntoEmision=...
+ * Genera reportes contables oficiales en formato PDF o Excel (.xlsx/.csv) aislados por empresa
  */
 export async function GET(request: Request) {
   try {
@@ -15,24 +15,39 @@ export async function GET(request: Request) {
     const endDate = searchParams.get("endDate") || "";
     const status = searchParams.get("status") || "";
     const puntoEmisionParam = searchParams.get("puntoEmision") || "";
+
+    const issuerIdParam = searchParams.get("issuerId");
     const issuerIdHeader = request.headers.get("x-issuer-id");
+    const userRoleParam = searchParams.get("userRole");
     const userRoleHeader = request.headers.get("x-user-role");
+    const emissionPointIdParam = searchParams.get("emissionPointId");
     const headerEmissionPointId = request.headers.get("x-emission-point-id");
     const headerPuntoEmision = request.headers.get("x-punto-emision");
 
+    const effectiveIssuerId = issuerIdParam || issuerIdHeader;
+    const effectiveUserRole = userRoleParam || userRoleHeader;
+    const effectiveEmissionPointId = emissionPointIdParam || headerEmissionPointId;
+
+    let targetIssuerId: number | null = null;
+    if (effectiveIssuerId && effectiveIssuerId !== "default" && effectiveIssuerId !== "null" && effectiveIssuerId !== "undefined") {
+      targetIssuerId = parseInt(effectiveIssuerId, 10);
+    }
+
     const where: any = {};
 
-    if (issuerIdHeader && issuerIdHeader !== "default" && issuerIdHeader !== "null" && issuerIdHeader !== "undefined") {
-      where.issuerId = parseInt(issuerIdHeader, 10);
+    // Aislamiento estricto por empresa
+    if (targetIssuerId) {
+      where.issuerId = targetIssuerId;
     }
 
     if (status && status !== "ALL") {
       where.estado = status;
     }
 
-    if (userRoleHeader === "OPERATOR") {
-      if (headerEmissionPointId && headerEmissionPointId !== "undefined" && headerEmissionPointId !== "null") {
-        where.emissionPointId = parseInt(headerEmissionPointId, 10);
+    // Aislamiento por caja / punto de emisión
+    if (effectiveUserRole === "OPERATOR") {
+      if (effectiveEmissionPointId && effectiveEmissionPointId !== "undefined" && effectiveEmissionPointId !== "null") {
+        where.emissionPointId = parseInt(effectiveEmissionPointId, 10);
       } else if (headerPuntoEmision && headerPuntoEmision !== "ALL") {
         where.puntoEmision = headerPuntoEmision;
       } else if (puntoEmisionParam && puntoEmisionParam !== "ALL") {
@@ -75,8 +90,16 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    const issuerObj = invoices[0]?.issuer || (await db.issuer.findFirst());
-    const businessName = issuerObj?.nombreEmpresa || issuerObj?.razonSocial || "FácilSRI Emisor";
+    // Resolver exactamente la empresa correspondiente
+    let issuerObj = null;
+    if (targetIssuerId) {
+      issuerObj = await db.issuer.findUnique({ where: { id: targetIssuerId } });
+    }
+    if (!issuerObj) {
+      issuerObj = invoices[0]?.issuer || (await db.issuer.findFirst());
+    }
+
+    const businessName = issuerObj?.nombreEmpresa || issuerObj?.razonSocial || "Lojafac Emisor";
     const rucEmisor = issuerObj?.ruc || "SRI";
 
     // --- EXPORTACIÓN A EXCEL (.xlsx / .csv compatible) ---

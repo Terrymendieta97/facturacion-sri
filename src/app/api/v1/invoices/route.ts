@@ -9,6 +9,36 @@ import { sendInvoiceEmail } from "@/lib/email";
 
 const sriClient = new SriClient();
 
+// Helper para validar cédula ecuatoriana (Módulo 10)
+function validarCedulaEcuatoriana(cedula: string): boolean {
+  const clean = cedula.trim();
+  if (clean.length !== 10 || !/^\d{10}$/.test(clean)) return false;
+  const prov = parseInt(clean.substring(0, 2), 10);
+  if ((prov < 1 || prov > 24) && prov !== 30) return false;
+  const tercerDigito = parseInt(clean.substring(2, 3), 10);
+  if (tercerDigito >= 6) return false;
+  const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
+  let suma = 0;
+  for (let i = 0; i < 9; i++) {
+    let valor = parseInt(clean.charAt(i), 10) * coeficientes[i];
+    if (valor >= 10) valor -= 9;
+    suma += valor;
+  }
+  const digitoVerificador = parseInt(clean.charAt(9), 10);
+  const residuo = suma % 10;
+  const resultado = residuo === 0 ? 0 : 10 - residuo;
+  return resultado === digitoVerificador;
+}
+
+// Helper para validar RUC ecuatoriano
+function validarRucEcuatoriano(ruc: string): boolean {
+  const clean = ruc.trim();
+  if (clean.length !== 13 || !/^\d{13}$/.test(clean)) return false;
+  const prov = parseInt(clean.substring(0, 2), 10);
+  if ((prov < 1 || prov > 24) && prov !== 30) return false;
+  return clean.endsWith("001") || clean.endsWith("002") || clean.endsWith("003");
+}
+
 /**
  * POST /api/v1/invoices
  * Emite una factura electrónica autorizada por el SRI desde sistemas externos / e-commerce
@@ -46,12 +76,86 @@ export async function POST(request: Request) {
 
     const { client, items, formaPago, observaciones } = body;
 
+    // Resolver y validar Establecimiento y Punto de Emisión
+    const establecimiento = String(body.establecimiento || issuer.establecimiento || "001").padStart(3, "0");
+    const puntoEmision = String(body.puntoEmision || issuer.puntoEmision || "001").padStart(3, "0");
+
+    let emissionPointObj = await db.emissionPoint.findUnique({
+      where: {
+        issuerId_establecimiento_puntoEmision: {
+          issuerId: issuer.id,
+          establecimiento,
+          puntoEmision,
+        },
+      },
+    });
+
+    if (body.puntoEmision && !emissionPointObj) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `El punto de emisión '${establecimiento}-${puntoEmision}' no existe configurado para esta empresa.`,
+          code: "EMISSION_POINT_NOT_FOUND",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (emissionPointObj && !emissionPointObj.activo) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `El punto de emisión '${establecimiento}-${puntoEmision}' se encuentra desactivado.`,
+          code: "EMISSION_POINT_INACTIVE",
+        },
+        { status: 400 }
+      );
+    }
+
     if (!client || !client.identificacion || !client.nombres) {
       return NextResponse.json(
         {
           success: false,
           error: "Datos del cliente incompletos. Se requiere 'identificacion' y 'nombres'.",
           code: "CLIENT_REQUIRED",
+        },
+        { status: 400 }
+      );
+    }
+
+    const clientIdent = String(client.identificacion).trim();
+    const isConsumidorFinal = clientIdent === "9999999999999" || client.tipoIdentificacion === "07";
+
+    // Validaciones preventivas anti-bloqueo SRI
+    if (!isConsumidorFinal) {
+      if (clientIdent.length === 10 && !validarCedulaEcuatoriana(clientIdent)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `La cédula '${clientIdent}' no es válida según el algoritmo de verificación del SRI. Corríjala antes de emitir.`,
+            code: "INVALID_CEDULA",
+          },
+          { status: 400 }
+        );
+      }
+      if (clientIdent.length === 13 && !validarRucEcuatoriano(clientIdent)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `El RUC '${clientIdent}' no es válido (debe tener 13 dígitos numéricos y sufijo válido ej: 001).`,
+            code: "INVALID_RUC",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (client.mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(client.mail).trim())) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `El correo electrónico '${client.mail}' tiene un formato inválido.`,
+          code: "INVALID_EMAIL",
         },
         { status: 400 }
       );
@@ -99,14 +203,15 @@ export async function POST(request: Request) {
     }
 
     // 4. Crear o Resolver Cliente en la base de datos y vincularlo
-    const clientIdent = String(client.identificacion).trim();
     let clientObj = await db.client.findUnique({
       where: { identificacion: clientIdent },
     });
 
     const clientPayload = {
       nombres: String(client.nombres).toUpperCase(),
-      tipoIdentificacion: String(client.tipoIdentificacion || (clientIdent.length === 13 ? "04" : "05")),
+      tipoIdentificacion: String(
+        client.tipoIdentificacion || (isConsumidorFinal ? "07" : clientIdent.length === 13 ? "04" : "05")
+      ),
       direccion: String(client.direccion || "S/N").toUpperCase(),
       mail: String(client.mail || "cliente@email.com").toLowerCase().trim(),
       celular: String(client.celular || "0999999999").trim(),
@@ -171,9 +276,12 @@ export async function POST(request: Request) {
       }
       totalDescuento += descuento;
 
-      // Buscar o registrar producto en el catálogo
-      let prodObj = await db.product.findUnique({
-        where: { codigoPrincipal },
+      // Buscar o registrar producto en el catálogo de esta empresa
+      let prodObj = await db.product.findFirst({
+        where: {
+          issuerId: issuer.id,
+          codigoPrincipal,
+        },
       });
 
       if (!prodObj) {
@@ -184,6 +292,7 @@ export async function POST(request: Request) {
             precio: precioUnitario,
             iva: ivaPct,
             descripcion: item.descripcion || "Registrado vía API Ecommerce",
+            issuerId: issuer.id,
           },
         });
       }
@@ -214,13 +323,29 @@ export async function POST(request: Request) {
     valorIva = Math.round(valorIva * 100) / 100;
     const total = Math.round((subtotal0 + subtotalIva + valorIva) * 100) / 100;
 
-    // 6. Generar Secuencial
+    // Validar límite legal de Consumidor Final ($50 USD)
+    if (isConsumidorFinal && total > 50.00) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Por disposición legal del SRI, las facturas a Consumidor Final (9999999999999) no pueden superar los $50.00 USD (Monto total: $${total.toFixed(2)}). Se requieren los datos del cliente (Cédula/RUC y nombres).`,
+          code: "CONSUMIDOR_FINAL_LIMIT_EXCEEDED",
+        },
+        { status: 400 }
+      );
+    }
+
+    // 6. Generar Secuencial para ESTE punto de emisión específico
     const lastInvoice = await db.invoice.findFirst({
-      where: { issuerId: issuer.id },
+      where: {
+        issuerId: issuer.id,
+        establecimiento,
+        puntoEmision,
+      },
       orderBy: { secuencial: "desc" },
     });
 
-    let nextSecNum = parseInt(issuer.startSecuencial || "1", 10);
+    let nextSecNum = parseInt(emissionPointObj?.secuencialInicio || issuer.startSecuencial || "1", 10);
     if (lastInvoice) {
       const lastSecNum = parseInt(lastInvoice.secuencial, 10);
       nextSecNum = Math.max(lastSecNum + 1, nextSecNum);
@@ -233,6 +358,8 @@ export async function POST(request: Request) {
     let invoice = await db.invoice.create({
       data: {
         secuencial,
+        establecimiento,
+        puntoEmision,
         fechaEmision: new Date(),
         tipoAmbiente: issuer.ambiente,
         subtotal0,
@@ -243,6 +370,7 @@ export async function POST(request: Request) {
         observaciones: observaciones || "Factura emitida vía API Ecommerce",
         clientId: clientObj.id,
         issuerId: issuer.id,
+        emissionPointId: emissionPointObj ? emissionPointObj.id : null,
         estado: "CREADA",
         items: {
           create: dbItemsData,
@@ -254,8 +382,8 @@ export async function POST(request: Request) {
     const xmlGenResult = generateInvoiceXml({
       secuencial,
       ambiente: issuer.ambiente,
-      establecimiento: issuer.establecimiento,
-      puntoEmision: issuer.puntoEmision,
+      establecimiento,
+      puntoEmision,
       fechaEmision: invoice.fechaEmision,
       formaPago: cleanFormaPago,
       emisor: {
@@ -342,12 +470,19 @@ export async function POST(request: Request) {
     const estadoFinalSRI = autorizacionResponse?.estado === "AUTORIZADO" ? "AUTORIZADA" : "RECIBIDA";
     const xmlFinalAutorizado = autorizacionResponse?.comprobanteXml || signResult.xmlSigned;
 
-    // Actualizar secuencial de inicio del emisor
+    // Actualizar secuencial en el punto de emisión si existe, o en el emisor
     const nextStartSecuencial = String(nextSecNum + 1).padStart(9, "0");
-    await db.issuer.update({
-      where: { id: issuer.id },
-      data: { startSecuencial: nextStartSecuencial },
-    });
+    if (emissionPointObj) {
+      await db.emissionPoint.update({
+        where: { id: emissionPointObj.id },
+        data: { secuencialInicio: nextStartSecuencial },
+      });
+    } else {
+      await db.issuer.update({
+        where: { id: issuer.id },
+        data: { startSecuencial: nextStartSecuencial },
+      });
+    }
 
     // 12. Descontar Saldo si es Pago por Factura
     if (issuer.planType === "PAY_PER_INVOICE" && (estadoFinalSRI === "AUTORIZADA" || estadoFinalSRI === "RECIBIDA")) {
@@ -374,8 +509,8 @@ export async function POST(request: Request) {
 
       pdfBuffer = await generateRidePdf({
         secuencial,
-        establecimiento: issuer.establecimiento,
-        puntoEmision: issuer.puntoEmision,
+        establecimiento,
+        puntoEmision,
         claveAcceso,
         numeroAutorizacion: autorizacionResponse?.numeroAutorizacion || claveAcceso,
         fechaAutorizacion: autorizacionResponse?.fechaAutorizacion || new Date().toISOString(),
@@ -439,7 +574,7 @@ export async function POST(request: Request) {
           issuerEmail: issuer.email,
           ruc: issuer.ruc,
           claveAcceso,
-          invoiceNumber: `${issuer.establecimiento}-${issuer.puntoEmision}-${secuencial}`,
+          invoiceNumber: `${establecimiento}-${puntoEmision}-${secuencial}`,
           xmlContent: xmlFinalAutorizado,
           pdfBuffer,
           businessName: issuer.razonSocial || issuer.nombreEmpresa,
@@ -461,8 +596,10 @@ export async function POST(request: Request) {
         success: true,
         id: invoice.id,
         estado: estadoFinalSRI,
-        secuencial: `${issuer.establecimiento}-${issuer.puntoEmision}-${secuencial}`,
+        secuencial: `${establecimiento}-${puntoEmision}-${secuencial}`,
         secuencialNumero: secuencial,
+        establecimiento,
+        puntoEmision,
         claveAcceso,
         fechaEmision: invoice.fechaEmision.toISOString(),
         totales: {

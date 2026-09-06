@@ -984,6 +984,21 @@ export default function Home() {
   const handleExportHistory = (format: "pdf" | "xlsx") => {
     const params = new URLSearchParams();
     params.set("format", format);
+    
+    // Identificador de la empresa activa
+    const currentIssuerId = activeIssuerId || (issuer ? String(issuer.id) : "") || localStorage.getItem("activeIssuerId") || "";
+    if (currentIssuerId) {
+      params.set("issuerId", currentIssuerId);
+    }
+
+    if (userRole) {
+      params.set("userRole", userRole);
+    }
+
+    if (operatorEmissionPoint?.id) {
+      params.set("emissionPointId", String(operatorEmissionPoint.id));
+    }
+
     if (historySearch) params.set("search", historySearch);
     if (historyStartDate) params.set("startDate", historyStartDate);
     if (historyEndDate) params.set("endDate", historyEndDate);
@@ -7322,21 +7337,31 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/70 space-y-2">
                     <div className="flex items-center space-x-2">
                       <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-black rounded-md">POST</span>
                       <span className="font-mono text-xs font-bold text-slate-800">/api/v1/invoices</span>
                     </div>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Emite una factura electrónica en 1 solo paso: firma el XML, envía al SRI, genera el PDF RIDE y envía correo al cliente.
+                      Emite una factura en 1 paso: firma XML, envía al SRI, genera RIDE y envía correo. Admite parámetro opcional <code className="font-bold text-indigo-700 font-mono">puntoEmision</code>.
                     </p>
                   </div>
 
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/70 space-y-2">
                     <div className="flex items-center space-x-2">
                       <span className="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-black rounded-md">GET</span>
-                      <span className="font-mono text-xs font-bold text-slate-800">/api/v1/invoices/:claveAcceso</span>
+                      <span className="font-mono text-xs font-bold text-slate-800">/api/v1/emission-points</span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Lista los puntos de emisión / cajas activas de la empresa y consulta su siguiente secuencial disponible en tiempo real.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/70 space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-black rounded-md">GET</span>
+                      <span className="font-mono text-xs font-bold text-slate-800">/api/v1/invoices/:clave</span>
                     </div>
                     <p className="text-xs text-slate-600 leading-relaxed">
                       Consulta el estado de una factura emitida y obtiene los enlaces públicos para descargar el RIDE en PDF y el XML firmado.
@@ -7346,10 +7371,10 @@ export default function Home() {
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/70 space-y-2">
                     <div className="flex items-center space-x-2">
                       <span className="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-black rounded-md">GET</span>
-                      <span className="font-mono text-xs font-bold text-slate-800">/api/v1/clients/lookup?identificacion=...</span>
+                      <span className="font-mono text-xs font-bold text-slate-800">/api/v1/clients/lookup</span>
                     </div>
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Valida y consulta datos de una cédula o RUC en la base de datos nacional para autocompletar el checkout de tu tienda online.
+                      Valida y consulta datos de una cédula o RUC en el Registro Civil / SRI para autocompletar el checkout de tu tienda.
                     </p>
                   </div>
 
@@ -8270,10 +8295,12 @@ def emitir_factura_sri(cliente: dict, items: list, observaciones: str = "Venta o
 
                         <div>
                           <pre className="bg-slate-900 text-slate-100 p-5 rounded-2xl overflow-x-auto text-xs font-mono leading-relaxed border border-slate-800 max-h-96">
-{`curl -X POST "${originUrl}/api/v1/invoices" \\
+{`# 1. EMITIR FACTURA (Punto de emisión opcional, default "001")
+curl -X POST "${originUrl}/api/v1/invoices" \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer ${activeKey}" \\
   -d '{
+    "puntoEmision": "001",
     "client": {
       "tipoIdentificacion": "05",
       "identificacion": "1105164683",
@@ -8294,7 +8321,11 @@ def emitir_factura_sri(cliente: dict, items: list, observaciones: str = "Venta o
     ],
     "formaPago": "20",
     "observaciones": "Pedido online #10542"
-  }'`}
+  }'
+
+# 2. CONSULTAR PUNTOS DE EMISIÓN Y SIGUIENTE SECUENCIAL
+curl -X GET "${originUrl}/api/v1/emission-points" \\
+  -H "Authorization: Bearer ${activeKey}"`}
                           </pre>
                         </div>
                       </div>

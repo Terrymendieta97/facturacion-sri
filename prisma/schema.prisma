@@ -50,6 +50,7 @@ model Issuer {
   clients             IssuerClient[]
   paymentRequests     PaymentRequest[]
   emissionPoints      EmissionPoint[]
+  products            Product[]
 }
 
 model SystemConfig {
@@ -123,14 +124,19 @@ model IssuerClient {
 model Product {
   id              Int           @id @default(autoincrement())
   nombre          String
-  codigoPrincipal String        @unique
+  codigoPrincipal String
   descripcion     String?
   precio          Float
   iva             Float         @default(12.0) // Porcentaje de IVA, ej: 12.0, 0.0, 15.0
   imagen          String?       // Imagen opcional del producto (Base64)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+  
+  issuerId        Int?
+  issuer          Issuer?       @relation(fields: [issuerId], references: [id], onDelete: Cascade)
   invoiceItems    InvoiceItem[]
+
+  @@unique([issuerId, codigoPrincipal])
 }
 
 model Invoice {

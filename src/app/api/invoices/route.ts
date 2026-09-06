@@ -275,6 +275,7 @@ export async function POST(request: Request) {
             iva: parseFloat(item.iva !== undefined ? item.iva : "12"),
             descripcion: item.descripcion || (isTemporary ? "Producto temporal creado en factura" : "Producto manual guardado en catálogo"),
             imagen: item.imagen || null,
+            issuerId: issuer.id,
           },
         });
 
