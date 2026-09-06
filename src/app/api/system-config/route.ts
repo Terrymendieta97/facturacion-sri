@@ -44,6 +44,13 @@ export async function GET() {
       metaKeywords: config.metaKeywords,
       pricePerInvoice: config.pricePerInvoice ?? 0.10,
       monthlyPlanFee: config.monthlyPlanFee ?? 15.0,
+      googleUserEmail: config.googleUserEmail || "lojafacec@gmail.com",
+      googleClientId: config.googleClientId || "136860143059-h5hihc8ra61p2ldcol6qhammkunjatjc.apps.googleusercontent.com",
+      googleRefreshToken: config.googleRefreshToken ? "Configurado (Activo)" : "",
+      smtpHost: config.smtpHost || "smtp.gmail.com",
+      smtpPort: config.smtpPort || 465,
+      smtpUser: config.smtpUser || "lojafacec@gmail.com",
+      smtpFromName: config.smtpFromName || "LojaFac Facturación SRI",
     };
 
     return NextResponse.json(safeConfig);
@@ -76,6 +83,15 @@ export async function POST(request: Request) {
       metaKeywords,
       pricePerInvoice,
       monthlyPlanFee,
+      googleUserEmail,
+      googleClientId,
+      googleClientSecret,
+      googleRefreshToken,
+      smtpHost,
+      smtpPort,
+      smtpUser,
+      smtpPass,
+      smtpFromName,
     } = body;
 
     // Verificar contraseña actual para permitir cambios
@@ -107,6 +123,16 @@ export async function POST(request: Request) {
 
     if (pricePerInvoice !== undefined) dataToSave.pricePerInvoice = parseFloat(pricePerInvoice) >= 0 ? parseFloat(pricePerInvoice) : 0.10;
     if (monthlyPlanFee !== undefined) dataToSave.monthlyPlanFee = parseFloat(monthlyPlanFee) >= 0 ? parseFloat(monthlyPlanFee) : 15.0;
+
+    if (googleUserEmail !== undefined) dataToSave.googleUserEmail = googleUserEmail;
+    if (googleClientId !== undefined) dataToSave.googleClientId = googleClientId;
+    if (googleClientSecret !== undefined) dataToSave.googleClientSecret = googleClientSecret;
+    if (googleRefreshToken !== undefined) dataToSave.googleRefreshToken = googleRefreshToken;
+    if (smtpHost !== undefined) dataToSave.smtpHost = smtpHost;
+    if (smtpPort !== undefined) dataToSave.smtpPort = parseInt(smtpPort, 10) || 465;
+    if (smtpUser !== undefined) dataToSave.smtpUser = smtpUser;
+    if (smtpPass !== undefined) dataToSave.smtpPass = smtpPass;
+    if (smtpFromName !== undefined) dataToSave.smtpFromName = smtpFromName;
 
     if (newAdminPassword && newAdminPassword.trim()) {
       dataToSave.adminPassword = newAdminPassword.trim();
@@ -145,6 +171,12 @@ export async function POST(request: Request) {
         metaKeywords: savedConfig.metaKeywords,
         pricePerInvoice: savedConfig.pricePerInvoice,
         monthlyPlanFee: savedConfig.monthlyPlanFee,
+        googleUserEmail: savedConfig.googleUserEmail,
+        googleClientId: savedConfig.googleClientId,
+        smtpHost: savedConfig.smtpHost,
+        smtpPort: savedConfig.smtpPort,
+        smtpUser: savedConfig.smtpUser,
+        smtpFromName: savedConfig.smtpFromName,
       },
     });
   } catch (error: any) {

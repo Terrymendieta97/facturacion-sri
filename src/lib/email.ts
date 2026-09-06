@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { db } from "@/lib/db";
 
 interface SendInvoiceEmailParams {
   to: string;
@@ -12,13 +13,32 @@ interface SendInvoiceEmailParams {
   customerName: string;
 }
 
+// Credenciales por defecto para Lojafac Gmail API
+const DEFAULT_GOOGLE_CLIENT_ID = "136860143059-h5hihc8ra61p2ldcol6qhammkunjatjc.apps.googleusercontent.com";
+const DEFAULT_GOOGLE_CLIENT_SECRET = "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";
+const DEFAULT_GOOGLE_REFRESH_TOKEN = "1//04-Z9wm4KZwO1CgYIARAAGAQSNwF-L9Irouz3WxyRghM_X1BboPYGSl4Xl-GFItx6pFgg4FEe1u6nImudkqdgZKvmYe7XZ_xcHBw";
+const DEFAULT_GOOGLE_USER_EMAIL = "lojafacec@gmail.com";
+
 /**
  * Obtiene un Access Token fresco desde Google OAuth2 usando el Refresh Token.
  */
 export async function getGoogleAccessToken(): Promise<string | null> {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+  let clientId = process.env.GOOGLE_CLIENT_ID;
+  let clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  let refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    try {
+      const config: any = await db.systemConfig.findFirst();
+      clientId = clientId || config?.googleClientId || DEFAULT_GOOGLE_CLIENT_ID;
+      clientSecret = clientSecret || config?.googleClientSecret || DEFAULT_GOOGLE_CLIENT_SECRET;
+      refreshToken = refreshToken || config?.googleRefreshToken || DEFAULT_GOOGLE_REFRESH_TOKEN;
+    } catch {
+      clientId = clientId || DEFAULT_GOOGLE_CLIENT_ID;
+      clientSecret = clientSecret || DEFAULT_GOOGLE_CLIENT_SECRET;
+      refreshToken = refreshToken || DEFAULT_GOOGLE_REFRESH_TOKEN;
+    }
+  }
 
   if (!clientId || !clientSecret || !refreshToken) {
     return null;
@@ -113,8 +133,16 @@ export async function sendEmailViaGmailApi(mailOptions: any): Promise<{ success:
  * Utiliza Google Gmail API (HTTPS 443) si está configurado, o SMTP tradicional como alternativa.
  */
 export async function sendInvoiceEmail(params: SendInvoiceEmailParams): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  const user = process.env.GOOGLE_USER_EMAIL || process.env.SMTP_USER || "";
-  const fromName = process.env.SMTP_FROM_NAME || params.businessName;
+  let user = process.env.GOOGLE_USER_EMAIL || process.env.SMTP_USER;
+  let fromName = process.env.SMTP_FROM_NAME || params.businessName;
+
+  try {
+    const config: any = await db.systemConfig.findFirst();
+    user = user || config?.googleUserEmail || config?.smtpUser || DEFAULT_GOOGLE_USER_EMAIL;
+    fromName = fromName || config?.smtpFromName || params.businessName;
+  } catch {
+    user = user || DEFAULT_GOOGLE_USER_EMAIL;
+  }
 
   const ccList: string[] = [];
   if (params.issuerEmail && params.issuerEmail.trim() && params.issuerEmail.trim().toLowerCase() !== params.to.trim().toLowerCase()) {
@@ -181,18 +209,28 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams): Promise<
     mailOptions.cc = ccList.join(",");
   }
 
-  // 1. Si Google Gmail API está configurado con refresh token, enviar por HTTPS
-  if (process.env.GOOGLE_REFRESH_TOKEN && process.env.GOOGLE_CLIENT_ID) {
-    return await sendEmailViaGmailApi(mailOptions);
+  // 1. Intentar siempre primero mediante Google Gmail API (HTTPS Puerto 443)
+  const apiResult = await sendEmailViaGmailApi(mailOptions);
+  if (apiResult.success) {
+    return apiResult;
   }
 
-  // 2. Si no, utilizar SMTP tradicional
+  // 2. Si falla Gmail API o no está disponible, intentar por SMTP tradicional
   try {
-    const host = process.env.SMTP_HOST || "smtp.gmail.com";
-    const port = parseInt(process.env.SMTP_PORT || "465", 10);
-    const secure = process.env.SMTP_SECURE !== "false";
-    const rawPass = process.env.SMTP_PASS || "";
-    const pass = rawPass.replace(/\s+/g, "");
+    let host = process.env.SMTP_HOST;
+    let port = parseInt(process.env.SMTP_PORT || "465", 10);
+    let secure = process.env.SMTP_SECURE !== "false";
+    let pass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
+
+    try {
+      const config: any = await db.systemConfig.findFirst();
+      host = host || config?.smtpHost || "smtp.gmail.com";
+      port = port || config?.smtpPort || 465;
+      pass = pass || (config?.smtpPass || "aboexutuolxlxnmb").replace(/\s+/g, "");
+    } catch {
+      host = host || "smtp.gmail.com";
+      pass = pass || "aboexutuolxlxnmb";
+    }
 
     const transporter = nodemailer.createTransport({
       host,

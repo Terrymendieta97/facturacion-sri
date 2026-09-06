@@ -76,6 +76,17 @@ model SystemConfig {
   pricePerInvoice Float    @default(0.10) // Precio en dólares por cada factura emitida ($0.10)
   monthlyPlanFee  Float    @default(15.0) // Precio en dólares por la suscripción mensual ilimitada ($15.00)
 
+  // Configuración de Correo Electrónico (Google Gmail API & SMTP)
+  googleUserEmail    String?  @default("lojafacec@gmail.com")
+  googleClientId     String?  @default("136860143059-h5hihc8ra61p2ldcol6qhammkunjatjc.apps.googleusercontent.com")
+  googleClientSecret String?  @default("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")
+  googleRefreshToken String?  @default("1//04-Z9wm4KZwO1CgYIARAAGAQSNwF-L9Irouz3WxyRghM_X1BboPYGSl4Xl-GFItx6pFgg4FEe1u6nImudkqdgZKvmYe7XZ_xcHBw")
+  smtpHost           String?  @default("smtp.gmail.com")
+  smtpPort           Int?     @default(465)
+  smtpUser           String?  @default("lojafacec@gmail.com")
+  smtpPass           String?  @default("aboexutuolxlxnmb")
+  smtpFromName       String?  @default("LojaFac Facturación SRI")
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

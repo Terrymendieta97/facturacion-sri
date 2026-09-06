@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { sendEmailViaGmailApi } from "@/lib/email";
+import { db } from "@/lib/db";
+
+const DEFAULT_GOOGLE_USER_EMAIL = "lojafacec@gmail.com";
 
 export async function POST(request: Request) {
   try {
@@ -14,11 +17,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const host = process.env.SMTP_HOST || "smtp.gmail.com";
-    const port = parseInt(process.env.SMTP_PORT || "465", 10);
-    const user = process.env.GOOGLE_USER_EMAIL || process.env.SMTP_USER || "";
-    const fromName = process.env.SMTP_FROM_NAME || "Lojafac Administración";
-    const usingGmailApi = !!(process.env.GOOGLE_REFRESH_TOKEN && process.env.GOOGLE_CLIENT_ID);
+    let config: any = null;
+    try {
+      config = await db.systemConfig.findFirst();
+    } catch (e) {
+      console.warn("Could not read SystemConfig from db:", e);
+    }
+
+    let user = process.env.GOOGLE_USER_EMAIL || process.env.SMTP_USER;
+    let fromName = process.env.SMTP_FROM_NAME;
+
+    user = user || config?.googleUserEmail || config?.smtpUser || DEFAULT_GOOGLE_USER_EMAIL;
+    fromName = fromName || config?.smtpFromName || "Lojafac Administración";
 
     const mailOptions = {
       from: `"${fromName}" <${user}>`,
@@ -41,7 +51,7 @@ export async function POST(request: Request) {
                 <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                   <tr>
                     <td style="padding: 4px 0; color: #64748b;">Método de Envío:</td>
-                    <td style="padding: 4px 0; font-weight: bold; color: #0f172a;">${usingGmailApi ? "Google Gmail REST API (HTTPS Puerto 443)" : "SMTP (" + host + ":" + port + ")"}</td>
+                    <td style="padding: 4px 0; font-weight: bold; color: #0f172a;">Google Gmail REST API (HTTPS Puerto 443)</td>
                   </tr>
                   <tr>
                     <td style="padding: 4px 0; color: #64748b;">Cuenta Emisora:</td>
@@ -63,27 +73,22 @@ export async function POST(request: Request) {
       `,
     };
 
-    if (usingGmailApi) {
-      const apiResult = await sendEmailViaGmailApi(mailOptions);
-      if (apiResult.success) {
-        return NextResponse.json({
-          success: true,
-          message: `Correo de prueba enviado exitosamente a ${to} mediante Google Gmail REST API (HTTPS 443).`,
-          messageId: apiResult.messageId,
-          method: "Google Gmail API (HTTPS 443)",
-        });
-      } else {
-        return NextResponse.json({
-          success: false,
-          error: `Fallo en Google Gmail API: ${apiResult.error}`,
-        });
-      }
+    // 1. Intentar por Google Gmail REST API (HTTPS Puerto 443)
+    const apiResult = await sendEmailViaGmailApi(mailOptions);
+    if (apiResult.success) {
+      return NextResponse.json({
+        success: true,
+        message: `Correo de prueba enviado exitosamente a ${to} mediante Google Gmail REST API (HTTPS 443).`,
+        messageId: apiResult.messageId,
+        method: "Google Gmail API (HTTPS 443)",
+      });
     }
 
-    // SMTP Fallback
+    // 2. Fallback a SMTP
+    const host = process.env.SMTP_HOST || config?.smtpHost || "smtp.gmail.com";
+    const port = parseInt(process.env.SMTP_PORT || String(config?.smtpPort || "465"), 10);
     const secure = process.env.SMTP_SECURE !== "false";
-    const rawPass = process.env.SMTP_PASS || "";
-    const pass = rawPass.replace(/\s+/g, "");
+    const pass = (process.env.SMTP_PASS || config?.smtpPass || "aboexutuolxlxnmb").replace(/\s+/g, "");
 
     const transporter = nodemailer.createTransport({
       host,
