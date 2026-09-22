@@ -166,6 +166,12 @@ model Invoice {
   emissionPointId Int?
   emissionPoint   EmissionPoint? @relation(fields: [emissionPointId], references: [id])
   items           InvoiceItem[]
+
+  @@index([issuerId, fechaEmision])
+  @@index([issuerId, estado])
+  @@index([issuerId, puntoEmision])
+  @@index([clientId])
+  @@index([secuencial])
 }
 
 model EmissionPoint {
