@@ -81,7 +81,8 @@ function escapeXml(unsafe: string): string {
  * Genera el XML de la factura formateado según el estándar del SRI
  */
 export function generateInvoiceXml(data: XmlInvoiceData): { xml: string; claveAcceso: string } {
-  // 1. Generar la clave de acceso de 49 dígitos
+  // 1. Generar código numérico aleatorio de 8 dígitos según estándar SRI y la clave de acceso de 49 dígitos
+  const codigoNumerico = String(Math.floor(10000000 + Math.random() * 90000000));
   const claveAcceso = generateClaveAcceso({
     fecha: data.fechaEmision,
     tipoComprobante: "01", // 01 = Factura
@@ -90,6 +91,7 @@ export function generateInvoiceXml(data: XmlInvoiceData): { xml: string; claveAc
     establecimiento: data.establecimiento,
     puntoEmision: data.puntoEmision,
     secuencial: data.secuencial,
+    codigoNumerico,
   });
 
   // 2. Calcular los totales de la factura

@@ -336,20 +336,25 @@ export async function POST(request: Request) {
     }
 
     // 6. Generar Secuencial para ESTE punto de emisión específico
-    const lastInvoice = await db.invoice.findFirst({
+    const existingInvoices = await db.invoice.findMany({
       where: {
         issuerId: issuer.id,
         establecimiento,
         puntoEmision,
       },
-      orderBy: { secuencial: "desc" },
+      select: { secuencial: true },
     });
 
-    let nextSecNum = parseInt(emissionPointObj?.secuencialInicio || issuer.startSecuencial || "1", 10);
-    if (lastInvoice) {
-      const lastSecNum = parseInt(lastInvoice.secuencial, 10);
-      nextSecNum = Math.max(lastSecNum + 1, nextSecNum);
+    let maxSecInDb = 0;
+    for (const inv of existingInvoices) {
+      const num = parseInt(inv.secuencial, 10);
+      if (!isNaN(num) && num > maxSecInDb) {
+        maxSecInDb = num;
+      }
     }
+
+    const configuredStartSec = parseInt(emissionPointObj?.secuencialInicio || issuer.startSecuencial || "1", 10) || 1;
+    const nextSecNum = Math.max(configuredStartSec, maxSecInDb + 1);
     const secuencial = String(nextSecNum).padStart(9, "0");
 
     const cleanFormaPago = formaPago || "01";

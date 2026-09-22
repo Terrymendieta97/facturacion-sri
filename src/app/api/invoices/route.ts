@@ -392,21 +392,25 @@ export async function POST(request: Request) {
     }
 
     // 5. Generar el Secuencial de la Factura (Autoincrementado por punto de emisión)
-    const lastInvoice = await db.invoice.findFirst({
+    const existingInvoices = await db.invoice.findMany({
       where: { 
         issuerId: issuer.id,
         establecimiento: activeEstablecimiento,
         puntoEmision: activePuntoEmision,
-        estado: { in: ["AUTORIZADA", "RECIBIDA"] }
       },
-      orderBy: { secuencial: "desc" },
+      select: { secuencial: true },
     });
-    
-    let nextSecNum = parseInt(startSec || "1", 10);
-    if (lastInvoice) {
-      const lastSecNum = parseInt(lastInvoice.secuencial, 10);
-      nextSecNum = Math.max(lastSecNum + 1, nextSecNum);
+
+    let maxSecInDb = 0;
+    for (const inv of existingInvoices) {
+      const num = parseInt(inv.secuencial, 10);
+      if (!isNaN(num) && num > maxSecInDb) {
+        maxSecInDb = num;
+      }
     }
+
+    const configuredStartSec = parseInt(startSec || "1", 10) || 1;
+    const nextSecNum = Math.max(configuredStartSec, maxSecInDb + 1);
     const secuencial = String(nextSecNum).padStart(9, "0");
 
     // 6. Cargar productos procesados, calcular subtotales y totales
