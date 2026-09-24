@@ -8,8 +8,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Issuer {
@@ -19,7 +20,7 @@ model Issuer {
   apellidos            String
   nombreEmpresa        String
   razonSocial          String
-  direccion            String
+  direccion            String  @db.Text
   email                String
   celular              String
   establecimiento      String  @default("001")
@@ -27,7 +28,7 @@ model Issuer {
   obligadoContabilidad Boolean @default(false)
   regimen              String  @default("REGIMEN GENERAL")
   ambiente             Int     @default(1) // 1 = Pruebas, 2 = Producción
-  firmaElectronica     String? // Ruta al archivo .p12 o el archivo codificado en Base64
+  firmaElectronica     String? @db.Text // Archivo .p12 codificado en Base64
   codigoSri            String? // Contraseña de la firma .p12
   startSecuencial      String  @default("000000001")
 
@@ -38,7 +39,7 @@ model Issuer {
   monthlyFee       Float    @default(15.0)
   balance          Float    @default(5.0)
   subscriptionEnds DateTime @default(now())
-  logo             String? // Logo de la empresa en Base64
+  logo             String?  @db.Text // Logo de la empresa en Base64
 
   // API Pública e Integraciones Ecommerce
   apiKey          String?   @unique
@@ -57,20 +58,20 @@ model SystemConfig {
   id             Int    @id @default(1)
   adminPassword  String @default("1104759574.1998")
   adminWhatsapp  String @default("593999999999")
-  bankAccounts   String @default("Banco Pichincha - Ahorros: 2200123456 (Beneficiario: SRI SaaS)\nBanco Guayaquil - Corriente: 10293847 (Beneficiario: SRI SaaS)")
+  bankAccounts   String @default("Banco Pichincha - Ahorros: 2200123456 (Beneficiario: SRI SaaS)\nBanco Guayaquil - Corriente: 10293847 (Beneficiario: SRI SaaS)") @db.Text
   defaultBalance Float  @default(5.0)
 
   // Marca y Personalización Visual
   systemName    String  @default("Lojafac")
   pageTitle     String  @default("Lojafac - Facturación Electrónica Ecuador")
-  systemLogo    String? // Logo en formato Base64
-  systemFavicon String? // Ícono de la pestaña del navegador (Favicon) en Base64/URL
+  systemLogo    String? @db.Text // Logo en formato Base64
+  systemFavicon String? @db.Text // Ícono de la pestaña del navegador (Favicon) en Base64/URL
   loginTitle    String  @default("Lojafac")
-  loginSubtitle String  @default("Sistema de Facturación Electrónica Ecuatoriana. Emite facturas, retenciones y guías autorizadas por el SRI al instante.")
+  loginSubtitle String  @default("Sistema de Facturación Electrónica Ecuatoriana. Emite facturas, retenciones y guías autorizadas por el SRI al instante.") @db.Text
 
   // Metadatos SEO
-  metaDescription String? @default("Lojafac - Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas autorizadas por el SRI.")
-  metaKeywords    String? @default("lojafac, facturacion sri, ecuador, facturas electronicas, comprobantes sri, retenciones, guias de remision")
+  metaDescription String? @default("Lojafac - Sistema de Facturación Electrónica en Ecuador para personas naturales y empresas autorizadas por el SRI.") @db.Text
+  metaKeywords    String? @default("lojafac, facturacion sri, ecuador, facturas electronicas, comprobantes sri, retenciones, guias de remision") @db.Text
 
   // Configuración de Tarifas y Planes Commerciales
   pricePerInvoice Float @default(0.10) // Precio en dólares por cada factura emitida ($0.10)
@@ -87,7 +88,7 @@ model BankAccount {
   numeroCuenta          String // "2200123456"
   titular               String // "FácilSRI SaaS"
   identificacionTitular String? // "1790000000001"
-  qrCode                String? // Imagen de Código QR de pago en formato Base64
+  qrCode                String?  @db.Text // Imagen de Código QR de pago en formato Base64
   activo                Boolean  @default(true)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -98,7 +99,7 @@ model Client {
   nombres            String
   tipoIdentificacion String // "04" (RUC), "05" (Cédula), "06" (Pasaporte), "07" (Consumidor Final)
   identificacion     String         @unique
-  direccion          String
+  direccion          String         @db.Text
   mail               String
   celular            String
   telefono           String? // Teléfono convencional adicional
@@ -124,10 +125,10 @@ model Product {
   id              Int      @id @default(autoincrement())
   nombre          String
   codigoPrincipal String
-  descripcion     String?
+  descripcion     String?  @db.Text
   precio          Float
   iva             Float    @default(12.0) // Porcentaje de IVA, ej: 12.0, 0.0, 15.0
-  imagen          String? // Imagen opcional del producto (Base64)
+  imagen          String?  @db.Text // Imagen opcional del producto (Base64)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -144,9 +145,9 @@ model Invoice {
   establecimiento String   @default("001") // 3 dígitos (ej: "001")
   puntoEmision    String   @default("001") // 3 dígitos (ej: "001", "002")
   claveAcceso     String?  @unique // 49 dígitos
-  xmlNoFirmado    String?
-  xmlAutorizado   String?
-  pdfRIDE         String?
+  xmlNoFirmado    String?  @db.Text
+  xmlAutorizado   String?  @db.Text
+  pdfRIDE         String?  @db.Text
   estado          String   @default("CREADA") // CREADA, FIRMADA, RECIBIDA, AUTORIZADA, DEVUELTA, RECHAZADA
   fechaEmision    DateTime
   tipoAmbiente    Int      @default(1) // 1 = Pruebas, 2 = Producción
@@ -155,7 +156,7 @@ model Invoice {
   valorIva        Float    @default(0.0)
   total           Float
   formaPago       String   @default("01") // "01" (Sin utilización del sistema financiero), "20" (Otros con utilización del sistema financiero)
-  observaciones   String? // Notas u observaciones adicionales del comprobante
+  observaciones   String?  @db.Text // Notas u observaciones adicionales del comprobante
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -199,8 +200,8 @@ model InvoiceItem {
   precioUnitario Float
   descuento      Float    @default(0.0)
   total          Float
-  notaExtra1     String? // Notas extra del ítem (ej. Color)
-  notaExtra2     String? // Notas extra del ítem (ej. Empaque)
+  notaExtra1     String?  @db.Text // Notas extra del ítem (ej. Color)
+  notaExtra2     String?  @db.Text // Notas extra del ítem (ej. Empaque)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -216,7 +217,7 @@ model PaymentRequest {
   razonSocial    String // Razón social del emisor
   monto          Float // Monto del pago
   tipo           String // "TOPUP" (Recarga de Billetera) o "MEMBERSHIP" (Renovación de Membresía)
-  referencia     String // Referencia de la transferencia o depósito
+  referencia     String    @db.Text // Referencia de la transferencia o depósito
   bancoDestino   String // Banco al que transfirió
   estado         String    @default("PENDIENTE") // PENDIENTE, APROBADO, RECHAZADO
   fechaSolicitud DateTime  @default(now())
