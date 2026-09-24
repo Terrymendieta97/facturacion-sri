@@ -655,9 +655,16 @@ export default function Home() {
     }
   };
 
-  // --- PROVEEDOR SEGURO DE FETCH (EVITA SYNTAXERROR JSON) ---
+  // --- PROVEEDOR SEGURO DE FETCH (EVITA SYNTAXERROR JSON Y CONECTA CON BACKEND) ---
+  const getApiUrl = (endpoint: string) => {
+    if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) return endpoint;
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+    return `${apiBase}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+  };
+
   const safeFetch = async (url: string, options?: RequestInit) => {
     try {
+      const fullUrl = getApiUrl(url);
       const headers = new Headers(options?.headers || {});
       const activeId = localStorage.getItem("activeIssuerId");
       if (activeId) {
@@ -676,7 +683,7 @@ export default function Home() {
         } catch (e) {}
       }
 
-      const res = await fetch(url, {
+      const res = await fetch(fullUrl, {
         ...options,
         headers,
       });
@@ -1007,7 +1014,7 @@ export default function Home() {
     const effectivePE = userRole === "OPERATOR" && operatorEmissionPoint ? operatorEmissionPoint.puntoEmision : filterPuntoEmision;
     if (effectivePE && effectivePE !== "ALL") params.set("puntoEmision", effectivePE);
 
-    window.open(`/api/invoices/export?${params.toString()}`, "_blank");
+    window.open(getApiUrl(`/api/invoices/export?${params.toString()}`), "_blank");
   };
 
   const fetchCompanies = async () => {
@@ -5577,7 +5584,7 @@ export default function Home() {
                                 </button>
                                 
                                 <a
-                                  href={`/api/invoices/download-pdf?id=${inv.id}`}
+                                  href={getApiUrl(`/api/invoices/download-pdf?id=${inv.id}`)}
                                   download={`FACTURA-${inv.secuencial}.pdf`}
                                   className="inline-flex items-center text-[10px] font-semibold border border-slate-200 bg-white text-slate-700 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors"
                                 >
@@ -5586,7 +5593,7 @@ export default function Home() {
                                 </a>
 
                                 <a
-                                  href={`/api/invoices/download-xml?id=${inv.id}`}
+                                  href={getApiUrl(`/api/invoices/download-xml?id=${inv.id}`)}
                                   download={`FACTURA-${inv.secuencial}.xml`}
                                   className="inline-flex items-center text-[10px] font-semibold border border-slate-200 bg-white text-slate-700 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors"
                                 >
@@ -8646,7 +8653,7 @@ curl -X GET "${originUrl}/api/v1/emission-points" \\
 
               <div className="flex items-center space-x-2">
                 <a
-                  href={`/api/invoices/download-pdf?id=${previewInvoice.id}`}
+                  href={getApiUrl(`/api/invoices/download-pdf?id=${previewInvoice.id}`)}
                   download={`FACTURA-${previewInvoice.secuencial}.pdf`}
                   className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs flex items-center shadow-xs transition-all active:scale-95"
                 >
@@ -8655,7 +8662,7 @@ curl -X GET "${originUrl}/api/v1/emission-points" \\
                 </a>
 
                 <a
-                  href={`/api/invoices/download-xml?id=${previewInvoice.id}`}
+                  href={getApiUrl(`/api/invoices/download-xml?id=${previewInvoice.id}`)}
                   download={`FACTURA-${previewInvoice.secuencial}.xml`}
                   className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center transition-all active:scale-95"
                 >
@@ -8684,7 +8691,7 @@ curl -X GET "${originUrl}/api/v1/emission-points" \\
             {/* Viewer Iframe Body */}
             <div className="flex-1 bg-slate-100 relative overflow-hidden">
               <iframe
-                src={`/api/invoices/download-pdf?id=${previewInvoice.id}&preview=true`}
+                src={getApiUrl(`/api/invoices/download-pdf?id=${previewInvoice.id}&preview=true`)}
                 className="w-full h-full border-0"
                 title={`Factura ${previewInvoice.secuencial}`}
               />
