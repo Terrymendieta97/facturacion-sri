@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { authenticateApiKey } from "@/lib/api-auth";
 import { generateInvoiceXml } from "@/lib/sri/xml-generator";
+import { getEcuadorDateParts } from "@/lib/sri/sri-utils";
 import { signDocument } from "@/lib/sri/sri-signer";
 import { SriClient } from "@/lib/sri/sri-client";
 import { generateRidePdf } from "@/lib/sri/ride-generator";
@@ -506,11 +507,9 @@ export async function POST(request: Request) {
     };
     const formaPagoText = formaPagoMap[cleanFormaPago] || "SIN UTILIZACION DEL SISTEMA FINANCIERO";
 
-    let pdfBase64: string | null = null;
     let pdfBuffer: Buffer | null = null;
     try {
-      const d = invoice.fechaEmision;
-      const fechaEmisionFormatted = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+      const fechaEmisionFormatted = getEcuadorDateParts(invoice.fechaEmision).fechaSlash;
 
       pdfBuffer = await generateRidePdf({
         secuencial,
@@ -555,19 +554,17 @@ export async function POST(request: Request) {
           iva: it.ivaPercentage,
         })),
       });
-
-      pdfBase64 = pdfBuffer.toString("base64");
     } catch (pdfErr) {
       console.error("Error al generar RIDE PDF:", pdfErr);
     }
 
-    // Actualizar factura en base de datos con XML y RIDE
+    // Actualizar factura en base de datos con XML (sin almacenar blob pesado de PDF)
     await db.invoice.update({
       where: { id: invoice.id },
       data: {
         estado: estadoFinalSRI,
         xmlAutorizado: xmlFinalAutorizado,
-        pdfRIDE: pdfBase64,
+        pdfRIDE: null,
       },
     });
 

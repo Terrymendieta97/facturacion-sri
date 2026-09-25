@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { generateInvoiceXml } from "@/lib/sri/xml-generator";
+import { getEcuadorDateParts } from "@/lib/sri/sri-utils";
 import { signDocument } from "@/lib/sri/sri-signer";
 import { SriClient } from "@/lib/sri/sri-client";
 import { generateRidePdf } from "@/lib/sri/ride-generator";
@@ -666,8 +667,7 @@ export async function POST(request: Request) {
       };
     });
 
-    const d = invoice.fechaEmision;
-    const fechaEmisionFormatted = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+    const fechaEmisionFormatted = getEcuadorDateParts(invoice.fechaEmision).fechaSlash;
 
     // Generar Buffer del PDF
     const pdfBuffer = await generateRidePdf({

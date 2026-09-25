@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "../db.js";
 import { generateInvoiceXml, generateCreditNoteXml } from "../services/sri/xml-generator.js";
+import { getEcuadorDateParts } from "../services/sri/sri-utils.js";
 import { signDocument } from "../services/sri/sri-signer.js";
 import { SriClient } from "../services/sri/sri-client.js";
 import { generateRidePdf } from "../services/sri/ride-generator.js";
@@ -406,7 +407,7 @@ export async function createInvoice(req: AuthenticatedRequest, res: Response) {
       fechaAutorizacion: autorizacionResponse.fechaAutorizacion,
       ambiente: issuer.ambiente || 1,
       tipoEmision: "1",
-      fechaEmision: new Date().toLocaleDateString("es-EC"),
+      fechaEmision: getEcuadorDateParts().fechaSlash,
       formaPagoText: formaPago === "01" ? "SIN UTILIZACION DEL SISTEMA FINANCIERO" : "OTROS CON UTILIZACION DEL SISTEMA FINANCIERO",
       subtotal0,
       subtotalIva,
@@ -538,10 +539,10 @@ export async function downloadPdf(req: Request, res: Response) {
       puntoEmision: invoice.puntoEmision,
       claveAcceso: invoice.claveAcceso || "PENDIENTE",
       numeroAutorizacion: invoice.claveAcceso || undefined,
-      fechaAutorizacion: invoice.fechaEmision.toLocaleDateString("es-EC"),
+      fechaAutorizacion: getEcuadorDateParts(invoice.fechaEmision).fechaSlash,
       ambiente: invoice.tipoAmbiente,
       tipoEmision: "1",
-      fechaEmision: invoice.fechaEmision.toLocaleDateString("es-EC"),
+      fechaEmision: getEcuadorDateParts(invoice.fechaEmision).fechaSlash,
       formaPagoText: invoice.formaPago === "01" ? "SIN UTILIZACION DEL SISTEMA FINANCIERO" : "OTROS CON UTILIZACION DEL SISTEMA FINANCIERO",
       subtotal0: invoice.subtotal0,
       subtotalIva: invoice.subtotalIva,
@@ -646,10 +647,10 @@ export async function resendEmail(req: Request, res: Response) {
         puntoEmision: invoice.puntoEmision,
         claveAcceso: invoice.claveAcceso || "PENDIENTE",
         numeroAutorizacion: invoice.claveAcceso || undefined,
-        fechaAutorizacion: invoice.fechaEmision.toLocaleDateString("es-EC"),
+        fechaAutorizacion: getEcuadorDateParts(invoice.fechaEmision).fechaSlash,
         ambiente: invoice.tipoAmbiente,
         tipoEmision: "1",
-        fechaEmision: invoice.fechaEmision.toLocaleDateString("es-EC"),
+        fechaEmision: getEcuadorDateParts(invoice.fechaEmision).fechaSlash,
         formaPagoText: invoice.formaPago === "01" ? "SIN UTILIZACION DEL SISTEMA FINANCIERO" : "OTROS CON UTILIZACION DEL SISTEMA FINANCIERO",
         subtotal0: invoice.subtotal0,
         subtotalIva: invoice.subtotalIva,

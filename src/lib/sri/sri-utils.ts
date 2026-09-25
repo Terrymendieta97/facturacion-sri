@@ -22,6 +22,38 @@ export function getMod11Dv(num: string): number {
 }
 
 /**
+ * Retorna las partes de fecha formateadas en la zona horaria oficial del Ecuador (America/Guayaquil, UTC-5).
+ * Esto garantiza que en servidores con zona horaria UTC (como Vercel, AWS o Docker) no se genere
+ * una fecha del día siguiente entre las 19:00 y 23:59, lo cual causa el rechazo del SRI:
+ * "FECHA EMISIÓN EXTEMPORANEA (es mayor a la fecha del servidor)".
+ */
+export function getEcuadorDateParts(d: Date = new Date()): {
+  day: string;
+  month: string;
+  year: string;
+  fechaStr: string;     // DDMMAAAA ej: 24092026
+  fechaSlash: string;   // DD/MM/AAAA ej: 24/09/2026
+} {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Guayaquil",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(d);
+  const day = parts.find((p) => p.type === "day")?.value || "01";
+  const month = parts.find((p) => p.type === "month")?.value || "01";
+  const year = parts.find((p) => p.type === "year")?.value || "2026";
+  return {
+    day,
+    month,
+    year,
+    fechaStr: `${day}${month}${year}`,
+    fechaSlash: `${day}/${month}/${year}`,
+  };
+}
+
+/**
  * Genera la clave de acceso de 49 dígitos para comprobantes electrónicos
  * 
  * @param fecha - Fecha de emisión del documento
@@ -45,12 +77,8 @@ export function generateClaveAcceso(params: {
   codigoNumerico?: string;
   tipoEmision?: string;
 }): string {
-  // 1. Formatear la fecha como DDMMAAAA
-  const d = params.fecha;
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = String(d.getFullYear());
-  const fechaStr = `${day}${month}${year}`;
+  // 1. Formatear la fecha como DDMMAAAA en zona horaria de Ecuador (America/Guayaquil)
+  const { fechaStr } = getEcuadorDateParts(params.fecha);
 
   // 2. Limpiar y rellenar parámetros
   const cleanRuc = params.ruc.replace(/\D/g, "").slice(0, 13).padStart(13, "0");

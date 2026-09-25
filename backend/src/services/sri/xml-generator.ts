@@ -1,4 +1,4 @@
-import { generateClaveAcceso } from "./sri-utils.js";
+import { generateClaveAcceso, getEcuadorDateParts } from "./sri-utils.js";
 
 export interface XmlInvoiceItem {
   nombre: string;
@@ -132,11 +132,8 @@ export function generateInvoiceXml(data: XmlInvoiceData): { xml: string; claveAc
   });
   const importeTotal = totalSinImpuestos + totalImpuestosVal;
 
-  const d = data.fechaEmision;
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = String(d.getFullYear());
-  const fechaEmisionStr = `${day}/${month}/${year}`;
+  // Formatear fecha para el nodo de la factura (DD/MM/AAAA) en zona horaria de Ecuador
+  const { fechaSlash: fechaEmisionStr } = getEcuadorDateParts(data.fechaEmision);
 
   const obligadoLlevarContabilidad = data.emisor.obligadoContabilidad ? "SI" : "NO";
 
@@ -309,11 +306,8 @@ export function generateCreditNoteXml(data: XmlCreditNoteData): { xml: string; c
   });
   const valorModificacion = totalSinImpuestos + totalImpuestosVal;
 
-  const dNC = data.fechaEmision;
-  const fechaEmisionNCStr = `${String(dNC.getDate()).padStart(2, "0")}/${String(dNC.getMonth() + 1).padStart(2, "0")}/${dNC.getFullYear()}`;
-
-  const dFac = data.fechaEmisionDocSustento;
-  const fechaEmisionFacStr = `${String(dFac.getDate()).padStart(2, "0")}/${String(dFac.getMonth() + 1).padStart(2, "0")}/${dFac.getFullYear()}`;
+  const { fechaSlash: fechaEmisionNCStr } = getEcuadorDateParts(data.fechaEmision);
+  const { fechaSlash: fechaEmisionFacStr } = getEcuadorDateParts(data.fechaEmisionDocSustento);
 
   const obligadoLlevarContabilidad = data.emisor.obligadoContabilidad ? "SI" : "NO";
 
