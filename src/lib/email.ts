@@ -13,11 +13,11 @@ interface SendInvoiceEmailParams {
   customerName: string;
 }
 
-// Credenciales por defecto para Lojafac Gmail API
-const DEFAULT_GOOGLE_CLIENT_ID = "136860143059-h5hihc8ra61p2ldcol6qhammkunjatjc.apps.googleusercontent.com";
-const DEFAULT_GOOGLE_CLIENT_SECRET = "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";
-const DEFAULT_GOOGLE_REFRESH_TOKEN = "1//04-Z9wm4KZwO1CgYIARAAGAQSNwF-L9Irouz3WxyRghM_X1BboPYGSl4Xl-GFItx6pFgg4FEe1u6nImudkqdgZKvmYe7XZ_xcHBw";
-const DEFAULT_GOOGLE_USER_EMAIL = "lojafacec@gmail.com";
+// Credenciales por defecto para Lojafac Gmail API desde variables de entorno
+const DEFAULT_GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const DEFAULT_GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
+const DEFAULT_GOOGLE_REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN || "";
+const DEFAULT_GOOGLE_USER_EMAIL = process.env.GOOGLE_USER_EMAIL || process.env.SMTP_USER || "";
 
 // Caché en memoria para evitar peticiones repetitivas a oauth2.googleapis.com
 let cachedAccessToken: string | null = null;
