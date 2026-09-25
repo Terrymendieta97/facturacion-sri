@@ -713,7 +713,7 @@ export async function POST(request: Request) {
       data: {
         estado: "AUTORIZADA",
         xmlAutorizado: xmlAutorizadoStr,
-        pdfRIDE: pdfBase64,
+        pdfRIDE: null,
       },
     });
 
@@ -765,6 +765,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       invoiceId: invoice.id,
+      secuencial,
       estado: "AUTORIZADA",
       claveAcceso,
       numeroAutorizacion: autorizacionResponse.numeroAutorizacion,

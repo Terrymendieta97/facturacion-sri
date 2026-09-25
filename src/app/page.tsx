@@ -2567,9 +2567,11 @@ export default function Home() {
       setSriStatusModal({
         show: true,
         step: "authorized",
-        message: "¡Comprobante autorizado por el SRI y RIDE emitido exitosamente!",
+        message: "¡Comprobante autorizado por el SRI y RIDE disponible para generar!",
         claveAcceso: data.claveAcceso,
         numeroAutorizacion: data.numeroAutorizacion,
+        invoiceId: data.invoiceId,
+        secuencial: data.secuencial,
       });
       addNotification(
         "Factura Autorizada",
@@ -2607,6 +2609,8 @@ export default function Home() {
     message: string;
     claveAcceso?: string;
     numeroAutorizacion?: string;
+    invoiceId?: number;
+    secuencial?: string;
     mensajes?: any[];
   }>({ show: false, step: "init", message: "" });
 
@@ -2711,9 +2715,11 @@ export default function Home() {
       setSriStatusModal({
         show: true,
         step: "authorized",
-        message: "¡Comprobante autorizado por el SRI y RIDE emitido exitosamente!",
+        message: "¡Comprobante autorizado por el SRI y RIDE disponible para generar!",
         claveAcceso: data.claveAcceso,
         numeroAutorizacion: data.numeroAutorizacion,
+        invoiceId: data.invoiceId,
+        secuencial: data.secuencial,
       });
     }
 
@@ -2935,9 +2941,11 @@ export default function Home() {
       setSriStatusModal({
         show: true,
         step: "authorized",
-        message: "Venta autorizada con éxito. Copia del ticket de caja y RIDE enviados por correo.",
+        message: "Venta autorizada con éxito. Copia del ticket de caja y RIDE disponibles.",
         claveAcceso: data.claveAcceso,
         numeroAutorizacion: data.numeroAutorizacion,
+        invoiceId: data.invoiceId,
+        secuencial: data.secuencial,
       });
       addNotification(
         "Venta POS Autorizada",
@@ -5585,11 +5593,12 @@ export default function Home() {
                                 
                                 <a
                                   href={getApiUrl(`/api/invoices/download-pdf?id=${inv.id}`)}
-                                  download={`FACTURA-${inv.secuencial}.pdf`}
-                                  className="inline-flex items-center text-[10px] font-semibold border border-slate-200 bg-white text-slate-700 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center text-[10px] font-bold border border-blue-200 bg-blue-50 text-blue-700 px-2 py-1 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
                                 >
-                                  <Download className="h-3 w-3 mr-1" />
-                                  PDF (RIDE)
+                                  <FileText className="h-3 w-3 mr-1" />
+                                  Generar RIDE
                                 </a>
 
                                 <a
@@ -9470,13 +9479,40 @@ curl -X GET "${originUrl}/api/v1/emission-points" \\
                     <span className="text-xs font-mono font-bold text-slate-700 break-all select-all">{sriStatusModal.claveAcceso}</span>
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setSriStatusModal({ show: false, step: "init", message: "" })}
-                  className="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs py-2 px-6 rounded-lg shadow-sm transition-colors mt-2"
-                >
-                  Entendido
-                </button>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+                  {sriStatusModal.invoiceId && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          window.open(getApiUrl(`/api/invoices/download-pdf?id=${sriStatusModal.invoiceId}`), "_blank");
+                        }}
+                        className="w-full sm:w-auto inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
+                      >
+                        <FileText className="h-4 w-4 mr-1.5" />
+                        Generar RIDE (PDF)
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          window.open(getApiUrl(`/api/invoices/download-xml?id=${sriStatusModal.invoiceId}`), "_blank");
+                        }}
+                        className="w-full sm:w-auto inline-flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2.5 px-4 rounded-xl border border-slate-200 transition-all cursor-pointer active:scale-95"
+                      >
+                        <Download className="h-4 w-4 mr-1.5" />
+                        Descargar XML
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setSriStatusModal({ show: false, step: "init", message: "" })}
+                    className="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs py-2.5 px-6 rounded-xl shadow-xs transition-colors cursor-pointer"
+                  >
+                    Entendido
+                  </button>
+                </div>
               </div>
             )}
 

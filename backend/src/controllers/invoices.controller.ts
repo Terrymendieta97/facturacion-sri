@@ -441,9 +441,8 @@ export async function createInvoice(req: AuthenticatedRequest, res: Response) {
     };
 
     const pdfBuffer = await generateRidePdf(rideData);
-    const pdfBase64 = pdfBuffer.toString("base64");
 
-    // 9. Guardar en Base de Datos PostgreSQL
+    // 9. Guardar en Base de Datos PostgreSQL (Ahorro de espacio: sin guardar blob base64 de PDF)
     const savedInvoice = await db.invoice.create({
       data: {
         secuencial,
@@ -452,7 +451,7 @@ export async function createInvoice(req: AuthenticatedRequest, res: Response) {
         claveAcceso,
         xmlNoFirmado,
         xmlAutorizado: xmlAutorizadoStr,
-        pdfRIDE: pdfBase64,
+        pdfRIDE: null,
         estado: estadoFinal,
         fechaEmision: new Date(),
         tipoAmbiente: issuer.ambiente || 1,
@@ -637,7 +636,54 @@ export async function resendEmail(req: Request, res: Response) {
     if (!invoice) return res.status(404).json({ error: "Factura no encontrada." });
 
     const targetEmail = email || invoice.client.mail;
-    const pdfBuffer = invoice.pdfRIDE ? Buffer.from(invoice.pdfRIDE, "base64") : Buffer.from("");
+    let pdfBuffer: Buffer;
+    if (invoice.pdfRIDE) {
+      pdfBuffer = Buffer.from(invoice.pdfRIDE, "base64");
+    } else {
+      pdfBuffer = await generateRidePdf({
+        secuencial: invoice.secuencial,
+        establecimiento: invoice.establecimiento,
+        puntoEmision: invoice.puntoEmision,
+        claveAcceso: invoice.claveAcceso || "PENDIENTE",
+        numeroAutorizacion: invoice.claveAcceso || undefined,
+        fechaAutorizacion: invoice.fechaEmision.toLocaleDateString("es-EC"),
+        ambiente: invoice.tipoAmbiente,
+        tipoEmision: "1",
+        fechaEmision: invoice.fechaEmision.toLocaleDateString("es-EC"),
+        formaPagoText: invoice.formaPago === "01" ? "SIN UTILIZACION DEL SISTEMA FINANCIERO" : "OTROS CON UTILIZACION DEL SISTEMA FINANCIERO",
+        subtotal0: invoice.subtotal0,
+        subtotalIva: invoice.subtotalIva,
+        valorIva: invoice.valorIva,
+        ivaPercentage: 15,
+        total: invoice.total,
+        emisor: {
+          ruc: invoice.issuer.ruc,
+          razonSocial: invoice.issuer.razonSocial,
+          nombreComercial: invoice.issuer.nombreEmpresa || invoice.issuer.razonSocial,
+          direccionMatriz: invoice.issuer.direccion || "Ecuador",
+          direccionEstablecimiento: invoice.issuer.direccion || "Ecuador",
+          obligadoContabilidad: invoice.issuer.obligadoContabilidad,
+          regimen: invoice.issuer.regimen,
+          logo: invoice.issuer.logo,
+        },
+        comprador: {
+          nombres: invoice.client.nombres,
+          identificacion: invoice.client.identificacion,
+          tipoIdentificacion: invoice.client.tipoIdentificacion,
+          direccion: invoice.client.direccion,
+          email: invoice.client.mail,
+        },
+        items: invoice.items.map((it) => ({
+          codigoPrincipal: it.product?.codigoPrincipal || "ITEM",
+          nombre: it.product?.nombre || "Producto",
+          cantidad: it.cantidad,
+          precioUnitario: it.precioUnitario,
+          descuento: it.descuento,
+          total: it.total,
+        })),
+      });
+    }
+
     const xmlContent = invoice.xmlAutorizado || invoice.xmlNoFirmado || "";
 
     const emailRes = await sendInvoiceEmail({

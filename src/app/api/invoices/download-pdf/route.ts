@@ -105,14 +105,8 @@ export async function GET(request: Request) {
           items: formattedItems,
         });
 
-        // Guardar el PDF regenerado con el logo en la base de datos
-        const newPdfBase64 = pdfBuffer.toString("base64");
-        await db.invoice.update({
-          where: { id: invoice.id },
-          data: { pdfRIDE: newPdfBase64 },
-        });
       } catch (regenErr) {
-        console.error("Error regenerando PDF con logo:", regenErr);
+        console.error("Error generando PDF on-demand:", regenErr);
         if (invoice.pdfRIDE) {
           pdfBuffer = Buffer.from(invoice.pdfRIDE, "base64");
         } else {
